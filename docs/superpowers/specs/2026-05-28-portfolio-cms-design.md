@@ -19,7 +19,7 @@ Nakul's current portfolio is a static HTML/CSS/JS site at `/Users/nakul/Sites/Po
 | Auth | Laravel Socialite (Gmail OAuth) |
 | RBAC | Spatie Laravel-Permission |
 | File Storage | Laravel filesystem (local + S3-ready) |
-| DB | MySQL (via Laravel Herd) |
+| DB | SQLite (this machine has no MySQL; matches sibling Herd projects) |
 | Dev environment | Laravel Herd at `/Users/nakul/Herd/Portfolio` |
 | Project name | `portfolio` |
 

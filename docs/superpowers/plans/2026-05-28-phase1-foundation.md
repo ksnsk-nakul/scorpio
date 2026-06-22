@@ -4,7 +4,7 @@
 
 **Goal:** Fresh Laravel 13 app with all packages installed, all migrations run, all models defined with relationships, seeders seeded, Gmail OAuth working, admin shell (Inertia + Vue 3) rendering, and .env.example committed.
 
-**Architecture:** Laravel 13 + Inertia.js + Vue 3. Spatie Laravel-Permission for RBAC. Laravel Socialite for Gmail OAuth. MySQL via Herd. Admin panel lives under the `/admin` route group protected by auth + role middleware.
+**Architecture:** Laravel 13 + Inertia.js + Vue 3. Spatie Laravel-Permission for RBAC. Laravel Socialite for Gmail OAuth. SQLite (this machine has no MySQL server; matches sibling Herd projects `archgate`/`starter-kit`). Admin panel lives under the `/admin` route group protected by auth + role middleware.
 
 **Tech Stack:** PHP 8.3+, Laravel 13, Inertia.js v2, Vue 3, Vite, Tailwind CSS v4, Spatie laravel-permission v6, laravel/socialite, Pest v3 for testing.
 
@@ -53,10 +53,10 @@ composer create-project laravel/laravel portfolio --prefer-dist
 cd portfolio
 ```
 
-- [ ] **Step 2: Create the MySQL database**
+- [ ] **Step 2: Create the SQLite database file**
 
 ```bash
-mysql -u root -e "CREATE DATABASE portfolio CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+touch database/database.sqlite
 ```
 
 - [ ] **Step 3: Configure .env**
@@ -66,12 +66,8 @@ Edit `.env`:
 APP_NAME=Portfolio
 APP_URL=http://portfolio.test
 
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=portfolio
-DB_USERNAME=root
-DB_PASSWORD=
+DB_CONNECTION=sqlite
+DB_DATABASE=/Users/nakul/Herd/Portfolio/database/database.sqlite
 
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
