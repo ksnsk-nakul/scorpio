@@ -9,7 +9,8 @@ class Setting extends Model
 
     public static function get(string $key, mixed $default = null): mixed
     {
-        return static::where('key', $key)->value('value') ?? $default;
+        $record = static::where('key', $key)->first();
+        return $record === null ? $default : $record->value;
     }
 
     public static function set(string $key, mixed $value, string $group = 'general'): void

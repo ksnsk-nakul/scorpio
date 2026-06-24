@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Comment extends Model
 {
-    protected $fillable = ['user_id', 'body'];
+    protected $fillable = ['commentable_type', 'commentable_id', 'user_id', 'body'];
 
     public function commentable(): \Illuminate\Database\Eloquent\Relations\MorphTo
     {

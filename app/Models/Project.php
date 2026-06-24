@@ -23,6 +23,11 @@ class Project extends Model
 
     public function tasks(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
+        return $this->hasMany(Task::class)->orderBy('sort_order');
+    }
+
+    public function rootTasks(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
         return $this->hasMany(Task::class)->whereNull('parent_id')->orderBy('sort_order');
     }
 
