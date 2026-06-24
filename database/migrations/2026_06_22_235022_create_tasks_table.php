@@ -25,6 +25,7 @@ return new class extends Migration
             $table->date('due_date')->nullable();
             $table->unsignedInteger('sort_order')->default(0);
             $table->timestamps();
+            $table->index(['project_id', 'status']);
         });
     }
 

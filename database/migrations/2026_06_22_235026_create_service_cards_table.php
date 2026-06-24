@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('service_cards', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('page_id')->nullable()->constrained()->nullOnDelete();
             $table->string('title');
             $table->text('description')->nullable();
             $table->string('icon')->nullable();
@@ -20,7 +21,6 @@ return new class extends Migration
             $table->json('tags')->nullable();
             $table->boolean('featured')->default(false);
             $table->unsignedInteger('sort_order')->default(0);
-            $table->foreignId('page_id')->nullable()->constrained()->nullOnDelete();
             $table->string('external_url')->nullable();
             $table->timestamps();
         });
