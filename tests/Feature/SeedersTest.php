@@ -1,33 +1,17 @@
 <?php
 
-namespace Tests\Feature;
-
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 use App\Models\Setting;
-use Tests\TestCase;
+use Spatie\Permission\Models\Role;
 
-class SeedersTest extends TestCase
-{
-    use RefreshDatabase;
+uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->seed();
-    }
+beforeEach(fn () => $this->seed());
 
-    public function test_seeds_the_three_roles(): void
-    {
-        $roles = Role::pluck('name')->toArray();
+it('seeds the three roles', function () {
+    expect(Role::pluck('name')->toArray())
+        ->toContain('admin', 'editor', 'viewer');
+});
 
-        $this->assertContains('admin', $roles);
-        $this->assertContains('editor', $roles);
-        $this->assertContains('viewer', $roles);
-    }
-
-    public function test_seeds_default_settings(): void
-    {
-        $this->assertTrue(Setting::where('key', 'site_name')->exists());
-    }
-}
+it('seeds default settings', function () {
+    expect(Setting::where('key', 'site_name')->exists())->toBeTrue();
+});
