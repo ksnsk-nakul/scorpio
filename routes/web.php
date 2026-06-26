@@ -65,3 +65,15 @@ Route::middleware(['auth', 'role:admin,editor'])
         Route::resource('workspaces', WorkspaceController::class)->except(['create','edit','show']);
         Route::resource('projects', ProjectController::class)->except(['create','edit']);
     });
+
+use App\Http\Controllers\Admin\TaskController;
+use App\Http\Controllers\Admin\CommentController;
+
+Route::middleware(['auth', 'role:admin,editor'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::resource('tasks', TaskController::class)->except(['create','edit']);
+        Route::post('tasks/{task}/comments', [CommentController::class, 'store'])->name('tasks.comments.store');
+        Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
+    });
