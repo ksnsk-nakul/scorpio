@@ -34,3 +34,13 @@ Route::middleware(['auth', 'role:admin,editor'])
 
 // Public preview (no auth needed):
 Route::get('/preview/pages/{page}', [PageController::class, 'preview'])->name('pages.preview');
+
+use App\Http\Controllers\Admin\ServiceCardController;
+
+Route::middleware(['auth', 'role:admin,editor'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::post('service-cards/reorder', [ServiceCardController::class, 'reorder'])->name('service-cards.reorder');
+        Route::resource('service-cards', ServiceCardController::class)->except(['show']);
+    });
