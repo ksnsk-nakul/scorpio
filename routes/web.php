@@ -13,3 +13,12 @@ Route::post('/logout', function (\Illuminate\Http\Request $request) {
     $request->session()->regenerateToken();
     return redirect('/login');
 })->name('logout');
+
+use App\Http\Controllers\Admin\DashboardController;
+
+Route::middleware(['auth', 'role:admin,editor,viewer'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    });
