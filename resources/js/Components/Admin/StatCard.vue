@@ -12,9 +12,9 @@ const props = defineProps({
   color: { type: String, default: 'slate' },
 })
 
-const colorClass = {
+const colorClass = ({
   slate: 'text-slate-800',
   amber: 'text-amber-500',
   blue:  'text-blue-600',
-}[props.color]
+}[props.color]) ?? 'text-slate-800'
 </script>

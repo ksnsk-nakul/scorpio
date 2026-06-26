@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    @vite(['resources/js/app.js'])
     @inertiaHead
+    @vite(['resources/js/app.js'])
 </head>
 <body class="antialiased bg-slate-50">
     @inertia
