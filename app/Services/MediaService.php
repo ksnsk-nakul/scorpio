@@ -1,0 +1,56 @@
+<?php
+namespace App\Services;
+
+use App\Models\Media;
+use App\Models\Setting;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+
+class MediaService
+{
+    private const ALLOWED_MIMES = [
+        'image/jpeg','image/png','image/gif','image/webp','image/svg+xml',
+        'video/mp4','video/quicktime','video/webm',
+    ];
+
+    public function store(UploadedFile $file, User $user): Media
+    {
+        $maxMb = (int) Setting::get('media_max_size_mb', 50);
+
+        if (! in_array($file->getMimeType(), self::ALLOWED_MIMES)) {
+            throw ValidationException::withMessages(['file' => 'File type not allowed.']);
+        }
+
+        if ($file->getSize() > $maxMb * 1024 * 1024) {
+            throw ValidationException::withMessages(['file' => "Max file size is {$maxMb}MB."]);
+        }
+
+        $disk = config('filesystems.default', 'local');
+        $dir  = 'media/' . now()->format('Y/m');
+        $name = Str::uuid() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs($dir, $name, $disk);
+
+        return Media::create([
+            'user_id'   => $user->id,
+            'disk'      => $disk,
+            'path'      => $path,
+            'filename'  => $file->getClientOriginalName(),
+            'mime_type' => $file->getMimeType(),
+            'size'      => $file->getSize(),
+        ]);
+    }
+
+    public function attach(array $mediaIds, Model $mediable): void
+    {
+        Media::whereIn('id', $mediaIds)
+            ->whereNull('mediable_type')
+            ->each(fn ($m) => $m->update([
+                'mediable_type' => get_class($mediable),
+                'mediable_id'   => $mediable->id,
+            ]));
+    }
+}

@@ -44,3 +44,13 @@ Route::middleware(['auth', 'role:admin,editor'])
         Route::post('service-cards/reorder', [ServiceCardController::class, 'reorder'])->name('service-cards.reorder');
         Route::resource('service-cards', ServiceCardController::class)->except(['show']);
     });
+
+use App\Http\Controllers\Admin\MediaController;
+
+Route::middleware(['auth', 'role:admin,editor'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::post('media', [MediaController::class, 'store'])->name('media.store');
+        Route::delete('media/{id}', [MediaController::class, 'destroy'])->name('media.destroy');
+    });

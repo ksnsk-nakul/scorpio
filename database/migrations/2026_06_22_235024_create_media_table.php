@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('media', function (Blueprint $table) {
             $table->id();
-            $table->morphs('mediable');
+            $table->nullableMorphs('mediable');
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('disk')->default('local');
             $table->string('path');
