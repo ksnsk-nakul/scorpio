@@ -54,3 +54,14 @@ Route::middleware(['auth', 'role:admin,editor'])
         Route::post('media', [MediaController::class, 'store'])->name('media.store');
         Route::delete('media/{id}', [MediaController::class, 'destroy'])->name('media.destroy');
     });
+
+use App\Http\Controllers\Admin\WorkspaceController;
+use App\Http\Controllers\Admin\ProjectController;
+
+Route::middleware(['auth', 'role:admin,editor'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::resource('workspaces', WorkspaceController::class)->except(['create','edit','show']);
+        Route::resource('projects', ProjectController::class)->except(['create','edit']);
+    });
