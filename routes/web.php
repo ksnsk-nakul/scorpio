@@ -101,3 +101,13 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
         Route::patch('settings', [SettingController::class, 'update'])->name('settings.update');
     });
+
+use App\Http\Controllers\Admin\ThirdPartySettingController;
+
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::resource('integrations', ThirdPartySettingController::class)
+            ->except(['create', 'edit', 'show'])
+            ->parameters(['integrations' => 'integration']);
+    });
