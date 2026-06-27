@@ -92,3 +92,12 @@ Route::middleware(['auth', 'role:admin'])
     ->group(function () {
         Route::post('github/projects/{project}/create', [GitHubController::class, 'createGitHubProject'])->name('github.project.create');
     });
+
+use App\Http\Controllers\Admin\SettingController;
+
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::patch('settings', [SettingController::class, 'update'])->name('settings.update');
+    });
