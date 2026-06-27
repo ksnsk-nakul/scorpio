@@ -77,3 +77,18 @@ Route::middleware(['auth', 'role:admin,editor'])
         Route::post('tasks/{task}/comments', [CommentController::class, 'store'])->name('tasks.comments.store');
         Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
     });
+
+use App\Http\Controllers\Admin\GitHubController;
+
+Route::middleware(['auth', 'role:admin,editor,viewer'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::get('github', [GitHubController::class, 'index'])->name('github.index');
+        Route::post('github/projects/{project}/sync', [GitHubController::class, 'sync'])->name('github.sync');
+    });
+
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::post('github/projects/{project}/create', [GitHubController::class, 'createGitHubProject'])->name('github.project.create');
+    });

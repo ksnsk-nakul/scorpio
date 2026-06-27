@@ -21,4 +21,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->wantsJson(),
         );
-    })->create();
+    })
+    ->withCommands([
+        \App\Console\Commands\SyncGitHubIssues::class,
+    ])
+    ->withSchedule(function (\Illuminate\Console\Scheduling\Schedule $schedule) {
+        $schedule->command('github:sync')->hourly();
+    })
+    ->create();
