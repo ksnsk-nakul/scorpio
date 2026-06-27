@@ -111,3 +111,13 @@ Route::middleware(['auth', 'role:admin'])
             ->except(['create', 'edit', 'show'])
             ->parameters(['integrations' => 'integration']);
     });
+
+use App\Http\Controllers\Admin\UserController;
+
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::get('users', [UserController::class, 'index'])->name('users.index');
+        Route::patch('users/{user}/role', [UserController::class, 'updateRole'])->name('users.role');
+        Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+    });
