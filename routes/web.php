@@ -121,3 +121,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::patch('users/{user}/role', [UserController::class, 'updateRole'])->name('users.role');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     });
+
+// Root redirect
+Route::get('/', fn () => redirect('/admin/dashboard'));
+

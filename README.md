@@ -1,58 +1,196 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Scorpio — Portfolio CMS
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A self-hosted content management system for developers and creative professionals. Manage your portfolio site, track projects, sync GitHub issues as tasks, and control team access — all from a clean admin panel.
 
-## About Laravel
+Built with Laravel 13, Inertia.js v2, and Vue 3. No password management — Google OAuth only.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Content & Publishing
+- Multi-page site builder with a block-based editor (Hero, Markdown, Service Cards, Gallery, CTA)
+- Page templates: Home, About, Services, Contact, Portfolio
+- Draft → Published workflow with public preview before publishing
+- Service card management with drag-and-drop reorder
 
-## Learning Laravel
+### Project & Task Management
+- Workspaces to group related projects (client, personal, open-source)
+- Projects link to a GitHub repo and GitHub Projects board
+- Tasks with status (`open` / `in_progress` / `done` / `closed`) and priority (`low` / `medium` / `high`)
+- Unlimited subtask depth via self-referencing `parent_id`
+- Threaded comments on tasks and subtasks
+- File attachments (images & video) on tasks, subtasks, and comments
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### GitHub Integration
+- List all repositories from the GitHub API
+- Sync open issues → tasks with one click or automatically on an hourly schedule
+- Create GitHub Projects and link them to local projects
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Media Library
+- Upload images (JPEG, PNG, GIF, WebP, SVG) and video (MP4, WebM, MOV)
+- 50 MB default size limit, configurable via the Settings panel
+- Polymorphic — attach files to Projects, Tasks, or Comments
+- Local disk by default; swap to S3-compatible storage via `.env`
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### Auth & Access Control
+- Google OAuth — no passwords, no registration forms
+- Three roles: **Admin**, **Editor**, **Viewer**
+- Role-gated middleware on all admin routes
+- Admin panel to reassign roles or remove users
 
-## Agentic Development
+---
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Laravel 13, PHP 8.4, SQLite |
+| Frontend | Inertia.js v2, Vue 3, Tailwind CSS v4, Vite |
+| Auth | Laravel Socialite (Google OAuth) |
+| RBAC | Spatie Laravel-Permission v8 |
+| Testing | Pest v3 — 31 tests, 100% passing |
+| Storage | Local disk (S3-swappable via `FILESYSTEM_DISK=s3`) |
+| Dev environment | Laravel Herd |
+
+---
+
+## Quick Start
+
+**Prerequisites:** PHP 8.4+, Composer, Node.js 18+, Laravel Herd (or any local server)
 
 ```bash
-composer require laravel/boost --dev
+# Clone
+git clone git@github.com:ksnsk-nakul/scorpio.git && cd scorpio
 
-php artisan boost:install
+# Install dependencies
+composer install
+npm install
+
+# Environment
+cp .env.example .env
+php artisan key:generate
+
+# Database
+touch database/database.sqlite
+php artisan migrate --seed
+
+# Frontend assets
+npm run dev
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### Google OAuth Setup
 
-## Contributing
+1. Go to [console.cloud.google.com](https://console.cloud.google.com) → APIs & Services → Credentials
+2. Create an **OAuth 2.0 Client ID** (Web application)
+3. Add `http://portfolio.test/auth/google/callback` (or your domain) to **Authorized redirect URIs**
+4. Copy the credentials into `.env`:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```env
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
+GOOGLE_REDIRECT_URI=http://portfolio.test/auth/google/callback
+```
 
-## Code of Conduct
+```bash
+php artisan config:clear
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Visit `http://portfolio.test` — you'll be redirected to the login page.
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Default Seeded Data
+
+The database seeder creates:
+
+| Seeder | What it creates |
+|---|---|
+| `RoleSeeder` | `admin`, `editor`, `viewer` roles with 7 permissions |
+| `SettingSeeder` | Default site settings (name, tagline, SEO, media limits) |
+| `UserSeeder` | `admin@portfolio.test` user with the `admin` role |
+
+The first Google login assigns the `viewer` role automatically. Promote users to `editor` or `admin` from the Users panel.
+
+---
+
+## GitHub Sync
+
+Add your GitHub token in the **Integrations** panel (group: `github`, key: `token`), then either:
+
+- Click **Sync Issues** on any linked project, or
+- Run manually: `php artisan github:sync`
+- Runs automatically every hour via the Laravel scheduler:
+
+```bash
+# Add to crontab
+* * * * * cd /path-to-project && php artisan schedule:run >> /dev/null 2>&1
+```
+
+---
+
+## Storage (S3)
+
+To switch from local disk to S3-compatible storage, set in `.env`:
+
+```env
+FILESYSTEM_DISK=s3
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=your-bucket
+```
+
+---
+
+## Testing
+
+```bash
+./vendor/bin/pest
+```
+
+All 31 tests pass across feature and unit suites covering auth, media uploads, page builder, service cards, workspaces, projects, tasks, comments, settings, integrations, and users.
+
+---
+
+## Project Structure
+
+```
+app/
+├── Console/Commands/   SyncGitHubIssues.php
+├── Http/Controllers/
+│   ├── Admin/          Dashboard, Pages, ServiceCards, Media,
+│   │                   Workspaces, Projects, Tasks, Comments,
+│   │                   GitHub, Settings, Integrations, Users
+│   └── Auth/           GoogleController
+├── Models/             User, Workspace, Project, Task, Comment,
+│                       Media, Page, ServiceCard, Setting, ThirdPartySetting
+├── Policies/           CommentPolicy
+└── Services/           GitHubService, MediaService
+
+resources/js/
+├── Components/Admin/   BlockEditor, MediaUploader, StatCard
+├── Layouts/            AdminLayout
+└── Pages/Admin/        Dashboard, Pages, ServiceCards, Workspaces,
+                        Projects, Tasks, GitHub, Settings, Integrations, Users
+```
+
+---
+
+## Roles & Permissions
+
+| Action | Viewer | Editor | Admin |
+|---|:---:|:---:|:---:|
+| View dashboard & tasks | ✓ | ✓ | ✓ |
+| Create & edit pages | | ✓ | ✓ |
+| Manage service cards | | ✓ | ✓ |
+| Create projects & tasks | | ✓ | ✓ |
+| Manage settings | | | ✓ |
+| Manage integrations | | | ✓ |
+| Assign user roles | | | ✓ |
+
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT
