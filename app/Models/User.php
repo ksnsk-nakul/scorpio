@@ -10,9 +10,14 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasRoles;
 
-    protected $fillable = ['name', 'email', 'avatar', 'google_id', 'email_verified_at'];
+    protected $fillable = [
+        'name', 'email', 'password', 'avatar',
+        'google_id', 'github_id', 'email_verified_at',
+    ];
 
-    protected $hidden = ['remember_token'];
+    protected $hidden = ['password', 'remember_token'];
+
+    protected $casts = ['password' => 'hashed'];
 
     public function tasks(): \Illuminate\Database\Eloquent\Relations\HasMany
     {

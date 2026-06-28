@@ -122,6 +122,30 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 
+// GitHub OAuth
+use App\Http\Controllers\Auth\GitHubController as GitHubOAuthController;
+
+Route::get('/auth/github', [GitHubOAuthController::class, 'redirect'])->name('auth.github');
+Route::get('/auth/github/callback', [GitHubOAuthController::class, 'callback'])->name('auth.github.callback');
+
+// Email + Password
+use App\Http\Controllers\Auth\PasswordAuthController;
+
+Route::get('/register', [PasswordAuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [PasswordAuthController::class, 'register'])->name('register.store');
+Route::post('/login/password', [PasswordAuthController::class, 'login'])->name('login.password');
+Route::get('/forgot-password', [PasswordAuthController::class, 'showForgot'])->name('password.request');
+Route::post('/forgot-password', [PasswordAuthController::class, 'sendReset'])->name('password.email');
+Route::get('/reset-password/{token}', [PasswordAuthController::class, 'showReset'])->name('password.reset');
+Route::post('/reset-password', [PasswordAuthController::class, 'reset'])->name('password.update');
+
+// Email OTP
+use App\Http\Controllers\Auth\OtpAuthController;
+
+Route::get('/login/otp', [OtpAuthController::class, 'show'])->name('login.otp');
+Route::post('/login/otp/send', [OtpAuthController::class, 'send'])->name('login.otp.send');
+Route::post('/login/otp/verify', [OtpAuthController::class, 'verify'])->name('login.otp.verify');
+
 // Root redirect
 Route::get('/', fn () => redirect('/admin/dashboard'));
 
