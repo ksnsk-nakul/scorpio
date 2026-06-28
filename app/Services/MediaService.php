@@ -31,7 +31,18 @@ class MediaService
 
         $disk = config('filesystems.default', 'local');
         $dir  = 'media/' . now()->format('Y/m');
-        $name = Str::uuid() . '.' . $file->getClientOriginalExtension();
+        $mimeMap = [
+            'image/jpeg'      => 'jpg',
+            'image/png'       => 'png',
+            'image/gif'       => 'gif',
+            'image/webp'      => 'webp',
+            'image/svg+xml'   => 'svg',
+            'video/mp4'       => 'mp4',
+            'video/quicktime' => 'mov',
+            'video/webm'      => 'webm',
+        ];
+        $ext  = $mimeMap[$file->getMimeType()] ?? 'bin';
+        $name = Str::uuid() . '.' . $ext;
         $path = $file->storeAs($dir, $name, $disk);
 
         return Media::create([
@@ -48,9 +59,9 @@ class MediaService
     {
         Media::whereIn('id', $mediaIds)
             ->whereNull('mediable_type')
-            ->each(fn ($m) => $m->update([
+            ->update([
                 'mediable_type' => get_class($mediable),
                 'mediable_id'   => $mediable->id,
-            ]));
+            ]);
     }
 }

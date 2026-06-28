@@ -8,7 +8,10 @@ class EnsureRole
 {
     public function handle(Request $request, Closure $next, string ...$roles): mixed
     {
-        if (! $request->user() || ! $request->user()->hasAnyRole($roles)) {
+        if (! $request->user()) {
+            return redirect()->route('login');
+        }
+        if (! $request->user()->hasAnyRole($roles)) {
             abort(403, 'Forbidden.');
         }
         return $next($request);

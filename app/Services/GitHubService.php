@@ -18,7 +18,11 @@ class GitHubService
 
     private function http(): \Illuminate\Http\Client\PendingRequest
     {
-        return Http::withToken($this->token())
+        $token = $this->token();
+        if (! $token) {
+            throw new \RuntimeException('GitHub token not configured. Add it in Integrations → github → token.');
+        }
+        return Http::withToken($token)
             ->withHeaders(['Accept' => 'application/vnd.github+json', 'X-GitHub-Api-Version' => '2022-11-28'])
             ->baseUrl($this->baseUrl);
     }

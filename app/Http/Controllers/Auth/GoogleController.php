@@ -46,12 +46,12 @@ class GoogleController extends Controller
                 ]);
             }
 
+            if (! $user->hasAnyRole(['admin', 'editor', 'viewer'])) {
+                $user->assignRole('viewer');
+            }
+
             return $user;
         });
-
-        if (! $user->hasAnyRole(['admin', 'editor', 'viewer'])) {
-            $user->assignRole('viewer');
-        }
 
         Auth::login($user);
 
