@@ -12,7 +12,7 @@ class PageController extends Controller
     public function index(): Response
     {
         return Inertia::render('Admin/Pages/Index', [
-            'pages'     => auth()->user()->pages()->latest('updated_at')->get(['id','name','slug','status','template','updated_at','is_home']),
+            'pages'     => auth()->user()->pages()->with('serviceCards')->latest('updated_at')->get(['id','name','slug','status','template','updated_at','is_home','blocks','user_id']),
             'templates' => ['blank', 'hero_cards', 'text_image', 'project_grid'],
         ]);
     }

@@ -10,15 +10,20 @@
               class="text-xs bg-blue-600 text-white rounded px-2 py-0.5 hover:bg-blue-700">+</button>
           </div>
           <nav class="p-2 space-y-1">
-            <Link
-              v-for="p in pages"
-              :key="p.id"
-              :href="`/admin/pages/${p.id}/edit`"
-              class="block px-3 py-2 rounded-lg text-sm transition text-slate-700 hover:bg-slate-50"
-            >
-              {{ p.name }}
-              <span v-if="p.status === 'draft'" class="text-xs text-amber-500 ml-1">draft</span>
-            </Link>
+            <div v-for="p in pages" :key="p.id" class="flex items-center gap-1">
+              <Link
+                :href="`/admin/pages/${p.id}/edit`"
+                class="flex-1 block px-3 py-2 rounded-lg text-sm transition text-slate-700 hover:bg-slate-50 truncate"
+              >
+                {{ p.name }}
+                <span v-if="p.status === 'draft'" class="text-xs text-amber-500 ml-1">draft</span>
+              </Link>
+              <button
+                @click="previewPage = p"
+                class="text-xs text-slate-400 hover:text-blue-600 px-1 py-1 rounded flex-shrink-0"
+                title="Preview"
+              >👁</button>
+            </div>
             <p v-if="pages.length === 0" class="px-3 py-2 text-xs text-slate-400">No pages yet.</p>
           </nav>
         </div>
@@ -43,6 +48,9 @@
         Select a page to edit, or create a new one.
       </div>
     </div>
+
+    <!-- Preview modal -->
+    <PagePreview v-if="previewPage" :page="previewPage" @close="previewPage = null" />
 
     <!-- Create modal -->
     <Teleport to="body">
@@ -75,10 +83,12 @@
 import { ref } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import PagePreview from '@/Components/PagePreview.vue'
 
 const props = defineProps({ pages: Array, templates: Array })
 
 const showCreate = ref(false)
+const previewPage = ref(null)
 const form = useForm({ name: '', template: 'blank' })
 
 const templateLabel = (t) => ({
