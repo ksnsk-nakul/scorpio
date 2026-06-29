@@ -56,14 +56,14 @@ const page = usePage()
 const isAdmin = computed(() => page.props.auth.roles?.includes('admin'))
 
 const allNav = [
-  { label: 'Dashboard',     href: '/admin/dashboard',     adminOnly: false },
-  { label: 'Pages',         href: '/admin/pages',         adminOnly: false },
-  { label: 'Service Cards', href: '/admin/service-cards', adminOnly: false },
-  { label: 'Projects',      href: '/admin/projects',      adminOnly: false },
-  { label: 'GitHub',        href: '/admin/github',        adminOnly: false },
-  { label: 'Users',         href: '/admin/users',         adminOnly: true  },
-  { label: 'Settings',      href: '/admin/settings',      adminOnly: true  },
-  { label: 'Integrations',  href: '/admin/integrations',  adminOnly: true  },
+  { label: 'Dashboard',     href: '/admin/dashboard',      adminOnly: false },
+  { label: 'Pages',         href: '/admin/pages',          adminOnly: false },
+  { label: 'Service Cards', href: '/admin/service-cards',  adminOnly: false },
+  { label: 'Products',      href: '/admin/products',       adminOnly: false },
+  { label: 'GitHub',        href: '/admin/github',         adminOnly: false },
+  { label: 'Profile',       href: '/admin/profile',        adminOnly: false },
+  { label: 'Users',         href: '/admin/users',          adminOnly: true  },
+  { label: 'Settings',      href: '/admin/settings',       adminOnly: true  },
 ]
 
 const nav = computed(() => allNav.filter(item => !item.adminOnly || isAdmin.value))

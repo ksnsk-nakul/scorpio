@@ -15,7 +15,7 @@ class ProjectController extends Controller
 
     public function index()
     {
-        return Inertia::render('Admin/Projects/Index', [
+        return Inertia::render('Admin/Products/Index', [
             'workspaces' => Workspace::with('projects:id,workspace_id,name,slug,status,github_repo,cover_image')
                 ->orderBy('name')->get(),
         ]);
@@ -30,12 +30,12 @@ class ProjectController extends Controller
             'status'       => 'in:active,archived',
         ]);
         $project = Project::create($data);
-        return redirect("/admin/projects/{$project->id}")->with('success', 'Project created.');
+        return redirect("/admin/products/{$project->id}")->with('success', 'Project created.');
     }
 
     public function show(Project $project)
     {
-        return Inertia::render('Admin/Projects/Show', [
+        return Inertia::render('Admin/Products/Show', [
             'project' => $project->load('workspace:id,name'),
             'tasks'   => $project->rootTasks()->with('assignee:id,name,avatar')->limit(20)->get(),
             'media'   => $project->media()->latest()->get()->map(fn ($m) => [
@@ -67,12 +67,12 @@ class ProjectController extends Controller
             $this->media->attach($mediaIds, $project);
         }
 
-        return redirect("/admin/projects/{$project->id}")->with('success', 'Project updated.');
+        return redirect("/admin/products/{$project->id}")->with('success', 'Project updated.');
     }
 
     public function destroy(Project $project)
     {
         $project->delete();
-        return redirect('/admin/projects')->with('success', 'Project deleted.');
+        return redirect('/admin/products')->with('success', 'Project deleted.');
     }
 }

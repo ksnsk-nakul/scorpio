@@ -63,7 +63,7 @@ Route::middleware(['auth', 'role:admin,editor'])
     ->name('admin.')
     ->group(function () {
         Route::resource('workspaces', WorkspaceController::class)->except(['create','edit','show']);
-        Route::resource('projects', ProjectController::class)->except(['create','edit']);
+        Route::resource('products', ProjectController::class, ['parameters' => ['products' => 'project']])->except(['create','edit']);
     });
 
 use App\Http\Controllers\Admin\TaskController;
@@ -102,15 +102,6 @@ Route::middleware(['auth', 'role:admin'])
         Route::patch('settings', [SettingController::class, 'update'])->name('settings.update');
     });
 
-use App\Http\Controllers\Admin\ThirdPartySettingController;
-
-Route::middleware(['auth', 'role:admin'])
-    ->prefix('admin')->name('admin.')
-    ->group(function () {
-        Route::resource('integrations', ThirdPartySettingController::class)
-            ->except(['create', 'edit', 'show'])
-            ->parameters(['integrations' => 'integration']);
-    });
 
 use App\Http\Controllers\Admin\UserController;
 
