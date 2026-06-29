@@ -44,6 +44,8 @@ class GitHubController extends Controller
 
     public function createGitHubProject(Request $request, Project $project)
     {
+        abort_if(! filled(auth()->user()->github_token), 403, 'No GitHub token configured.');
+
         $data = $request->validate([
             'owner' => 'required|string',
             'name'  => 'required|string|max:255',
@@ -63,6 +65,8 @@ class GitHubController extends Controller
 
     public function sync(Project $project)
     {
+        abort_if(! filled(auth()->user()->github_token), 403, 'No GitHub token configured.');
+
         $token = auth()->user()->github_token;
         $count = $this->github->withToken($token)->syncIssuesToProject($project);
         return back()->with('success', "{$count} issues synced from GitHub.");

@@ -38,12 +38,14 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user'  => $request->user()?->only('id', 'name', 'email', 'avatar'),
+                'user'  => $request->user()?->only('id', 'name', 'email', 'avatar', 'username'),
                 'roles' => $request->user()?->getRoleNames() ?? [],
             ],
             'flash' => [
-                'status'  => fn () => $request->session()->get('status'),
-                'success' => fn () => $request->session()->get('success'),
+                'status'           => fn () => $request->session()->get('status'),
+                'success'          => fn () => $request->session()->get('success'),
+                'profile_success'  => fn () => $request->session()->get('profile_success'),
+                'password_success' => fn () => $request->session()->get('password_success'),
             ],
             'demo' => env('DEMO_MODE', false) ? [
                 'enabled'  => true,

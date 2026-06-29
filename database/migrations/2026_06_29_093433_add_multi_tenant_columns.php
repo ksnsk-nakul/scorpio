@@ -8,7 +8,7 @@ return new class extends Migration {
     {
         Schema::table('users', function (Blueprint $table) {
             $table->string('username')->nullable()->unique()->after('name');
-            $table->string('github_token')->nullable()->after('github_id');
+            $table->text('github_token')->nullable()->after('github_id');
         });
 
         Schema::table('pages', function (Blueprint $table) {

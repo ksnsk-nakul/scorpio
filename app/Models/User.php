@@ -19,7 +19,10 @@ class User extends Authenticatable
 
     protected $hidden = ['password', 'remember_token', 'github_token'];
 
-    protected $casts = ['password' => 'hashed'];
+    protected $casts = [
+        'password'     => 'hashed',
+        'github_token' => 'encrypted',
+    ];
 
     protected static function booted(): void
     {

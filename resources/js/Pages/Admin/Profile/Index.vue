@@ -33,7 +33,7 @@
           <div class="flex items-center gap-3 mt-5">
             <button type="submit" :disabled="profileForm.processing"
               class="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700">Save</button>
-            <span v-if="$page.props.flash?.success" class="text-xs text-green-600">Saved!</span>
+            <span v-if="$page.props.flash?.profile_success" class="text-xs text-green-600">Saved!</span>
           </div>
         </form>
       </div>
@@ -64,6 +64,7 @@
           <div class="flex items-center gap-3 mt-5">
             <button type="submit" :disabled="pwForm.processing"
               class="bg-slate-800 text-white text-sm px-4 py-2 rounded-lg hover:bg-slate-700">Update Password</button>
+            <span v-if="$page.props.flash?.password_success" class="text-xs text-green-600">Password updated!</span>
           </div>
         </form>
       </div>
