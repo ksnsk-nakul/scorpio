@@ -11,7 +11,12 @@ class PublicController extends Controller
 {
     public function portfolio(string $username): Response
     {
-        $user = \App\Models\User::where('username', $username)->firstOrFail();
+        // select() prevents loading sensitive columns (password, github_token, etc.)
+        $user = \App\Models\User::where('username', $username)
+            ->select(['id', 'name', 'username'])
+            ->firstOrFail();
+
+        // status=published check intentionally returns 404 (not 403) to avoid disclosing draft existence
         $page = $user->pages()
             ->where('is_home', true)
             ->where('status', 'published')
@@ -21,13 +26,16 @@ class PublicController extends Controller
         return Inertia::render('Public/Portfolio', [
             'page'     => $page,
             'owner'    => $user->only('name', 'username'),
-            'settings' => \App\Models\Setting::all()->pluck('value', 'key'),
+            'settings' => Setting::whereIn('key', ['site_name', 'og_image'])->pluck('value', 'key'),
         ]);
     }
 
     public function portfolioPage(string $username, string $slug): Response
     {
-        $user = \App\Models\User::where('username', $username)->firstOrFail();
+        $user = \App\Models\User::where('username', $username)
+            ->select(['id', 'name', 'username'])
+            ->firstOrFail();
+
         $page = $user->pages()
             ->where('slug', $slug)
             ->where('status', 'published')
@@ -37,7 +45,7 @@ class PublicController extends Controller
         return Inertia::render('Public/Portfolio', [
             'page'     => $page,
             'owner'    => $user->only('name', 'username'),
-            'settings' => \App\Models\Setting::all()->pluck('value', 'key'),
+            'settings' => Setting::whereIn('key', ['site_name', 'og_image'])->pluck('value', 'key'),
         ]);
     }
 
