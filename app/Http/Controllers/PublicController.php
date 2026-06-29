@@ -9,6 +9,38 @@ use Inertia\Response;
 
 class PublicController extends Controller
 {
+    public function portfolio(string $username): Response
+    {
+        $user = \App\Models\User::where('username', $username)->firstOrFail();
+        $page = $user->pages()
+            ->where('is_home', true)
+            ->where('status', 'published')
+            ->with('serviceCards')
+            ->firstOrFail();
+
+        return Inertia::render('Public/Portfolio', [
+            'page'     => $page,
+            'owner'    => $user->only('name', 'username'),
+            'settings' => \App\Models\Setting::all()->pluck('value', 'key'),
+        ]);
+    }
+
+    public function portfolioPage(string $username, string $slug): Response
+    {
+        $user = \App\Models\User::where('username', $username)->firstOrFail();
+        $page = $user->pages()
+            ->where('slug', $slug)
+            ->where('status', 'published')
+            ->with('serviceCards')
+            ->firstOrFail();
+
+        return Inertia::render('Public/Portfolio', [
+            'page'     => $page,
+            'owner'    => $user->only('name', 'username'),
+            'settings' => \App\Models\Setting::all()->pluck('value', 'key'),
+        ]);
+    }
+
     public function index(): Response
     {
         $pages = Page::where('status', 'published')

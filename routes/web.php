@@ -157,3 +157,13 @@ Route::post('/login/otp/verify', [OtpAuthController::class, 'verify'])->name('lo
 // Public portfolio
 Route::get('/', [\App\Http\Controllers\PublicController::class, 'index'])->name('home');
 
+// Multi-tenant portfolio routes — must be last
+Route::get('/{username}', [\App\Http\Controllers\PublicController::class, 'portfolio'])
+    ->name('portfolio')
+    ->where('username', '[a-z0-9_\-]+');
+
+Route::get('/{username}/{slug}', [\App\Http\Controllers\PublicController::class, 'portfolioPage'])
+    ->name('portfolio.page')
+    ->where('username', '[a-z0-9_\-]+')
+    ->where('slug', '[a-z0-9\-]+');
+

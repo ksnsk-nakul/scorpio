@@ -26,7 +26,9 @@ class UserSeeder extends Seeder
         }
 
         if (empty($admin->username)) {
-            $admin->update(['username' => \App\Models\User::uniqueUsername('admin')]);
+            // Use the admin's name (not 'admin') to avoid colliding with the /admin route prefix
+            $base = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $name));
+            $admin->update(['username' => \App\Models\User::uniqueUsername($base)]);
         }
     }
 }
