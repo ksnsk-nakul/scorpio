@@ -14,10 +14,14 @@ class PageSeeder extends Seeder
             return;
         }
 
+        $adminEmail = filled(env('ADMIN_EMAIL')) ? env('ADMIN_EMAIL') : 'admin@example.com';
+        $adminId    = \App\Models\User::where('email', $adminEmail)->value('id');
+        abort_if(is_null($adminId), 1, "Admin user not found for [{$adminEmail}] — run UserSeeder first.");
+
         $page = Page::create([
             'name'         => 'Home',
             'slug'         => 'home',
-            'user_id'      => \App\Models\User::where('email', filled(env('ADMIN_EMAIL')) ? env('ADMIN_EMAIL') : 'admin@example.com')->value('id'),
+            'user_id'      => $adminId,
             'is_home'      => true,
             'template'     => 'hero_cards',
             'status'       => 'published',

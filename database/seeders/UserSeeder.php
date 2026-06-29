@@ -26,7 +26,7 @@ class UserSeeder extends Seeder
         }
 
         if (empty($admin->username)) {
-            $admin->update(['username' => 'admin']);
+            $admin->update(['username' => \App\Models\User::uniqueUsername('admin')]);
         }
     }
 }
