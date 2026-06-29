@@ -2,7 +2,7 @@
   <AdminLayout>
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-slate-800">Tasks</h1>
-      <Link href="/admin/projects" class="text-sm text-blue-600 hover:underline">View by Project →</Link>
+      <Link href="/admin/products" class="text-sm text-blue-600 hover:underline">View by Product →</Link>
     </div>
 
     <!-- Filters -->

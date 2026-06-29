@@ -11,8 +11,8 @@
         <h2 class="font-semibold text-slate-800">{{ ws.name }}</h2>
         <p class="text-xs text-slate-400 mt-1 mb-3">{{ ws.description }}</p>
         <p class="text-xs text-slate-500">{{ ws.projects_count }} projects</p>
-        <Link :href="`/admin/projects?workspace=${ws.id}`" class="text-xs text-blue-600 hover:underline mt-3 block">
-          View Projects →
+        <Link :href="`/admin/products?workspace=${ws.id}`" class="text-xs text-blue-600 hover:underline mt-3 block">
+          View Products →
         </Link>
       </div>
       <div v-if="workspaces.length === 0" class="col-span-3 text-center text-slate-400 py-12 text-sm">

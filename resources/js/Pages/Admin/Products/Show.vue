@@ -10,7 +10,7 @@
               class="hover:underline">{{ project.github_repo }}</a>
           </p>
         </div>
-        <Link href="/admin/projects" class="text-xs text-slate-400 hover:text-slate-700">← Projects</Link>
+        <Link href="/admin/products" class="text-xs text-slate-400 hover:text-slate-700">← Products</Link>
       </div>
 
       <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">

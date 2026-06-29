@@ -4,9 +4,9 @@
       <h1 class="text-2xl font-bold text-slate-800 mb-6">GitHub</h1>
 
       <div v-if="!hasToken" class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-6 text-sm text-amber-800">
-        No GitHub token configured. Add one in
-        <Link href="/admin/integrations" class="font-medium underline">Integrations</Link>
-        under the GitHub group.
+        No GitHub token configured. Connect your account on the
+        <Link href="/admin/github" class="font-medium underline">GitHub</Link>
+        page.
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

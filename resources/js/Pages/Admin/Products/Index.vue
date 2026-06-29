@@ -1,9 +1,9 @@
 <template>
   <AdminLayout>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-slate-800">Projects</h1>
+      <h1 class="text-2xl font-bold text-slate-800">Products</h1>
       <button @click="showCreate = true"
-        class="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700">+ New Project</button>
+        class="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700">+ New Product</button>
     </div>
 
     <div v-for="ws in workspaces" :key="ws.id" class="mb-8">
@@ -12,7 +12,7 @@
         <Link
           v-for="p in ws.projects"
           :key="p.id"
-          :href="`/admin/projects/${p.id}`"
+          :href="`/admin/products/${p.id}`"
           class="bg-white border border-slate-200 rounded-xl p-5 hover:border-blue-300 transition block"
         >
           <div class="flex items-start justify-between mb-2">
@@ -22,23 +22,23 @@
           </div>
           <p v-if="p.github_repo" class="text-xs text-slate-400">🐙 {{ p.github_repo }}</p>
         </Link>
-        <div v-if="ws.projects.length === 0" class="text-xs text-slate-400">No projects in this workspace.</div>
+        <div v-if="ws.projects.length === 0" class="text-xs text-slate-400">No products in this workspace.</div>
       </div>
     </div>
 
     <Teleport to="body">
       <div v-if="showCreate" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
         <div class="bg-white rounded-xl p-6 w-80 shadow-xl">
-          <h2 class="font-semibold mb-4 text-slate-800">New Project</h2>
+          <h2 class="font-semibold mb-4 text-slate-800">New Product</h2>
           <select v-model="form.workspace_id" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mb-3 outline-none">
             <option :value="null">— Select workspace —</option>
             <option v-for="ws in workspaces" :key="ws.id" :value="ws.id">{{ ws.name }}</option>
           </select>
-          <input v-model="form.name" placeholder="Project name"
+          <input v-model="form.name" placeholder="Product name"
             class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mb-4 outline-none" />
           <div class="flex gap-2 justify-end">
             <button @click="showCreate = false" class="px-4 py-2 text-sm text-slate-500">Cancel</button>
-            <button @click="form.post('/admin/projects', { onSuccess: () => showCreate = false })"
+            <button @click="form.post('/admin/products', { onSuccess: () => showCreate = false })"
               :disabled="form.processing"
               class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg">Create</button>
           </div>
