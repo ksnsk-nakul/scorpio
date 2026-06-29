@@ -2,7 +2,7 @@
 
 A self-hosted content management system for developers and creative professionals. Manage your portfolio site, track projects, sync GitHub issues as tasks, and control team access — all from a clean admin panel.
 
-Built with Laravel 13, Inertia.js v2, and Vue 3. No password management — Google OAuth only.
+Built with Laravel 13, Inertia.js v2, and Vue 3. Supports four authentication methods: Google OAuth, GitHub OAuth, email + password, and email OTP.
 
 ---
 
@@ -34,7 +34,8 @@ Built with Laravel 13, Inertia.js v2, and Vue 3. No password management — Goog
 - Local disk by default; swap to S3-compatible storage via `.env`
 
 ### Auth & Access Control
-- Google OAuth — no passwords, no registration forms
+- Four login methods: **Google OAuth**, **GitHub OAuth**, **email + password**, and **email OTP** — buyers can enable whichever fits their workflow
+- Password reset via email link
 - Three roles: **Admin**, **Editor**, **Viewer**
 - Role-gated middleware on all admin routes
 - Admin panel to reassign roles or remove users
@@ -47,7 +48,7 @@ Built with Laravel 13, Inertia.js v2, and Vue 3. No password management — Goog
 |---|---|
 | Backend | Laravel 13, PHP 8.4, SQLite |
 | Frontend | Inertia.js v2, Vue 3, Tailwind CSS v4, Vite |
-| Auth | Laravel Socialite (Google OAuth) |
+| Auth | Laravel Socialite (Google + GitHub OAuth), email + password, email OTP |
 | RBAC | Spatie Laravel-Permission v8 |
 | Testing | Pest v3 — 31 tests, 100% passing |
 | Storage | Local disk (S3-swappable via `FILESYSTEM_DISK=s3`) |
@@ -79,12 +80,21 @@ php artisan migrate --seed
 npm run dev
 ```
 
-### Google OAuth Setup
+### Authentication Setup
 
+Scorpio ships with four login methods. Enable whichever you need — all are optional except email + password, which works out of the box.
+
+#### Email + Password (default)
+No configuration required. Register at `/register`, log in at `/login`.
+
+#### Email OTP
+Requires a working mail driver. Set `MAIL_*` variables in `.env` and send OTPs from the `/login/otp` page.
+
+#### Google OAuth
 1. Go to [console.cloud.google.com](https://console.cloud.google.com) → APIs & Services → Credentials
 2. Create an **OAuth 2.0 Client ID** (Web application)
-3. Add `http://portfolio.test/auth/google/callback` (or your domain) to **Authorized redirect URIs**
-4. Copy the credentials into `.env`:
+3. Add `http://portfolio.test/auth/google/callback` to **Authorized redirect URIs**
+4. Add to `.env`:
 
 ```env
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
@@ -92,11 +102,22 @@ GOOGLE_CLIENT_SECRET=your-client-secret
 GOOGLE_REDIRECT_URI=http://portfolio.test/auth/google/callback
 ```
 
+#### GitHub OAuth
+1. Go to GitHub → Settings → Developer Settings → OAuth Apps → New OAuth App
+2. Set **Authorization callback URL** to `http://portfolio.test/auth/github/callback`
+3. Add to `.env`:
+
+```env
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+GITHUB_REDIRECT_URI=http://portfolio.test/auth/github/callback
+```
+
 ```bash
 php artisan config:clear
 ```
 
-Visit `http://portfolio.test` — you'll be redirected to the login page.
+Visit `http://portfolio.test/login` to access the login page with all enabled methods.
 
 ---
 
@@ -108,9 +129,19 @@ The database seeder creates:
 |---|---|
 | `RoleSeeder` | `admin`, `editor`, `viewer` roles with 7 permissions |
 | `SettingSeeder` | Default site settings (name, tagline, SEO, media limits) |
-| `UserSeeder` | `admin@portfolio.test` user with the `admin` role |
+| `UserSeeder` | Admin user from `ADMIN_EMAIL` / `ADMIN_NAME` / `ADMIN_PASSWORD` in `.env` |
+| `PageSeeder` | Sample published homepage: Hero, About, Services, Projects, Contact blocks |
 
-The first Google login assigns the `viewer` role automatically. Promote users to `editor` or `admin` from the Users panel.
+**Default admin credentials** (set these in `.env` before running `migrate --seed`):
+
+| Field | Default |
+|---|---|
+| Email | `admin@example.com` |
+| Password | `password` |
+
+Log in at `/login` with email + password, then visit `/admin/dashboard` to customise the sample content.
+
+New OAuth sign-ins (Google / GitHub) are assigned the `viewer` role automatically. Email + password registrations are also assigned `viewer`. Promote users to `editor` or `admin` from the Users panel.
 
 ---
 
@@ -162,7 +193,8 @@ app/
 │   ├── Admin/          Dashboard, Pages, ServiceCards, Media,
 │   │                   Workspaces, Projects, Tasks, Comments,
 │   │                   GitHub, Settings, Integrations, Users
-│   └── Auth/           GoogleController
+│   └── Auth/           GoogleController, GitHubController,
+│                       PasswordAuthController, OtpAuthController
 ├── Models/             User, Workspace, Project, Task, Comment,
 │                       Media, Page, ServiceCard, Setting, ThirdPartySetting
 ├── Policies/           CommentPolicy

@@ -2,8 +2,33 @@
   <div class="min-h-screen flex items-center justify-center bg-slate-900 px-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
 
+      <!-- Demo banner -->
+      <div v-if="demo" class="mx-6 mt-6 rounded-xl bg-amber-50 border border-amber-200 p-4">
+        <p class="text-xs font-semibold text-amber-800 mb-2">Demo Mode — try the CMS</p>
+        <div class="space-y-1 mb-3">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs text-amber-700 font-mono truncate">{{ demo.email }}</span>
+            <button @click="copyToClipboard(demo.email)" class="text-xs text-amber-600 hover:text-amber-800 flex-shrink-0">
+              {{ copied === 'email' ? '✓ Copied' : 'Copy' }}
+            </button>
+          </div>
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs text-amber-700 font-mono">{{ demo.password }}</span>
+            <button @click="copyToClipboard(demo.password, 'pass')" class="text-xs text-amber-600 hover:text-amber-800 flex-shrink-0">
+              {{ copied === 'pass' ? '✓ Copied' : 'Copy' }}
+            </button>
+          </div>
+        </div>
+        <button
+          @click="useDemoCredentials"
+          class="w-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium py-2 rounded-lg transition"
+        >
+          Use demo credentials
+        </button>
+      </div>
+
       <!-- Header -->
-      <div class="px-8 pt-8 pb-6 text-center">
+      <div class="px-8 pt-6 pb-6 text-center">
         <h1 class="text-2xl font-bold text-slate-800 mb-1">Portfolio CMS</h1>
         <p class="text-sm text-slate-400">Sign in to your account</p>
       </div>
@@ -117,14 +142,29 @@
 import { ref, watch } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 
-const tab = ref('password')
-const otpSent = ref(false)
+const props = defineProps({
+  demo: { type: Object, default: null },
+})
 
-const passForm = useForm({ email: '', password: '', remember: false })
-const otpForm  = useForm({ email: '' })
+const tab    = ref('password')
+const otpSent = ref(false)
+const copied = ref(null)
+
+const passForm   = useForm({ email: '', password: '', remember: false })
+const otpForm    = useForm({ email: '' })
 const verifyForm = useForm({ email: '', otp: '' })
 
-watch(() => otpForm.email, (val) => {
-  verifyForm.email = val
-})
+watch(() => otpForm.email, (val) => { verifyForm.email = val })
+
+function useDemoCredentials() {
+  tab.value = 'password'
+  passForm.email    = props.demo.email
+  passForm.password = props.demo.password
+}
+
+function copyToClipboard(text, key = 'email') {
+  navigator.clipboard.writeText(text)
+  copied.value = key
+  setTimeout(() => { copied.value = null }, 2000)
+}
 </script>

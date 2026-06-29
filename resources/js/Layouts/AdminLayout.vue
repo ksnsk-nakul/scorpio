@@ -33,6 +33,13 @@
 
     <!-- Main content -->
     <main class="flex-1 overflow-y-auto">
+      <!-- Demo mode banner -->
+      <div v-if="page.props.demo" class="bg-amber-400 text-amber-900 text-xs font-medium px-6 py-2 flex items-center gap-2">
+        <span>⚡ Demo Mode</span>
+        <span class="opacity-60">—</span>
+        <span>Changes you make here are visible on the public site. Reset anytime with <code class="font-mono bg-amber-300 px-1 rounded">php artisan migrate:fresh --seed</code></span>
+        <a href="/" target="_blank" class="ml-auto underline hover:no-underline flex-shrink-0">View public site ↗</a>
+      </div>
       <div class="p-6">
         <slot />
       </div>

@@ -8,11 +8,17 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $email = env('ADMIN_EMAIL', 'admin@portfolio.test');
+        $email    = filled(env('ADMIN_EMAIL')) ? env('ADMIN_EMAIL') : 'admin@example.com';
+        $name     = filled(env('ADMIN_NAME'))  ? env('ADMIN_NAME')  : 'Admin';
+        $password = filled(env('ADMIN_PASSWORD')) ? env('ADMIN_PASSWORD') : 'password';
 
         $admin = User::firstOrCreate(
             ['email' => $email],
-            ['name' => env('ADMIN_NAME', 'Admin'), 'email_verified_at' => now()]
+            [
+                'name'              => $name,
+                'password'          => \Illuminate\Support\Facades\Hash::make($password),
+                'email_verified_at' => now(),
+            ]
         );
 
         if (! $admin->hasRole('admin')) {

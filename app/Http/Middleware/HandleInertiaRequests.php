@@ -45,6 +45,11 @@ class HandleInertiaRequests extends Middleware
                 'status'  => fn () => $request->session()->get('status'),
                 'success' => fn () => $request->session()->get('success'),
             ],
+            'demo' => env('DEMO_MODE', false) ? [
+                'enabled'  => true,
+                'email'    => filled(env('DEMO_EMAIL')) ? env('DEMO_EMAIL') : env('ADMIN_EMAIL', 'admin@example.com'),
+                'password' => filled(env('DEMO_PASSWORD')) ? env('DEMO_PASSWORD') : env('ADMIN_PASSWORD', 'password'),
+            ] : null,
         ];
     }
 }

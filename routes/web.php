@@ -146,6 +146,6 @@ Route::get('/login/otp', [OtpAuthController::class, 'show'])->name('login.otp');
 Route::post('/login/otp/send', [OtpAuthController::class, 'send'])->name('login.otp.send');
 Route::post('/login/otp/verify', [OtpAuthController::class, 'verify'])->name('login.otp.verify');
 
-// Root redirect
-Route::get('/', fn () => redirect('/admin/dashboard'));
+// Public portfolio
+Route::get('/', [\App\Http\Controllers\PublicController::class, 'index'])->name('home');
 
