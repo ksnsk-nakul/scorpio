@@ -1,0 +1,23 @@
+FROM php:8.3-fpm-alpine
+
+RUN apk add --no-cache \
+    nodejs \
+    npm \
+    sqlite \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    libwebp-dev \
+    freetype-dev \
+    zip \
+    unzip \
+    git \
+    bash
+
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install pdo pdo_sqlite pdo_mysql fileinfo gd zip pcntl bcmath
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+EXPOSE 8000 5173
