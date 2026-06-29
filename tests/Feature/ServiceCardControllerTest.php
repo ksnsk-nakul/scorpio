@@ -27,8 +27,8 @@ it('creates a service card', function () {
 });
 
 it('reorders service cards', function () {
-    $a = ServiceCard::create(['title' => 'A', 'sort_order' => 0]);
-    $b = ServiceCard::create(['title' => 'B', 'sort_order' => 1]);
+    $a = ServiceCard::create(['title' => 'A', 'sort_order' => 0, 'user_id' => $this->admin->id]);
+    $b = ServiceCard::create(['title' => 'B', 'sort_order' => 1, 'user_id' => $this->admin->id]);
     $this->actingAs($this->admin)
         ->post('/admin/service-cards/reorder', ['ids' => [$b->id, $a->id]])
         ->assertOk();

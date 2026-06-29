@@ -12,7 +12,7 @@ class PageController extends Controller
     public function index(): Response
     {
         return Inertia::render('Admin/Pages/Index', [
-            'pages'     => Page::orderBy('updated_at', 'desc')->get(['id','name','slug','status','template','updated_at']),
+            'pages'     => auth()->user()->pages()->latest('updated_at')->get(['id','name','slug','status','template','updated_at','is_home']),
             'templates' => ['blank', 'hero_cards', 'text_image', 'project_grid'],
         ]);
     }
@@ -34,7 +34,7 @@ class PageController extends Controller
             default        => [],
         };
 
-        $page = Page::create(array_merge($data, ['blocks' => $blocks]));
+        $page = Page::create(array_merge($data, ['blocks' => $blocks, 'user_id' => auth()->id()]));
 
         return redirect("/admin/pages/{$page->id}/edit");
     }
@@ -49,6 +49,8 @@ class PageController extends Controller
 
     public function update(Request $request, Page $page)
     {
+        abort_if($page->user_id !== auth()->id(), 403);
+
         $data = $request->validate([
             'name'   => 'sometimes|string|max:255',
             'blocks' => 'sometimes|array',
@@ -65,12 +67,17 @@ class PageController extends Controller
 
     public function publish(Page $page)
     {
+        abort_if($page->user_id !== auth()->id(), 403);
+
         $page->update(['status' => 'published', 'published_at' => now()]);
         return back()->with('success', 'Page published.');
     }
 
     public function destroy(Page $page)
     {
+        abort_if($page->user_id !== auth()->id(), 403);
+        abort_if($page->is_home, 403, 'Home page cannot be deleted.');
+
         $page->delete();
         return redirect('/admin/pages')->with('success', 'Page deleted.');
     }

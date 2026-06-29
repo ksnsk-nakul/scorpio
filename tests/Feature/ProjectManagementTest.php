@@ -21,18 +21,18 @@ it('creates a workspace', function () {
 });
 
 it('creates a project inside a workspace', function () {
-    $ws = Workspace::create(['name' => 'Personal', 'slug' => 'personal']);
+    $ws = Workspace::create(['name' => 'Personal', 'slug' => 'personal', 'user_id' => $this->admin->id]);
     $this->actingAs($this->admin)
-        ->post('/admin/projects', ['workspace_id' => $ws->id, 'name' => 'Portfolio'])
+        ->post('/admin/products', ['workspace_id' => $ws->id, 'name' => 'Portfolio'])
         ->assertRedirect();
     expect(Project::where('name', 'Portfolio')->exists())->toBeTrue();
 });
 
 it('links a github repo to a project', function () {
-    $ws = Workspace::create(['name' => 'Test', 'slug' => 'test-ws']);
+    $ws = Workspace::create(['name' => 'Test', 'slug' => 'test-ws', 'user_id' => $this->admin->id]);
     $p  = Project::create(['workspace_id' => $ws->id, 'name' => 'TestProject', 'slug' => 'test-proj']);
     $this->actingAs($this->admin)
-        ->patch("/admin/projects/{$p->id}", ['github_repo' => 'nakul/portfolio', 'name' => 'TestProject'])
+        ->patch("/admin/products/{$p->id}", ['github_repo' => 'nakul/portfolio', 'name' => 'TestProject'])
         ->assertRedirect();
     expect($p->fresh()->github_repo)->toBe('nakul/portfolio');
 });

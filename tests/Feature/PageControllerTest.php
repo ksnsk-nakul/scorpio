@@ -27,7 +27,7 @@ it('creates a page', function () {
 });
 
 it('publishes a page', function () {
-    $p = Page::create(['name' => 'Test', 'slug' => 'test', 'template' => 'blank']);
+    $p = Page::create(['name' => 'Test', 'slug' => 'test', 'template' => 'blank', 'user_id' => $this->admin->id]);
     $this->actingAs($this->admin)
         ->patch("/admin/pages/{$p->id}/publish")
         ->assertRedirect();

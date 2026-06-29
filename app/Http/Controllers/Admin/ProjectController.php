@@ -16,7 +16,7 @@ class ProjectController extends Controller
     public function index()
     {
         return Inertia::render('Admin/Products/Index', [
-            'workspaces' => Workspace::with('projects:id,workspace_id,name,slug,status,github_repo,cover_image')
+            'workspaces' => auth()->user()->workspaces()->with('projects:id,workspace_id,name,slug,status,github_repo,cover_image')
                 ->orderBy('name')->get(),
         ]);
     }
@@ -29,12 +29,23 @@ class ProjectController extends Controller
             'description'  => 'nullable|string',
             'status'       => 'in:active,archived',
         ]);
+
+        abort_unless(
+            auth()->user()->workspaces()->where('id', $data['workspace_id'])->exists(),
+            403
+        );
+
         $project = Project::create($data);
         return redirect("/admin/products/{$project->id}")->with('success', 'Project created.');
     }
 
     public function show(Project $project)
     {
+        abort_unless(
+            auth()->user()->workspaces()->where('id', $project->workspace_id)->exists(),
+            403
+        );
+
         return Inertia::render('Admin/Products/Show', [
             'project' => $project->load('workspace:id,name'),
             'tasks'   => $project->rootTasks()->with('assignee:id,name,avatar')->limit(20)->get(),
@@ -50,6 +61,11 @@ class ProjectController extends Controller
 
     public function update(Request $request, Project $project)
     {
+        abort_unless(
+            auth()->user()->workspaces()->where('id', $project->workspace_id)->exists(),
+            403
+        );
+
         $data = $request->validate([
             'name'              => 'required|string|max:255',
             'description'       => 'nullable|string',

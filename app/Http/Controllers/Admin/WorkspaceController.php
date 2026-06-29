@@ -11,7 +11,7 @@ class WorkspaceController extends Controller
     public function index()
     {
         return Inertia::render('Admin/Workspaces/Index', [
-            'workspaces' => Workspace::withCount('projects')->orderBy('name')->get(),
+            'workspaces' => auth()->user()->workspaces()->withCount('projects')->orderBy('name')->get(),
         ]);
     }
 
@@ -21,12 +21,15 @@ class WorkspaceController extends Controller
             'name'        => 'required|string|max:255',
             'description' => 'nullable|string',
         ]);
+        $data['user_id'] = auth()->id();
         Workspace::create($data);
         return redirect('/admin/workspaces')->with('success', 'Workspace created.');
     }
 
     public function update(Request $request, Workspace $workspace)
     {
+        abort_if($workspace->user_id !== auth()->id(), 403);
+
         $workspace->update($request->validate([
             'name'        => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -36,6 +39,8 @@ class WorkspaceController extends Controller
 
     public function destroy(Workspace $workspace)
     {
+        abort_if($workspace->user_id !== auth()->id(), 403);
+
         $workspace->delete();
         return redirect('/admin/workspaces')->with('success', 'Workspace deleted.');
     }
