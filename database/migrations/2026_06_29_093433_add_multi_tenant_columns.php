@@ -9,7 +9,6 @@ return new class extends Migration {
         Schema::table('users', function (Blueprint $table) {
             $table->string('username')->nullable()->unique()->after('name');
             $table->string('github_token')->nullable()->after('github_id');
-            $table->string('password')->nullable()->change();
         });
 
         Schema::table('pages', function (Blueprint $table) {
@@ -28,8 +27,11 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::table('users', fn ($t) => $t->dropColumn(['username', 'github_token']));
-        Schema::table('pages', fn ($t) => $t->dropColumn(['user_id', 'is_home']));
+        Schema::table('users', function ($t) {
+            $t->dropUnique(['username']);
+            $t->dropColumn(['username', 'github_token']);
+        });
+        Schema::table('pages', fn ($t) => $t->dropForeignIdFor(\App\Models\User::class)->dropColumn(['user_id', 'is_home']));
         Schema::table('service_cards', fn ($t) => $t->dropForeignIdFor(\App\Models\User::class)->dropColumn('user_id'));
         Schema::table('workspaces', fn ($t) => $t->dropForeignIdFor(\App\Models\User::class)->dropColumn('user_id'));
     }
