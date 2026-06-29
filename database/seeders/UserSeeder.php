@@ -24,5 +24,9 @@ class UserSeeder extends Seeder
         if (! $admin->hasRole('admin')) {
             $admin->assignRole('admin');
         }
+
+        if (empty($admin->username)) {
+            $admin->update(['username' => 'admin']);
+        }
     }
 }

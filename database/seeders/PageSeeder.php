@@ -17,6 +17,8 @@ class PageSeeder extends Seeder
         $page = Page::create([
             'name'         => 'Home',
             'slug'         => 'home',
+            'user_id'      => \App\Models\User::where('email', filled(env('ADMIN_EMAIL')) ? env('ADMIN_EMAIL') : 'admin@example.com')->value('id'),
+            'is_home'      => true,
             'template'     => 'hero_cards',
             'status'       => 'published',
             'published_at' => now(),
@@ -99,7 +101,11 @@ class PageSeeder extends Seeder
         ];
 
         foreach ($services as $service) {
-            ServiceCard::create(array_merge($service, ['page_id' => $page->id, 'featured' => true]));
+            ServiceCard::create(array_merge($service, [
+                'page_id'  => $page->id,
+                'user_id'  => $page->user_id,
+                'featured' => true,
+            ]));
         }
     }
 }
