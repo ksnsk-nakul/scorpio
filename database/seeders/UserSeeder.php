@@ -8,10 +8,15 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        $email = env('ADMIN_EMAIL', 'admin@portfolio.test');
+
         $admin = User::firstOrCreate(
-            ['email' => 'admin@portfolio.test'],
-            ['name' => 'Admin', 'email_verified_at' => now()]
+            ['email' => $email],
+            ['name' => env('ADMIN_NAME', 'Admin'), 'email_verified_at' => now()]
         );
-        $admin->assignRole('admin');
+
+        if (! $admin->hasRole('admin')) {
+            $admin->assignRole('admin');
+        }
     }
 }
