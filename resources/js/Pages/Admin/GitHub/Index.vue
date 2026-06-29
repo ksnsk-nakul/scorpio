@@ -3,10 +3,21 @@
     <div class="max-w-4xl mx-auto">
       <h1 class="text-2xl font-bold text-slate-800 mb-6">GitHub</h1>
 
-      <div v-if="!hasToken" class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-6 text-sm text-amber-800">
-        No GitHub token configured. Connect your account on the
-        <Link href="/admin/github" class="font-medium underline">GitHub</Link>
-        page.
+      <div v-if="!hasToken" class="bg-white border border-slate-200 rounded-xl p-6 mb-6">
+        <h2 class="font-semibold text-slate-800 mb-1">Connect GitHub</h2>
+        <p class="text-sm text-slate-500 mb-4">Enter a personal access token with <code>repo</code> scope.</p>
+        <form @submit.prevent="connectForm.post('/admin/github/token')">
+          <input v-model="connectForm.token" type="password" placeholder="ghp_..."
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mb-3 outline-none" />
+          <button type="submit" :disabled="connectForm.processing"
+            class="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700">Connect</button>
+        </form>
+      </div>
+
+      <div v-else class="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 flex items-center justify-between">
+        <span class="text-sm text-green-800">GitHub connected</span>
+        <Link href="/admin/github/token" method="delete" as="button"
+          class="text-xs text-red-500 hover:text-red-700">Disconnect</Link>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -51,8 +62,10 @@
 </template>
 
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { Link, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 
 defineProps({ repos: Array, projects: Array, hasToken: Boolean })
+
+const connectForm = useForm({ token: '' })
 </script>

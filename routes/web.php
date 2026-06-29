@@ -93,6 +93,13 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('github/projects/{project}/create', [GitHubController::class, 'createGitHubProject'])->name('github.project.create');
     });
 
+Route::middleware(['auth', 'role:admin,editor'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::post('github/token', [GitHubController::class, 'connectToken'])->name('github.token.connect');
+        Route::delete('github/token', [GitHubController::class, 'disconnectToken'])->name('github.token.disconnect');
+    });
+
 use App\Http\Controllers\Admin\SettingController;
 
 Route::middleware(['auth', 'role:admin'])
@@ -111,6 +118,16 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('users', [UserController::class, 'index'])->name('users.index');
         Route::patch('users/{user}/role', [UserController::class, 'updateRole'])->name('users.role');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+    });
+
+use App\Http\Controllers\Admin\ProfileController;
+
+Route::middleware(['auth'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::get('profile', [ProfileController::class, 'index'])->name('profile.index');
+        Route::patch('profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::patch('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     });
 
 // GitHub OAuth

@@ -3,24 +3,32 @@ namespace App\Services;
 
 use App\Models\Project;
 use App\Models\Task;
-use App\Models\ThirdPartySetting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class GitHubService
 {
     private string $baseUrl = 'https://api.github.com';
+    private ?string $overrideToken = null;
+
+    /** Return a clone of the service using the given token. */
+    public function withToken(?string $token): static
+    {
+        $clone = clone $this;
+        $clone->overrideToken = $token;
+        return $clone;
+    }
 
     private function token(): ?string
     {
-        return ThirdPartySetting::getValue('github', 'token');
+        return $this->overrideToken;
     }
 
     private function http(): \Illuminate\Http\Client\PendingRequest
     {
         $token = $this->token();
         if (! $token) {
-            throw new \RuntimeException('GitHub token not configured. Add it in Integrations → github → token.');
+            throw new \RuntimeException('GitHub token not configured. Connect your account on the GitHub page.');
         }
         return Http::withToken($token)
             ->withHeaders(['Accept' => 'application/vnd.github+json', 'X-GitHub-Api-Version' => '2022-11-28'])
