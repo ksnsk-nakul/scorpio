@@ -9,7 +9,7 @@ uses(RefreshDatabase::class);
 beforeEach(fn () => $this->seed());
 
 beforeEach(function () {
-    Storage::fake('local');
+    Storage::fake('public');
     $this->admin = User::factory()->create();
     $this->admin->assignRole('admin');
 });
@@ -21,7 +21,7 @@ it('uploads an image and returns a media record', function () {
         ->postJson('/admin/media', ['file' => $file]);
 
     $response->assertOk()->assertJsonStructure(['id','filename','mime_type','url']);
-    Storage::disk('local')->assertExists($response->json('path'));
+    Storage::disk('public')->assertExists($response->json('path'));
 });
 
 it('rejects files over max size', function () {

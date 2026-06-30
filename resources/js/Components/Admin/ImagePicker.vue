@@ -38,7 +38,7 @@
 import { ref } from 'vue'
 import axios from 'axios'
 
-const props = defineProps({ modelValue: String })
+const props = defineProps({ modelValue: String, context: { type: String, default: 'default' } })
 const emit = defineEmits(['update:modelValue'])
 
 const dragging  = ref(false)
@@ -52,6 +52,7 @@ const upload = async (file) => {
   error.value = null
   const fd = new FormData()
   fd.append('file', file)
+  fd.append('context', props.context)
   try {
     const { data } = await axios.post('/admin/media', fd)
     emit('update:modelValue', data.url)

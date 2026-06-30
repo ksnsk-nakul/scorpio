@@ -17,7 +17,7 @@ class MediaService
         'video/mp4','video/quicktime','video/webm',
     ];
 
-    public function store(UploadedFile $file, User $user): Media
+    public function store(UploadedFile $file, User $user, string $context = 'default'): Media
     {
         $maxMb = (int) Setting::get('media_max_size_mb', 50);
 
@@ -29,8 +29,10 @@ class MediaService
             throw ValidationException::withMessages(['file' => "Max file size is {$maxMb}MB."]);
         }
 
-        $disk = config('filesystems.default', 'local');
-        $dir  = 'media/' . now()->format('Y/m');
+        $disk         = config('media.disk', 'public');
+        $pathTemplate = config("media.paths.{$context}", config('media.paths.default', 'users/{user}/uploads'));
+        $base         = str_replace('{user}', $user->id, $pathTemplate);
+        $dir          = $base . '/' . now()->format('Y/m');
         $mimeMap = [
             'image/jpeg'      => 'jpg',
             'image/png'       => 'png',

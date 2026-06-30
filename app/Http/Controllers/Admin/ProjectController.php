@@ -86,6 +86,20 @@ class ProjectController extends Controller
         return redirect("/admin/products/{$project->id}")->with('success', 'Project updated.');
     }
 
+    public function reorder(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $ids = $request->validate(['ids' => 'required|array', 'ids.*' => 'integer'])['ids'];
+        $owned = auth()->user()->workspaces()->with('projects:id,workspace_id')->get()
+            ->flatMap(fn ($ws) => $ws->projects->pluck('id'))->all();
+
+        foreach ($ids as $order => $id) {
+            if (in_array($id, $owned)) {
+                \App\Models\Project::where('id', $id)->update(['sort_order' => $order]);
+            }
+        }
+        return response()->json(['ok' => true]);
+    }
+
     public function destroy(Project $project)
     {
         $project->delete();

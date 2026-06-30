@@ -16,7 +16,8 @@ class MediaController extends Controller
     {
         $request->validate(['file' => 'required|file']);
 
-        $record = $this->media->store($request->file('file'), $request->user());
+        $context = $request->input('context', 'default');
+        $record = $this->media->store($request->file('file'), $request->user(), $context);
 
         return response()->json([
             'id'        => $record->id,

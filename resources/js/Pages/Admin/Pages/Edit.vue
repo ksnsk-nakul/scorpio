@@ -34,7 +34,7 @@
 
       <!-- Block canvas -->
       <div class="flex-1">
-        <BlockEditor v-model="form.blocks" :block-types="blockTypes" :workspaces="workspaces" />
+        <BlockEditor v-model="form.blocks" :block-types="blockTypes" :workspaces="workspaces" :service-cards="page.service_cards ?? []" />
       </div>
     </div>
   <PagePreview v-if="showPreview" :page="previewPage" @close="showPreview = false" />

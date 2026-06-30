@@ -20,12 +20,10 @@ class Media extends Model
 
     public function getUrlAttribute(): string
     {
-        $disk = Storage::disk($this->disk);
-        // Local disk doesn't support url(); serve via public storage symlink instead
-        if ($this->disk === 'local') {
+        if ($this->disk === 'public') {
             return asset('storage/' . $this->path);
         }
-        return $disk->url($this->path);
+        return Storage::disk($this->disk)->url($this->path);
     }
 
     public function isImage(): bool

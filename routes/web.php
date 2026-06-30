@@ -64,6 +64,7 @@ Route::middleware(['auth', 'role:admin,editor'])
     ->group(function () {
         Route::resource('workspaces', WorkspaceController::class)->except(['create','edit','show']);
         Route::resource('products', ProjectController::class, ['parameters' => ['products' => 'project']])->except(['create','edit']);
+        Route::post('products/reorder', [ProjectController::class, 'reorder'])->name('products.reorder');
     });
 
 use App\Http\Controllers\Admin\TaskController;
