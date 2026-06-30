@@ -142,18 +142,20 @@ use App\Http\Controllers\Auth\PasswordAuthController;
 
 Route::get('/register', [PasswordAuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [PasswordAuthController::class, 'register'])->name('register.store');
-Route::post('/login/password', [PasswordAuthController::class, 'login'])->name('login.password');
+Route::post('/login/password', [PasswordAuthController::class, 'login'])->name('login.password')->middleware('throttle:10,1');
 Route::get('/forgot-password', [PasswordAuthController::class, 'showForgot'])->name('password.request');
-Route::post('/forgot-password', [PasswordAuthController::class, 'sendReset'])->name('password.email');
+Route::post('/forgot-password', [PasswordAuthController::class, 'sendReset'])->name('password.email')->middleware('throttle:5,1');
 Route::get('/reset-password/{token}', [PasswordAuthController::class, 'showReset'])->name('password.reset');
 Route::post('/reset-password', [PasswordAuthController::class, 'reset'])->name('password.update');
 
 // Email OTP
 use App\Http\Controllers\Auth\OtpAuthController;
 
-Route::get('/login/otp', [OtpAuthController::class, 'show'])->name('login.otp');
-Route::post('/login/otp/send', [OtpAuthController::class, 'send'])->name('login.otp.send');
-Route::post('/login/otp/verify', [OtpAuthController::class, 'verify'])->name('login.otp.verify');
+// The OTP flow is handled inline on the Login page (tab switcher); no
+// standalone Auth/Otp Vue page exists, so redirect rather than 404.
+Route::get('/login/otp', fn () => redirect('/login'))->name('login.otp');
+Route::post('/login/otp/send', [OtpAuthController::class, 'send'])->name('login.otp.send')->middleware('throttle:5,1');
+Route::post('/login/otp/verify', [OtpAuthController::class, 'verify'])->name('login.otp.verify')->middleware('throttle:10,1');
 
 // Public portfolio
 Route::get('/', [\App\Http\Controllers\PublicController::class, 'index'])->name('home');

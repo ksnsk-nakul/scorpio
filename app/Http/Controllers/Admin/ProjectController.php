@@ -80,7 +80,7 @@ class ProjectController extends Controller
         $project->update($data);
 
         if ($mediaIds) {
-            $this->media->attach($mediaIds, $project);
+            $this->media->attach($mediaIds, $project, auth()->id());
         }
 
         return redirect("/admin/products/{$project->id}")->with('success', 'Project updated.');

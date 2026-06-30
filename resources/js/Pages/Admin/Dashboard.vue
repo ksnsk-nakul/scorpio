@@ -10,7 +10,7 @@
         <StatCard label="Pages"         :value="stats.pages" />
         <StatCard label="Service Cards" :value="stats.serviceCards" />
         <StatCard label="Open Tasks"    :value="stats.openTasks" color="amber" />
-        <StatCard label="Users"         :value="stats.users" />
+        <StatCard v-if="stats.users !== null" label="Users" :value="stats.users" />
       </div>
 
       <div class="bg-white rounded-xl border border-slate-200 p-5">

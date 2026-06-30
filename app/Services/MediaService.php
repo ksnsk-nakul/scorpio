@@ -57,13 +57,17 @@ class MediaService
         ]);
     }
 
-    public function attach(array $mediaIds, Model $mediable): void
+    public function attach(array $mediaIds, Model $mediable, ?int $userId = null): void
     {
-        Media::whereIn('id', $mediaIds)
-            ->whereNull('mediable_type')
-            ->update([
-                'mediable_type' => get_class($mediable),
-                'mediable_id'   => $mediable->id,
-            ]);
+        $query = Media::whereIn('id', $mediaIds)->whereNull('mediable_type');
+
+        if ($userId !== null) {
+            $query->where('user_id', $userId);
+        }
+
+        $query->update([
+            'mediable_type' => get_class($mediable),
+            'mediable_id'   => $mediable->id,
+        ]);
     }
 }

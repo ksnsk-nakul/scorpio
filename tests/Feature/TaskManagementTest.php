@@ -12,7 +12,7 @@ beforeEach(fn () => $this->seed());
 beforeEach(function () {
     $this->admin = User::factory()->create();
     $this->admin->assignRole('admin');
-    $ws = Workspace::create(['name' => 'WS', 'slug' => 'ws']);
+    $ws = Workspace::create(['name' => 'WS', 'slug' => 'ws', 'user_id' => $this->admin->id]);
     $this->project = Project::create(['workspace_id' => $ws->id, 'name' => 'Proj', 'slug' => 'proj']);
 });
 

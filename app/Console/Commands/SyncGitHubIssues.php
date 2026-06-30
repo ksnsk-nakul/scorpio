@@ -12,7 +12,7 @@ class SyncGitHubIssues extends Command
 
     public function handle(GitHubService $github): int
     {
-        $query = Project::whereNotNull('github_repo');
+        $query = Project::whereNotNull('github_repo')->with('workspace.user');
 
         if ($this->option('project')) {
             $query->where('id', $this->option('project'));
@@ -27,7 +27,14 @@ class SyncGitHubIssues extends Command
 
         $total = 0;
         foreach ($projects as $project) {
-            $count = $github->syncIssuesToProject($project);
+            $token = $project->workspace?->user?->github_token;
+
+            if (! $token) {
+                $this->warn("  {$project->name} ({$project->github_repo}): skipped — owner has no GitHub token connected.");
+                continue;
+            }
+
+            $count = $github->withToken($token)->syncIssuesToProject($project);
             $this->line("  {$project->name} ({$project->github_repo}): {$count} issues synced.");
             $total += $count;
         }
