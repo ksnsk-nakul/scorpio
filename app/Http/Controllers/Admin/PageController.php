@@ -44,6 +44,7 @@ class PageController extends Controller
         return Inertia::render('Admin/Pages/Edit', [
             'page'       => $page->load('serviceCards'),
             'blockTypes' => ['hero','text','text_image','service_cards','project_grid','contact_form'],
+            'workspaces' => auth()->user()->workspaces()->with('projects:id,workspace_id,name,status')->get(['id','name']),
         ]);
     }
 

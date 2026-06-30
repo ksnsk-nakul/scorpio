@@ -24,9 +24,10 @@ class PublicController extends Controller
             ->firstOrFail();
 
         return Inertia::render('Public/Portfolio', [
-            'page'     => $page,
-            'owner'    => $user->only('name', 'username'),
-            'settings' => Setting::whereIn('key', ['site_name', 'og_image'])->pluck('value', 'key'),
+            'page'       => $page,
+            'owner'      => $user->only('name', 'username'),
+            'workspaces' => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
+            'settings'   => Setting::whereIn('key', ['site_name', 'og_image'])->pluck('value', 'key'),
         ]);
     }
 
@@ -43,9 +44,10 @@ class PublicController extends Controller
             ->firstOrFail();
 
         return Inertia::render('Public/Portfolio', [
-            'page'     => $page,
-            'owner'    => $user->only('name', 'username'),
-            'settings' => Setting::whereIn('key', ['site_name', 'og_image'])->pluck('value', 'key'),
+            'page'       => $page,
+            'owner'      => $user->only('name', 'username'),
+            'workspaces' => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
+            'settings'   => Setting::whereIn('key', ['site_name', 'og_image'])->pluck('value', 'key'),
         ]);
     }
 

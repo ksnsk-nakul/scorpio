@@ -27,8 +27,22 @@
       <template v-else-if="block.type === 'text_image'">
         <textarea v-model="block.data.text" placeholder="Text content..."
           class="w-full bg-transparent outline-none text-sm resize-none min-h-16 mb-2" @click.stop />
-        <input v-model="block.data.image" placeholder="Image URL or upload path"
-          class="w-full border border-slate-200 rounded px-3 py-1.5 text-sm outline-none" @click.stop />
+        <div @click.stop>
+          <ImagePicker v-model="block.data.image" />
+        </div>
+      </template>
+
+      <template v-else-if="block.type === 'project_grid'">
+        <input v-model="block.data.heading" placeholder="Section heading"
+          class="w-full bg-transparent outline-none text-sm font-medium mb-2" @click.stop />
+        <div @click.stop class="mt-1">
+          <label class="text-xs text-slate-400 block mb-1">Link to workspace (optional)</label>
+          <select v-model="block.data.workspace_id"
+            class="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none bg-white">
+            <option :value="undefined">— Use inline project data —</option>
+            <option v-for="ws in workspaces" :key="ws.id" :value="ws.id">{{ ws.name }} ({{ ws.projects?.length ?? 0 }} products)</option>
+          </select>
+        </div>
       </template>
 
       <template v-else>
@@ -61,8 +75,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import ImagePicker from '@/Components/Admin/ImagePicker.vue'
 
-const props = defineProps({ modelValue: Array, blockTypes: Array })
+const props = defineProps({ modelValue: Array, blockTypes: Array, workspaces: { type: Array, default: () => [] } })
 const emit = defineEmits(['update:modelValue'])
 
 const active = ref(null)

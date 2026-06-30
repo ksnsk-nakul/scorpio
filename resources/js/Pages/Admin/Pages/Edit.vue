@@ -34,7 +34,7 @@
 
       <!-- Block canvas -->
       <div class="flex-1">
-        <BlockEditor v-model="form.blocks" :block-types="blockTypes" />
+        <BlockEditor v-model="form.blocks" :block-types="blockTypes" :workspaces="workspaces" />
       </div>
     </div>
   <PagePreview v-if="showPreview" :page="previewPage" @close="showPreview = false" />
@@ -48,7 +48,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import BlockEditor from '@/Components/Admin/BlockEditor.vue'
 import PagePreview from '@/Components/PagePreview.vue'
 
-const props = defineProps({ page: Object, blockTypes: Array })
+const props = defineProps({ page: Object, blockTypes: Array, workspaces: { type: Array, default: () => [] } })
 
 const form = useForm({
   name:   props.page.name,

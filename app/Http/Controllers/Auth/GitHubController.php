@@ -11,7 +11,7 @@ class GitHubController extends Controller
 {
     public function redirect()
     {
-        return Socialite::driver('github')->redirect();
+        return Socialite::driver('github')->scopes(['repo', 'read:user', 'user:email'])->redirect();
     }
 
     public function callback()
@@ -31,6 +31,7 @@ class GitHubController extends Controller
             if ($user) {
                 $user->update([
                     'github_id'         => $githubUser->getId(),
+                    'github_token'      => $githubUser->token,
                     'name'              => $user->name ?: $githubUser->getName(),
                     'avatar'            => $user->avatar ?: $githubUser->getAvatar(),
                     'email_verified_at' => $user->email_verified_at ?? now(),
@@ -38,6 +39,7 @@ class GitHubController extends Controller
             } else {
                 $user = User::create([
                     'github_id'         => $githubUser->getId(),
+                    'github_token'      => $githubUser->token,
                     'name'              => $githubUser->getName() ?: $githubUser->getNickname(),
                     'email'             => $githubUser->getEmail(),
                     'avatar'            => $githubUser->getAvatar(),

@@ -67,14 +67,27 @@
           <div v-if="block.data.heading" class="text-center mb-10">
             <h2 class="text-3xl font-bold text-slate-900">{{ block.data.heading }}</h2>
           </div>
-          <div v-if="block.data.projects?.length" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <a
-              v-for="project in block.data.projects"
+          <!-- DB workspace products (when workspace linked) -->
+          <div v-if="block.data.workspace_id && workspaces[block.data.workspace_id]?.projects?.length"
+            class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <a v-for="project in workspaces[block.data.workspace_id].projects"
+              :key="project.id"
+              :href="project.github_repo ? `https://github.com/${project.github_repo}` : '#'"
+              :target="project.github_repo ? '_blank' : '_self'"
+              rel="noopener"
+              class="group rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-md transition-shadow block">
+              <h3 class="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors mb-1">{{ project.name }}</h3>
+              <p class="text-sm text-slate-500">{{ project.description }}</p>
+              <span v-if="project.github_repo" class="text-xs text-slate-400 mt-2 block">🐙 {{ project.github_repo }}</span>
+            </a>
+          </div>
+          <!-- Inline JSON fallback -->
+          <div v-else-if="block.data.projects?.length" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <a v-for="project in block.data.projects"
               :key="project.id ?? project.title"
               :href="project.url ?? '#'"
               target="_blank"
-              class="group rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-md transition-shadow block"
-            >
+              class="group rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-md transition-shadow block">
               <h3 class="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors mb-1">{{ project.title }}</h3>
               <p class="text-sm text-slate-500">{{ project.description }}</p>
             </a>
@@ -133,10 +146,11 @@ import { usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
 
 const props = defineProps({
-  page:     { type: Object, default: () => ({}) },
-  owner:    { type: Object, default: () => ({}) },
-  settings: { type: Object, default: () => ({}) },
-  auth:     { type: Object, default: () => ({}) },
+  page:       { type: Object, default: () => ({}) },
+  owner:      { type: Object, default: () => ({}) },
+  settings:   { type: Object, default: () => ({}) },
+  workspaces: { type: Object, default: () => ({}) },
+  auth:       { type: Object, default: () => ({}) },
 })
 
 const { props: pageProps } = usePage()
