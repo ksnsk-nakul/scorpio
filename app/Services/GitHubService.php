@@ -87,14 +87,59 @@ class GitHubService
         return $count;
     }
 
-    public function createProject(string $owner, string $name, string $body = ''): ?array
+    /**
+     * Push a task's status back to its linked GitHub issue (open/closed).
+     * Called when a task with github_issue_id changes status locally, so
+     * the sync isn't purely one-directional (GitHub -> tasks).
+     */
+    public function updateIssueState(string $repo, string $issueNumber, string $state): bool
     {
         try {
-            $response = $this->http()->post("/users/{$owner}/projects", compact('name', 'body'));
-            return $response->successful() ? $response->json() : null;
+            $response = $this->http()->patch("/repos/{$repo}/issues/{$issueNumber}", ['state' => $state]);
+            return $response->successful();
         } catch (\Throwable $e) {
-            Log::warning('GitHubService::createProject failed', ['error' => $e->getMessage()]);
+            Log::warning('GitHubService::updateIssueState failed', ['repo' => $repo, 'issue' => $issueNumber, 'error' => $e->getMessage()]);
+            return false;
+        }
+    }
+
+    /**
+     * Create a GitHub Projects v2 board via GraphQL. The classic REST
+     * Projects API (/users/{owner}/projects) this used to call is
+     * deprecated/removed; Projects v2 is GraphQL-only.
+     */
+    public function createProjectV2(string $ownerLogin, string $title): ?array
+    {
+        try {
+            $ownerQuery = <<<'GQL'
+            query($login: String!) {
+              repositoryOwner(login: $login) { id }
+            }
+            GQL;
+            $ownerId = $this->graphql($ownerQuery, ['login' => $ownerLogin])['data']['repositoryOwner']['id'] ?? null;
+
+            if (! $ownerId) {
+                return null;
+            }
+
+            $mutation = <<<'GQL'
+            mutation($ownerId: ID!, $title: String!) {
+              createProjectV2(input: { ownerId: $ownerId, title: $title }) {
+                projectV2 { id number title url }
+              }
+            }
+            GQL;
+            return $this->graphql($mutation, ['ownerId' => $ownerId, 'title' => $title])['data']['createProjectV2']['projectV2'] ?? null;
+        } catch (\Throwable $e) {
+            Log::warning('GitHubService::createProjectV2 failed', ['error' => $e->getMessage()]);
             return null;
         }
+    }
+
+    private function graphql(string $query, array $variables = []): array
+    {
+        return $this->http()
+            ->post('https://api.github.com/graphql', ['query' => $query, 'variables' => $variables])
+            ->json() ?? [];
     }
 }

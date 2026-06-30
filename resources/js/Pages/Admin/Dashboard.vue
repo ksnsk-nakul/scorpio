@@ -10,6 +10,7 @@
         <StatCard label="Pages"         :value="stats.pages" />
         <StatCard label="Service Cards" :value="stats.serviceCards" />
         <StatCard label="Open Tasks"    :value="stats.openTasks" color="amber" />
+        <StatCard label="Overdue"       :value="stats.overdueTasks" color="red" />
         <StatCard v-if="stats.users !== null" label="Users" :value="stats.users" />
       </div>
 
@@ -20,6 +21,7 @@
           <li v-for="task in recentTasks" :key="task.id" class="flex items-center gap-3 text-sm">
             <span :class="statusColor(task.status)" class="w-2 h-2 rounded-full flex-shrink-0" />
             <span class="flex-1 text-slate-700">{{ task.title }}</span>
+            <span v-if="isOverdue(task)" class="text-xs font-medium text-red-500">Overdue</span>
             <span class="text-xs text-slate-400">{{ task.project?.name }}</span>
           </li>
         </ul>
@@ -44,4 +46,7 @@ const statusColor = s => ({
   done:        'bg-green-400',
   closed:      'bg-slate-300',
 }[s] ?? 'bg-slate-300')
+
+const isOverdue = (task) =>
+  task.due_date && !['done', 'closed'].includes(task.status) && new Date(task.due_date) < new Date(new Date().toDateString())
 </script>

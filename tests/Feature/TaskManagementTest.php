@@ -49,3 +49,26 @@ it('adds a comment to a task', function () {
         ->assertRedirect();
     expect($task->comments()->count())->toBe(1);
 });
+
+it('updates task status via the kanban endpoint and logs activity', function () {
+    $task = Task::create(['project_id' => $this->project->id, 'title' => 'Task', 'status' => 'open', 'priority' => 'low']);
+
+    $this->actingAs($this->admin)
+        ->patch("/admin/tasks/{$task->id}/status", ['status' => 'done'])
+        ->assertRedirect();
+
+    expect($task->fresh()->status)->toBe('done');
+    expect($task->activities()->where('field', 'status')->where('to', 'done')->exists())->toBeTrue();
+});
+
+it('rejects status updates for tasks belonging to another tenant', function () {
+    $other  = User::factory()->create();
+    $other->assignRole('editor');
+    $otherWs = Workspace::create(['name' => 'Other', 'slug' => 'other', 'user_id' => $other->id]);
+    $otherProject = Project::create(['workspace_id' => $otherWs->id, 'name' => 'OtherProj', 'slug' => 'other-proj']);
+    $task = Task::create(['project_id' => $otherProject->id, 'title' => 'Not yours', 'status' => 'open', 'priority' => 'low']);
+
+    $this->actingAs($this->admin)
+        ->patch("/admin/tasks/{$task->id}/status", ['status' => 'done'])
+        ->assertForbidden();
+});

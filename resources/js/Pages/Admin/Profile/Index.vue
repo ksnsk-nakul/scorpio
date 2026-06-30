@@ -54,6 +54,16 @@
               <label class="block text-xs font-medium text-slate-500 mb-1">OG / share image</label>
               <ImagePicker v-model="profileForm.og_image" context="branding" />
             </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">Custom domain</label>
+              <input v-model="profileForm.custom_domain" type="text" placeholder="you.com"
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none" />
+              <p v-if="profileForm.errors.custom_domain" class="text-xs text-red-500 mt-1">{{ profileForm.errors.custom_domain }}</p>
+              <p class="text-xs text-slate-400 mt-1">
+                Point an A/CNAME record at this server, then enter the domain here.
+                Your portfolio will be served at that domain instead of /{{ profileForm.username }}.
+              </p>
+            </div>
           </div>
           <div class="flex items-center gap-3 mt-5">
             <button type="submit" :disabled="profileForm.processing"
@@ -105,11 +115,12 @@ import ImagePicker from '@/Components/Admin/ImagePicker.vue'
 const props = defineProps({ user: Object })
 
 const profileForm = useForm({
-  name:      props.user.name,
-  username:  props.user.username,
-  email:     props.user.email,
-  site_name: props.user.site_name ?? '',
-  og_image:  props.user.og_image ?? '',
+  name:          props.user.name,
+  username:      props.user.username,
+  email:         props.user.email,
+  site_name:     props.user.site_name ?? '',
+  og_image:      props.user.og_image ?? '',
+  custom_domain: props.user.custom_domain ?? '',
 })
 
 const pwForm = useForm({

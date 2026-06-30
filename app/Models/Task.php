@@ -41,4 +41,9 @@ class Task extends Model
     {
         return $this->morphMany(Media::class, 'mediable');
     }
+
+    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(TaskActivity::class)->latest();
+    }
 }

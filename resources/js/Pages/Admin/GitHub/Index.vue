@@ -58,15 +58,33 @@
             <h2 class="font-semibold text-slate-800 text-sm">Linked Projects</h2>
           </div>
           <ul class="divide-y divide-slate-100">
-            <li v-for="p in projects" :key="p.id" class="px-5 py-3 flex items-center gap-3">
-              <div class="flex-1">
-                <p class="text-sm font-medium text-slate-800">{{ p.name }}</p>
-                <p class="text-xs text-slate-400">{{ p.github_repo }}</p>
+            <li v-for="p in projects" :key="p.id" class="px-5 py-3">
+              <div class="flex items-center gap-3 mb-1">
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-slate-800">{{ p.name }}</p>
+                  <p class="text-xs text-slate-400">{{ p.github_repo }}</p>
+                </div>
+                <Link :href="`/admin/github/projects/${p.id}/sync`" method="post" as="button"
+                  class="text-xs bg-slate-100 text-slate-600 rounded px-2 py-1 hover:bg-slate-200">
+                  Sync Issues
+                </Link>
+                <Link :href="`/admin/github/projects/${p.id}/webhook`" method="post" as="button"
+                  class="text-xs bg-slate-100 text-slate-600 rounded px-2 py-1 hover:bg-slate-200">
+                  Get Webhook
+                </Link>
               </div>
-              <Link :href="`/admin/github/projects/${p.id}/sync`" method="post" as="button"
-                class="text-xs bg-slate-100 text-slate-600 rounded px-2 py-1 hover:bg-slate-200">
-                Sync Issues
-              </Link>
+              <div v-if="webhookFor === p.id" class="bg-slate-50 rounded-lg p-3 mt-2 text-xs space-y-2">
+                <p class="text-slate-500">Add this as a webhook in your repo's Settings → Webhooks, with content type <code class="bg-slate-200 px-1 rounded">application/json</code> and event <code class="bg-slate-200 px-1 rounded">Issues</code>:</p>
+                <div>
+                  <p class="text-slate-400 mb-0.5">Payload URL</p>
+                  <code class="block bg-white border border-slate-200 rounded px-2 py-1 break-all">{{ webhookUrl }}</code>
+                </div>
+                <div>
+                  <p class="text-slate-400 mb-0.5">Secret</p>
+                  <code class="block bg-white border border-slate-200 rounded px-2 py-1 break-all">{{ webhookSecret }}</code>
+                </div>
+                <p class="text-amber-600">This secret is only shown once — copy it now.</p>
+              </div>
             </li>
             <li v-if="projects.length === 0" class="px-5 py-8 text-center text-sm text-slate-400">
               No projects linked to GitHub repos.
@@ -79,10 +97,16 @@
 </template>
 
 <script setup>
-import { Link, useForm } from '@inertiajs/vue3'
+import { Link, useForm, usePage } from '@inertiajs/vue3'
+import { computed } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 
 defineProps({ repos: Array, projects: Array, hasToken: Boolean })
 
 const connectForm = useForm({ token: '' })
+
+const { props: pageProps } = usePage()
+const webhookFor    = computed(() => pageProps.flash?.webhook_project_id ?? null)
+const webhookUrl    = computed(() => pageProps.flash?.webhook_url ?? '')
+const webhookSecret = computed(() => pageProps.flash?.webhook_secret ?? '')
 </script>

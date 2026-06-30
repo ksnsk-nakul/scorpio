@@ -75,6 +75,7 @@ Route::middleware(['auth', 'role:admin,editor'])
     ->name('admin.')
     ->group(function () {
         Route::resource('tasks', TaskController::class)->except(['create','edit']);
+        Route::patch('tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.status');
         Route::post('tasks/{task}/comments', [CommentController::class, 'store'])->name('tasks.comments.store');
         Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
     });
@@ -93,6 +94,17 @@ Route::middleware(['auth', 'role:admin'])
     ->group(function () {
         Route::post('github/projects/{project}/create', [GitHubController::class, 'createGitHubProject'])->name('github.project.create');
     });
+
+Route::middleware(['auth', 'role:admin,editor'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::post('github/projects/{project}/webhook', [GitHubController::class, 'webhookCredentials'])->name('github.webhook.credentials');
+    });
+
+// GitHub webhook receiver — no auth (GitHub calls this directly), verified
+// via HMAC signature instead. Excluded from CSRF in bootstrap/app.php.
+use App\Http\Controllers\GitHubWebhookController;
+Route::post('/webhooks/github/{project}', [GitHubWebhookController::class, 'handle'])->name('webhooks.github');
 
 Route::middleware(['auth', 'role:admin,editor'])
     ->prefix('admin')->name('admin.')

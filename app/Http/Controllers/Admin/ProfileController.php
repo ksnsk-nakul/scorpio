@@ -13,7 +13,7 @@ class ProfileController extends Controller
     public function index()
     {
         return Inertia::render('Admin/Profile/Index', [
-            'user' => auth()->user()->only('id', 'name', 'username', 'email', 'site_name', 'og_image'),
+            'user' => auth()->user()->only('id', 'name', 'username', 'email', 'site_name', 'og_image', 'custom_domain'),
         ]);
     }
 
@@ -22,13 +22,15 @@ class ProfileController extends Controller
         $user = auth()->user();
 
         $data = $request->validate([
-            'name'      => ['required', 'string', 'max:255'],
-            'username'  => ['required', 'string', 'max:64', 'alpha_dash',
-                            Rule::unique('users', 'username')->ignore($user->id)],
-            'email'     => ['required', 'email', 'max:255',
-                            Rule::unique('users', 'email')->ignore($user->id)],
-            'site_name' => ['nullable', 'string', 'max:255'],
-            'og_image'  => ['nullable', 'string', 'max:2048'],
+            'name'          => ['required', 'string', 'max:255'],
+            'username'      => ['required', 'string', 'max:64', 'alpha_dash',
+                                Rule::unique('users', 'username')->ignore($user->id)],
+            'email'         => ['required', 'email', 'max:255',
+                                Rule::unique('users', 'email')->ignore($user->id)],
+            'site_name'     => ['nullable', 'string', 'max:255'],
+            'og_image'      => ['nullable', 'string', 'max:2048'],
+            'custom_domain' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9.\-]+\.[a-z]{2,}$/i',
+                                Rule::unique('users', 'custom_domain')->ignore($user->id)],
         ]);
 
         $user->update($data);

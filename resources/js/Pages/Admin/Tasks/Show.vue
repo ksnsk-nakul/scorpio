@@ -44,12 +44,18 @@
 
       <!-- Subtasks -->
       <div class="bg-white border border-slate-200 rounded-xl p-5">
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center justify-between mb-2">
           <h2 class="text-sm font-semibold text-slate-700">Subtasks ({{ task.subtasks?.length ?? 0 }})</h2>
           <button @click="showSubtask = !showSubtask"
             class="text-xs bg-slate-100 text-slate-600 rounded px-3 py-1.5 hover:bg-slate-200">
             {{ showSubtask ? 'Cancel' : '+ Subtask' }}
           </button>
+        </div>
+        <div v-if="task.subtasks?.length" class="flex items-center gap-2 mb-3">
+          <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full bg-green-400 transition-all" :style="{ width: subtaskProgressPct + '%' }" />
+          </div>
+          <span class="text-xs text-slate-400 flex-shrink-0">{{ doneSubtasks }}/{{ task.subtasks.length }} done</span>
         </div>
         <ul class="space-y-2 mb-3">
           <li v-for="sub in task.subtasks" :key="sub.id" class="flex items-center gap-3 text-sm">
@@ -93,17 +99,42 @@
         </div>
       </div>
 
+      <!-- Activity log -->
+      <div v-if="task.activities?.length" class="bg-white border border-slate-200 rounded-xl p-5">
+        <h2 class="text-sm font-semibold text-slate-700 mb-4">Activity</h2>
+        <ul class="space-y-2.5">
+          <li v-for="activity in task.activities" :key="activity.id" class="text-xs text-slate-500 flex items-start gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mt-1.5 flex-shrink-0" />
+            <span>
+              <span class="font-medium text-slate-700">{{ activity.user?.name ?? 'System' }}</span>
+              changed <span class="font-medium">{{ activity.field.replace('_', ' ') }}</span>
+              <template v-if="activity.from"> from <span class="font-mono">{{ activity.from }}</span></template>
+              to <span class="font-mono">{{ activity.to }}</span>
+              <span class="text-slate-300">· {{ formatDate(activity.created_at) }}</span>
+            </span>
+          </li>
+        </ul>
+      </div>
+
     </div>
   </AdminLayout>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { Link, useForm, router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import MediaUploader from '@/Components/Admin/MediaUploader.vue'
 
 const props = defineProps({ task: Object, users: Array })
+
+const doneSubtasks = computed(() => (props.task.subtasks ?? []).filter(s => s.status === 'done').length)
+const subtaskProgressPct = computed(() => {
+  const total = props.task.subtasks?.length ?? 0
+  return total === 0 ? 0 : Math.round((doneSubtasks.value / total) * 100)
+})
+
+const formatDate = (d) => new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 
 const editing = ref(false)
 const showSubtask = ref(false)

@@ -53,18 +53,37 @@ class GitHubController extends Controller
         $data = $request->validate([
             'owner' => 'required|string',
             'name'  => 'required|string|max:255',
-            'body'  => 'nullable|string',
         ]);
 
         $token = auth()->user()->github_token;
-        $ghProject = $this->github->withToken($token)->createProject($data['owner'], $data['name'], $data['body'] ?? '');
+        $ghProject = $this->github->withToken($token)->createProjectV2($data['owner'], $data['name']);
 
         if (! $ghProject) {
-            return back()->withErrors(['github' => 'Failed to create GitHub project.']);
+            return back()->withErrors(['github' => 'Failed to create GitHub project. Check that your token has the "project" scope.']);
         }
 
         $project->update(['github_project_id' => (string) $ghProject['number']]);
         return back()->with('success', "GitHub project #{$ghProject['number']} created and linked.");
+    }
+
+    /**
+     * Generate (or rotate) a webhook secret for a project and return the
+     * URL + secret for the user to paste into the repo's GitHub webhook
+     * settings — gives real-time sync instead of hourly/on-demand pulls.
+     */
+    public function webhookCredentials(Project $project)
+    {
+        abort_unless(auth()->user()->workspaces()->where('id', $project->workspace_id)->exists(), 403);
+        abort_if(! $project->github_repo, 422, 'Link a GitHub repo to this product first.');
+
+        $project->github_webhook_secret = bin2hex(random_bytes(20));
+        $project->save();
+
+        return back()->with([
+            'webhook_project_id' => $project->id,
+            'webhook_url'        => route('webhooks.github', $project),
+            'webhook_secret'     => $project->github_webhook_secret,
+        ]);
     }
 
     public function sync(Project $project)

@@ -8,8 +8,10 @@ class Project extends Model
 {
     protected $fillable = [
         'workspace_id','name','slug','description',
-        'github_repo','github_project_id','cover_image','status','sort_order',
+        'github_repo','github_project_id','github_webhook_secret','cover_image','status','sort_order',
     ];
+
+    protected $hidden = ['github_webhook_secret'];
 
     protected static function booted(): void
     {

@@ -42,10 +42,13 @@ class HandleInertiaRequests extends Middleware
                 'roles' => $request->user()->getRoleNames(),
             ] : null,
             'flash' => [
-                'status'           => fn () => $request->session()->get('status'),
-                'success'          => fn () => $request->session()->get('success'),
-                'profile_success'  => fn () => $request->session()->get('profile_success'),
-                'password_success' => fn () => $request->session()->get('password_success'),
+                'status'             => fn () => $request->session()->get('status'),
+                'success'            => fn () => $request->session()->get('success'),
+                'profile_success'    => fn () => $request->session()->get('profile_success'),
+                'password_success'   => fn () => $request->session()->get('password_success'),
+                'webhook_project_id' => fn () => $request->session()->get('webhook_project_id'),
+                'webhook_url'        => fn () => $request->session()->get('webhook_url'),
+                'webhook_secret'     => fn () => $request->session()->get('webhook_secret'),
             ],
             'demo' => env('DEMO_MODE', false) ? [
                 'enabled'  => true,

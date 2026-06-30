@@ -16,5 +16,6 @@ const colorClass = ({
   slate: 'text-slate-800',
   amber: 'text-amber-500',
   blue:  'text-blue-600',
+  red:   'text-red-500',
 }[props.color]) ?? 'text-slate-800'
 </script>

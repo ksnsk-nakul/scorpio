@@ -21,6 +21,11 @@ class DashboardController extends Controller
                 'serviceCards' => $user->serviceCards()->count(),
                 'openTasks'    => Task::whereNull('parent_id')->where('status', 'open')
                     ->whereIn('project_id', $ownedProjectIds)->count(),
+                'overdueTasks' => Task::whereNull('parent_id')
+                    ->whereIn('project_id', $ownedProjectIds)
+                    ->whereNotIn('status', ['done', 'closed'])
+                    ->whereDate('due_date', '<', now())
+                    ->count(),
                 'users'        => $user->hasRole('admin') ? User::count() : null,
             ],
             'recentTasks' => Task::whereNull('parent_id')
@@ -28,7 +33,7 @@ class DashboardController extends Controller
                 ->with('project:id,name', 'assignee:id,name,avatar')
                 ->latest()
                 ->limit(5)
-                ->get(['id','title','status','priority','project_id','assignee_id']),
+                ->get(['id','title','status','priority','project_id','assignee_id','due_date']),
         ]);
     }
 }
