@@ -16,6 +16,7 @@ return [
         'service_cards' => 'users/{user}/services',
         'products'      => 'users/{user}/products',
         'avatar'        => 'users/{user}/avatar',
+        'branding'      => 'users/{user}/branding',
         'default'       => 'users/{user}/uploads',
     ],
 ];

@@ -1,11 +1,24 @@
 <template>
+  <Head>
+    <title>{{ pageTitle }}</title>
+    <meta name="description" :content="pageDescription" />
+    <meta property="og:title" :content="pageTitle" />
+    <meta property="og:description" :content="pageDescription" />
+    <meta property="og:type" content="profile" />
+    <meta v-if="settings.og_image" property="og:image" :content="settings.og_image" />
+    <meta name="twitter:card" :content="settings.og_image ? 'summary_large_image' : 'summary'" />
+    <meta name="twitter:title" :content="pageTitle" />
+    <meta name="twitter:description" :content="pageDescription" />
+    <meta v-if="settings.og_image" name="twitter:image" :content="settings.og_image" />
+  </Head>
+
   <div class="min-h-screen bg-white text-slate-900 font-sans">
 
     <!-- Nav -->
     <nav class="fixed top-0 inset-x-0 z-50 bg-white/80 backdrop-blur border-b border-slate-100">
       <div class="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
         <span class="font-semibold text-slate-800 tracking-tight">
-          {{ owner.name }}
+          {{ settings.site_name || owner.name }}
         </span>
         <a
           v-if="isAdmin"
@@ -136,13 +149,13 @@
 
     <!-- Footer -->
     <footer class="border-t border-slate-100 py-8 text-center text-xs text-slate-400">
-      {{ owner.name }}
+      {{ settings.site_name || owner.name }}
     </footer>
   </div>
 </template>
 
 <script setup>
-import { usePage } from '@inertiajs/vue3'
+import { usePage, Head } from '@inertiajs/vue3'
 import { computed } from 'vue'
 
 const props = defineProps({
@@ -158,4 +171,14 @@ const { props: pageProps } = usePage()
 const isAdmin = computed(() =>
   pageProps.auth?.roles?.includes('admin') ?? false
 )
+
+const pageTitle = computed(() => {
+  const site = props.settings.site_name || props.owner.name
+  return props.page.is_home ? site : `${props.page.name} — ${site}`
+})
+
+const pageDescription = computed(() => {
+  const heroBlock = (props.page.blocks ?? []).find(b => b.type === 'hero')
+  return heroBlock?.data?.subheading || `${props.owner.name}'s portfolio`
+})
 </script>

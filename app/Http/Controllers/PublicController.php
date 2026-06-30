@@ -12,28 +12,35 @@ class PublicController extends Controller
     {
         // select() prevents loading sensitive columns (password, github_token, etc.)
         $user = \App\Models\User::where('username', $username)
-            ->select(['id', 'name', 'username'])
+            ->select(['id', 'name', 'username', 'site_name', 'og_image'])
             ->firstOrFail();
 
-        // status=published check intentionally returns 404 (not 403) to avoid disclosing draft existence
         $page = $user->pages()
             ->where('is_home', true)
             ->where('status', 'published')
             ->with('serviceCards')
-            ->firstOrFail();
+            ->first();
+
+        // User exists but hasn't published a home page yet — show a stub
+        // instead of a hard 404, since the username itself is valid.
+        if (! $page) {
+            return Inertia::render('Public/ProfileStub', [
+                'owner' => $user->only('name', 'username'),
+            ]);
+        }
 
         return Inertia::render('Public/Portfolio', [
             'page'       => $page,
             'owner'      => $user->only('name', 'username'),
             'workspaces' => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
-            'settings'   => Setting::whereIn('key', ['site_name', 'og_image'])->pluck('value', 'key'),
+            'settings'   => $this->tenantSettings($user),
         ]);
     }
 
     public function portfolioPage(string $username, string $slug): Response
     {
         $user = \App\Models\User::where('username', $username)
-            ->select(['id', 'name', 'username'])
+            ->select(['id', 'name', 'username', 'site_name', 'og_image'])
             ->firstOrFail();
 
         $page = $user->pages()
@@ -46,8 +53,21 @@ class PublicController extends Controller
             'page'       => $page,
             'owner'      => $user->only('name', 'username'),
             'workspaces' => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
-            'settings'   => Setting::whereIn('key', ['site_name', 'og_image'])->pluck('value', 'key'),
+            'settings'   => $this->tenantSettings($user),
         ]);
+    }
+
+    /**
+     * Per-tenant branding falls back to the platform-wide site_name when a
+     * user hasn't set their own; og_image has no global fallback since it's
+     * inherently tied to one tenant's content.
+     */
+    private function tenantSettings(\App\Models\User $user): array
+    {
+        return [
+            'site_name' => $user->site_name ?? Setting::get('site_name'),
+            'og_image'  => $user->og_image,
+        ];
     }
 
     public function index(): Response|\Illuminate\Http\RedirectResponse
