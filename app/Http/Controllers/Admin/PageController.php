@@ -42,7 +42,7 @@ class PageController extends Controller
     public function edit(Page $page): Response
     {
         return Inertia::render('Admin/Pages/Edit', [
-            'page'       => $page,
+            'page'       => $page->load('serviceCards'),
             'blockTypes' => ['hero','text','text_image','service_cards','project_grid','contact_form'],
         ]);
     }

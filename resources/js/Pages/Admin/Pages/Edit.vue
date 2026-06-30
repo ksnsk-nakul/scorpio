@@ -24,8 +24,8 @@
             class="w-full bg-green-600 text-white text-sm rounded-lg py-2 hover:bg-green-700 disabled:opacity-50">
             Publish
           </button>
-          <a :href="`/preview/pages/${page.id}`" target="_blank"
-            class="block text-center text-sm text-blue-600 hover:underline">Preview ↗</a>
+          <button @click="showPreview = true"
+            class="block w-full text-center text-sm text-blue-600 hover:underline">Preview</button>
           <Link href="/admin/pages" class="block text-center text-xs text-slate-400 hover:text-slate-600">
             ← All pages
           </Link>
@@ -37,13 +37,16 @@
         <BlockEditor v-model="form.blocks" :block-types="blockTypes" />
       </div>
     </div>
+  <PagePreview v-if="showPreview" :page="previewPage" @close="showPreview = false" />
   </AdminLayout>
 </template>
 
 <script setup>
+import { ref, computed } from 'vue'
 import { useForm, Link } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import BlockEditor from '@/Components/Admin/BlockEditor.vue'
+import PagePreview from '@/Components/PagePreview.vue'
 
 const props = defineProps({ page: Object, blockTypes: Array })
 
@@ -52,6 +55,9 @@ const form = useForm({
   blocks: props.page.blocks ?? [],
   status: props.page.status,
 })
+
+const showPreview = ref(false)
+const previewPage = computed(() => ({ ...props.page, name: form.name, blocks: form.blocks, service_cards: props.page.service_cards ?? [] }))
 
 const save    = () => form.patch(`/admin/pages/${props.page.id}`, { preserveScroll: true })
 const publish = () => form.patch(`/admin/pages/${props.page.id}/publish`)

@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             SettingSeeder::class,
             UserSeeder::class,
             PageSeeder::class,
+            WorkspaceSeeder::class,
         ]);
     }
 }
