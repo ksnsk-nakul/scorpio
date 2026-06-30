@@ -16,9 +16,12 @@ class GitHubController extends Controller
         $user     = auth()->user();
         $hasToken = filled($user->github_token);
 
+        $ownedWorkspaceIds = $user->workspaces()->pluck('id');
+
         return Inertia::render('Admin/GitHub/Index', [
             'repos'    => $hasToken ? $this->github->withToken($user->github_token)->getRepos() : [],
             'projects' => Project::whereNotNull('github_repo')
+                ->whereIn('workspace_id', $ownedWorkspaceIds)
                 ->with('workspace:id,name')
                 ->get(['id','name','github_repo','github_project_id','workspace_id']),
             'hasToken' => $hasToken,
@@ -45,6 +48,7 @@ class GitHubController extends Controller
     public function createGitHubProject(Request $request, Project $project)
     {
         abort_if(! filled(auth()->user()->github_token), 403, 'No GitHub token configured.');
+        abort_unless(auth()->user()->workspaces()->where('id', $project->workspace_id)->exists(), 403);
 
         $data = $request->validate([
             'owner' => 'required|string',
@@ -66,6 +70,7 @@ class GitHubController extends Controller
     public function sync(Project $project)
     {
         abort_if(! filled(auth()->user()->github_token), 403, 'No GitHub token configured.');
+        abort_unless(auth()->user()->workspaces()->where('id', $project->workspace_id)->exists(), 403);
 
         $token = auth()->user()->github_token;
         $count = $this->github->withToken($token)->syncIssuesToProject($project);

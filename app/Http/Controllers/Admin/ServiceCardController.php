@@ -38,7 +38,7 @@ class ServiceCardController extends Controller
             'external_url' => 'nullable|url',
         ]);
 
-        $data['sort_order'] = ServiceCard::max('sort_order') + 1;
+        $data['sort_order'] = (auth()->user()->serviceCards()->max('sort_order') ?? 0) + 1;
         $data['user_id'] = auth()->id();
         ServiceCard::create($data);
 
@@ -47,6 +47,8 @@ class ServiceCardController extends Controller
 
     public function edit(ServiceCard $serviceCard): Response
     {
+        abort_if($serviceCard->user_id !== auth()->id(), 403);
+
         return Inertia::render('Admin/ServiceCards/Form', [
             'card'  => $serviceCard,
             'pages' => auth()->user()->pages()->where('status', 'published')->get(['id','name']),

@@ -102,6 +102,11 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
+        abort_unless(
+            auth()->user()->workspaces()->where('id', $project->workspace_id)->exists(),
+            403
+        );
+
         $project->delete();
         return redirect('/admin/products')->with('success', 'Project deleted.');
     }

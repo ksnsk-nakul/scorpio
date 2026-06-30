@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Page;
 use App\Models\Setting;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -51,18 +50,24 @@ class PublicController extends Controller
         ]);
     }
 
-    public function index(): Response
+    public function index(): Response|\Illuminate\Http\RedirectResponse
     {
-        $pages = Page::where('status', 'published')
-            ->orderBy('published_at')
-            ->with(['serviceCards' => fn ($q) => $q->orderBy('sort_order')])
-            ->get(['id', 'name', 'slug', 'template', 'blocks']);
+        // Root domain isn't tied to a single tenant — route to the first
+        // user with a published home page rather than mixing every
+        // tenant's blocks into one feed (which would leak cross-tenant content).
+        $homeUser = \App\Models\User::whereHas('pages', fn ($q) => $q->where('is_home', true)->where('status', 'published'))
+            ->orderBy('id')
+            ->first(['id', 'username']);
+
+        if ($homeUser) {
+            return redirect("/{$homeUser->username}");
+        }
 
         $settings = Setting::whereIn('key', ['site_name', 'site_tagline', 'meta_description'])
             ->pluck('value', 'key');
 
         return Inertia::render('Public/Home', [
-            'pages'    => $pages,
+            'pages'    => [],
             'settings' => $settings,
         ]);
     }
