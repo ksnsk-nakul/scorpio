@@ -38,7 +38,7 @@
         <span>⚡ Demo Mode</span>
         <span class="opacity-60">—</span>
         <span>You're exploring a live demo — any edits are visible on the public site and reset periodically.</span>
-        <a href="/" target="_blank" class="ml-auto underline hover:no-underline flex-shrink-0">View public site ↗</a>
+        <a :href="`/portfolio/${page.props.auth.user?.username}`" target="_blank" class="ml-auto underline hover:no-underline flex-shrink-0">View public site ↗</a>
       </div>
       <div class="p-6">
         <slot />

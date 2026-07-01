@@ -189,12 +189,12 @@ Route::post('/donate/verify', [DonationController::class, 'verify'])->name('dona
 // Public portfolio
 Route::get('/', [\App\Http\Controllers\PublicController::class, 'index'])->name('home');
 
-// Multi-tenant portfolio routes — must be last
-Route::get('/{username}', [\App\Http\Controllers\PublicController::class, 'portfolio'])
+// Multi-tenant portfolio routes
+Route::get('/portfolio/{username}', [\App\Http\Controllers\PublicController::class, 'portfolio'])
     ->name('portfolio')
     ->where('username', '[a-z0-9_\-]+');
 
-Route::get('/{username}/{slug}', [\App\Http\Controllers\PublicController::class, 'portfolioPage'])
+Route::get('/portfolio/{username}/{slug}', [\App\Http\Controllers\PublicController::class, 'portfolioPage'])
     ->name('portfolio.page')
     ->where('username', '[a-z0-9_\-]+')
     ->where('slug', '[a-z0-9\-]+');

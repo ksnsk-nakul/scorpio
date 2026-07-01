@@ -48,7 +48,6 @@ class ProjectController extends Controller
 
         return Inertia::render('Admin/Products/Show', [
             'project' => $project->load('workspace:id,name'),
-            'tasks'   => $project->rootTasks()->with('assignee:id,name,avatar')->limit(20)->get(),
             'media'   => $project->media()->latest()->get()->map(fn ($m) => [
                 'id'       => $m->id,
                 'filename' => $m->filename,

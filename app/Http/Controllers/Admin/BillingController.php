@@ -7,15 +7,18 @@ use App\Models\Subscription;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Razorpay\Api\Api;
+use Razorpay\Api\Errors\BadRequestError;
 
 class BillingController extends Controller
 {
     private function razorpay(): Api
     {
-        return new Api(
-            config('billing.razorpay.key_id'),
-            config('billing.razorpay.key_secret')
-        );
+        $key    = config('billing.razorpay.key_id');
+        $secret = config('billing.razorpay.key_secret');
+
+        abort_if(blank($key) || blank($secret), 503, 'Razorpay is not configured.');
+
+        return new Api($key, $secret);
     }
 
     public function index()
@@ -36,30 +39,34 @@ class BillingController extends Controller
 
         $plan = config('billing.plans.' . $request->plan);
 
-        $order = $this->razorpay()->order->create([
-            'amount'          => $plan['price'],
-            'currency'        => $plan['currency'],
-            'receipt'         => 'order_' . auth()->id() . '_' . time(),
-            'payment_capture' => 1,
-            'notes'           => [
-                'user_id' => auth()->id(),
-                'plan'    => $request->plan,
-            ],
-        ]);
+        try {
+            $order = $this->razorpay()->order->create([
+                'amount'          => $plan['price'],
+                'currency'        => $plan['currency'],
+                'receipt'         => 'order_' . auth()->id() . '_' . time(),
+                'payment_capture' => 1,
+                'notes'           => [
+                    'user_id' => (string) auth()->id(),
+                    'plan'    => $request->plan,
+                ],
+            ]);
+        } catch (BadRequestError $e) {
+            return response()->json(['message' => 'Razorpay error: ' . $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Could not create payment order. Please try again.'], 500);
+        }
 
-        // Store a pending subscription record
         Subscription::create([
-            'user_id'            => auth()->id(),
-            'plan'               => $request->plan,
-            'status'             => 'pending',
-            'razorpay_order_id'  => $order->id,
+            'user_id'           => auth()->id(),
+            'plan'              => $request->plan,
+            'status'            => 'pending',
+            'razorpay_order_id' => $order->id,
         ]);
 
         return response()->json([
-            'order_id'    => $order->id,
-            'amount'      => $order->amount,
-            'currency'    => $order->currency,
-            'key_id'      => config('billing.razorpay.key_id'),
+            'order_id' => $order->id,
+            'amount'   => $order->amount,
+            'currency' => $order->currency,
         ]);
     }
 
@@ -71,14 +78,15 @@ class BillingController extends Controller
             'razorpay_signature'  => 'required|string',
         ]);
 
-        $expectedSignature = hash_hmac(
+        $expected = hash_hmac(
             'sha256',
             $request->razorpay_order_id . '|' . $request->razorpay_payment_id,
             config('billing.razorpay.key_secret')
         );
 
-        if (! hash_equals($expectedSignature, $request->razorpay_signature)) {
-            return back()->with('error', 'Payment verification failed. Please contact support.');
+        if (! hash_equals($expected, $request->razorpay_signature)) {
+            return redirect()->route('admin.billing.index')
+                ->with('error', 'Payment verification failed. Please contact support.');
         }
 
         $subscription = Subscription::where('razorpay_order_id', $request->razorpay_order_id)
@@ -86,13 +94,13 @@ class BillingController extends Controller
             ->firstOrFail();
 
         $subscription->update([
-            'status'               => 'active',
-            'razorpay_payment_id'  => $request->razorpay_payment_id,
-            'razorpay_signature'   => $request->razorpay_signature,
-            'current_period_end'   => now()->addMonth(),
+            'status'              => 'active',
+            'razorpay_payment_id' => $request->razorpay_payment_id,
+            'razorpay_signature'  => $request->razorpay_signature,
+            'current_period_end'  => now()->addMonth(),
         ]);
 
-        // Cancel any previously active subscriptions for this user
+        // Deactivate any other active subscriptions for this user
         Subscription::where('user_id', auth()->id())
             ->where('id', '!=', $subscription->id)
             ->where('status', 'active')

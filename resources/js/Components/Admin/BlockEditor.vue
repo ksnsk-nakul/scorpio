@@ -100,6 +100,41 @@
               </li>
             </ul>
           </template>
+
+          <!-- Inline project cards with drag-to-reorder -->
+          <template v-else>
+            <p class="text-xs text-slate-400 mb-1.5">Inline projects — drag to reorder, edit title/description/URL</p>
+            <ul class="space-y-2 mb-2">
+              <li
+                v-for="(proj, pi) in (block.data.projects ?? [])"
+                :key="pi"
+                draggable="true"
+                @dragstart="inlineDragIdx = pi; inlineDragBlock = block"
+                @dragover.prevent="inlineDragOver = pi"
+                @drop.prevent="dropInline(pi, block)"
+                @dragend="inlineDragIdx = inlineDragOver = null"
+                class="rounded-lg border border-slate-100 bg-white select-none"
+                :class="inlineDragOver === pi ? 'border-teal-400 bg-teal-50' : ''"
+              >
+                <div class="flex items-center gap-2 px-3 pt-2">
+                  <span class="text-slate-300 cursor-grab text-sm flex-shrink-0">⠿</span>
+                  <input v-model="proj.title" placeholder="Project title"
+                    class="flex-1 text-sm font-medium text-slate-700 outline-none bg-transparent" />
+                  <button @click="removeInlineProject(block, pi)"
+                    class="text-slate-300 hover:text-red-400 text-xs flex-shrink-0">✕</button>
+                </div>
+                <div class="px-3 pb-2 pt-1 space-y-1">
+                  <input v-model="proj.description" placeholder="Short description"
+                    class="w-full text-xs text-slate-500 outline-none bg-transparent" />
+                  <input v-model="proj.url" placeholder="https://..." type="url"
+                    class="w-full text-xs text-blue-400 outline-none bg-transparent" />
+                </div>
+              </li>
+              <li v-if="!(block.data.projects?.length)" class="text-xs text-slate-400 px-1">No inline projects yet.</li>
+            </ul>
+            <button @click="addInlineProject(block)"
+              class="text-xs text-teal-600 hover:text-teal-800">+ Add project</button>
+          </template>
         </div>
       </template>
 
@@ -239,6 +274,22 @@ const dropProduct = async (toIdx, wsId) => {
   productOrders.value[wsId] = arr
   await axios.post('/admin/products/reorder', { ids: arr.map(p => p.id) })
 }
+
+// --- Inline project_grid drag-to-reorder ---
+const inlineDragIdx   = ref(null)
+const inlineDragOver  = ref(null)
+const inlineDragBlock = ref(null)
+
+const dropInline = (toIdx, block) => {
+  if (inlineDragIdx.value === null || inlineDragIdx.value === toIdx) return
+  const arr = [...(block.data.projects ?? [])]
+  const [item] = arr.splice(inlineDragIdx.value, 1)
+  arr.splice(toIdx, 0, item)
+  block.data.projects = arr
+}
+
+const addInlineProject    = (block) => { block.data.projects = [...(block.data.projects ?? []), { title: '', description: '', url: '' }] }
+const removeInlineProject = (block, idx) => { block.data.projects = block.data.projects.filter((_, i) => i !== idx) }
 
 // --- Contact form link helpers ---
 const addLink    = (block) => { block.data.links = [...(block.data.links ?? []), { label: '', url: '' }] }

@@ -128,20 +128,32 @@ const planBadge = (key) => ({
 const formatDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 
 const subscribe = async (planKey) => {
+  if (!window.Razorpay) {
+    alert('Razorpay SDK failed to load. Please refresh the page and try again.')
+    return
+  }
+  if (!props.razorpayKey || props.razorpayKey.includes('your_key')) {
+    alert('Razorpay is not configured yet. Please set RAZORPAY_KEY_ID in your .env file.')
+    return
+  }
+
   loading.value = planKey
 
   try {
     const res = await fetch('/admin/billing/order', {
       method:  'POST',
       headers: {
-        'Content-Type':     'application/json',
-        'X-CSRF-TOKEN':     document.querySelector('meta[name="csrf-token"]')?.content ?? '',
-        'Accept':           'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+        'Accept':       'application/json',
       },
       body: JSON.stringify({ plan: planKey }),
     })
 
-    if (!res.ok) throw new Error('Order creation failed')
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.message ?? 'Order creation failed')
+    }
     const data = await res.json()
 
     const rzp = new window.Razorpay({
@@ -153,20 +165,21 @@ const subscribe = async (planKey) => {
       description: planLabel(planKey) + ' plan — monthly',
       theme:       { color: '#2563EB' },
       handler: (response) => {
+        loading.value = planKey // keep spinner while Inertia navigates
         router.post('/admin/billing/verify', {
           razorpay_order_id:   response.razorpay_order_id,
           razorpay_payment_id: response.razorpay_payment_id,
           razorpay_signature:  response.razorpay_signature,
-        })
+        }, { onFinish: () => { loading.value = null } })
       },
       modal: {
-        ondismiss: () => { loading.value = null }
+        ondismiss: () => { loading.value = null },
       },
     })
     rzp.open()
   } catch (e) {
     loading.value = null
-    alert('Could not initiate payment. Please try again.')
+    alert(e.message ?? 'Could not initiate payment. Please try again.')
   }
 }
 

@@ -80,7 +80,7 @@ class PublicController extends Controller
             ->first(['id', 'username']);
 
         if ($homeUser) {
-            return redirect("/{$homeUser->username}");
+            return redirect("/portfolio/{$homeUser->username}");
         }
 
         $settings = Setting::whereIn('key', ['site_name', 'site_tagline', 'meta_description'])

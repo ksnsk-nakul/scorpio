@@ -32,7 +32,7 @@ class ResolveCustomDomain
 
         $path = $request->path() === '/' ? '' : '/' . ltrim($request->path(), '/');
 
-        $rewritten = Request::create("/{$user->username}{$path}", $request->method(), $request->query->all());
+        $rewritten = Request::create("/portfolio/{$user->username}{$path}", $request->method(), $request->query->all());
         $rewritten->setLaravelSession($request->session());
         $rewritten->headers = $request->headers;
 
