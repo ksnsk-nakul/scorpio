@@ -4,6 +4,8 @@ return [
     'razorpay' => [
         'key_id'     => env('RAZORPAY_KEY_ID'),
         'key_secret' => env('RAZORPAY_KEY_SECRET'),
+        'me_handle'  => env('RAZORPAY_ME_HANDLE'),
+        'me_url'     => 'https://razorpay.me/@' . env('RAZORPAY_ME_HANDLE', ''),
     ],
 
     'plans' => [

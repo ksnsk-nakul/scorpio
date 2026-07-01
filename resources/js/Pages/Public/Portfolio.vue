@@ -20,13 +20,23 @@
         <span class="font-semibold text-slate-800 tracking-tight">
           {{ settings.site_name || owner.name }}
         </span>
-        <a
-          v-if="isAdmin"
-          href="/admin/dashboard"
-          class="text-sm px-4 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-700 transition-colors"
-        >
-          Dashboard →
-        </a>
+        <div class="flex items-center gap-3">
+          <a
+            href="/donate"
+            class="text-sm px-4 py-1.5 rounded-lg border border-pink-200 text-pink-600 hover:bg-pink-50 transition-colors flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+            Support
+          </a>
+          <a
+            v-if="isAdmin"
+            href="/admin/dashboard"
+            class="text-sm px-4 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-700 transition-colors"
+          >
+            Dashboard →
+          </a>
+        </div>
       </div>
     </nav>
 
@@ -148,8 +158,14 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-100 py-8 text-center text-xs text-slate-400">
-      {{ settings.site_name || owner.name }}
+    <footer class="border-t border-slate-100 py-8 text-center text-xs text-slate-400 space-y-2">
+      <p>{{ settings.site_name || owner.name }}</p>
+      <a href="/donate" class="inline-flex items-center gap-1 text-pink-400 hover:text-pink-600 transition-colors">
+        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        Support my work
+      </a>
     </footer>
   </div>
 </template>

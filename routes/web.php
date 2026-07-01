@@ -180,6 +180,12 @@ Route::get('/login/otp', fn () => redirect('/login'))->name('login.otp');
 Route::post('/login/otp/send', [OtpAuthController::class, 'send'])->name('login.otp.send')->middleware('throttle:5,1');
 Route::post('/login/otp/verify', [OtpAuthController::class, 'verify'])->name('login.otp.verify')->middleware('throttle:10,1');
 
+// Donation — public, no auth required
+use App\Http\Controllers\DonationController;
+Route::get('/donate', [DonationController::class, 'show'])->name('donate');
+Route::post('/donate/order', [DonationController::class, 'createOrder'])->name('donate.order');
+Route::post('/donate/verify', [DonationController::class, 'verify'])->name('donate.verify');
+
 // Public portfolio
 Route::get('/', [\App\Http\Controllers\PublicController::class, 'index'])->name('home');
 
