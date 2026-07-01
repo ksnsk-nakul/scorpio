@@ -14,7 +14,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'email', 'password', 'avatar',
         'username', 'github_token',
-        'site_name', 'og_image', 'custom_domain',
+        'site_name', 'og_image', 'custom_domain', 'plan',
         'google_id', 'github_id', 'email_verified_at',
     ];
 
@@ -69,5 +69,20 @@ class User extends Authenticatable
     public function comments(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Comment::class);
+    }
+
+    public function subscriptions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function activeSubscription(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Subscription::class)->where('status', 'active')->latestOfMany();
+    }
+
+    public function currentPlan(): string
+    {
+        return $this->plan ?? 'free';
     }
 }

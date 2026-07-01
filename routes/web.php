@@ -133,6 +133,17 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 
+use App\Http\Controllers\Admin\BillingController;
+
+Route::middleware(['auth'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::get('billing', [BillingController::class, 'index'])->name('billing.index');
+        Route::post('billing/order', [BillingController::class, 'createOrder'])->name('billing.order');
+        Route::post('billing/verify', [BillingController::class, 'verify'])->name('billing.verify');
+        Route::post('billing/cancel', [BillingController::class, 'cancel'])->name('billing.cancel');
+    });
+
 use App\Http\Controllers\Admin\ProfileController;
 
 Route::middleware(['auth'])
