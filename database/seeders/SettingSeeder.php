@@ -20,9 +20,9 @@ class SettingSeeder extends Seeder
 
             ['key' => 'show_donate_banner', 'value' => '0', 'group' => 'general'],
 
-            // Social — left blank; fill in from Profile or Settings
-            ['key' => 'social_github',   'value' => '', 'group' => 'social'],
-            ['key' => 'social_linkedin', 'value' => '', 'group' => 'social'],
+            // Social
+            ['key' => 'social_github',   'value' => 'https://github.com/ksnsk-nakul',                          'group' => 'social'],
+            ['key' => 'social_linkedin', 'value' => 'https://linkedin.com/in/nakul-sri-kuber-384233193',        'group' => 'social'],
             ['key' => 'social_twitter',  'value' => '', 'group' => 'social'],
 
             // Mail — seeded from env so mail works out of the box

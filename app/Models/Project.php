@@ -8,8 +8,10 @@ class Project extends Model
 {
     protected $fillable = [
         'workspace_id','name','slug','description',
-        'github_repo','github_project_id','github_webhook_secret','cover_image','status','sort_order',
+        'github_repo','demo_url','tags','github_project_id','github_webhook_secret','cover_image','status','sort_order',
     ];
+
+    protected $casts = ['tags' => 'array'];
 
     protected $hidden = ['github_webhook_secret'];
 

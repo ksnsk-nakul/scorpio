@@ -38,7 +38,7 @@ class PublicController extends Controller
         return Inertia::render('Public/Portfolio', [
             'page'       => $page,
             'owner'      => $user->only('id', 'name', 'username'),
-            'workspaces' => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
+            'workspaces' => $user->workspaces()->with('projects:id,workspace_id,name,slug,description,github_repo,demo_url,tags,status,sort_order')->orderBy('sort_order')->get(['id','name'])->keyBy('id'),
             'settings'   => $this->tenantSettings($user),
             'dbSkills'   => $this->userSkills($user),
             'dbAbout'    => $this->userAbout($user),
@@ -60,7 +60,7 @@ class PublicController extends Controller
         return Inertia::render('Public/Portfolio', [
             'page'         => $page,
             'owner'        => $user->only('id', 'name', 'username'),
-            'workspaces'   => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
+            'workspaces'   => $user->workspaces()->with('projects:id,workspace_id,name,slug,description,github_repo,demo_url,tags,status,sort_order')->orderBy('sort_order')->get(['id','name'])->keyBy('id'),
             'settings'     => $this->tenantSettings($user),
             'dbSkills'     => $this->userSkills($user),
             'dbAbout'      => $this->userAbout($user),
@@ -89,7 +89,7 @@ class PublicController extends Controller
         return Inertia::render('Public/Portfolio', [
             'page'         => $page,
             'owner'        => $user->only('id', 'name', 'username'),
-            'workspaces'   => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
+            'workspaces'   => $user->workspaces()->with('projects:id,workspace_id,name,slug,description,github_repo,demo_url,tags,status,sort_order')->orderBy('sort_order')->get(['id','name'])->keyBy('id'),
             'settings'     => $this->tenantSettings($user),
             'dbSkills'     => $this->userSkills($user),
             'dbAbout'      => $this->userAbout($user),
@@ -112,7 +112,7 @@ class PublicController extends Controller
         return Inertia::render('Public/Portfolio', [
             'page'         => $page,
             'owner'        => $user->only('id', 'name', 'username'),
-            'workspaces'   => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
+            'workspaces'   => $user->workspaces()->with('projects:id,workspace_id,name,slug,description,github_repo,demo_url,tags,status,sort_order')->orderBy('sort_order')->get(['id','name'])->keyBy('id'),
             'settings'     => $this->tenantSettings($user),
             'dbSkills'     => $this->userSkills($user),
             'dbAbout'      => $this->userAbout($user),

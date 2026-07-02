@@ -21,7 +21,7 @@
 
         <!-- Logo: SVG brand mark + site name -->
         <a href="#home" class="flex items-center gap-2 group">
-          <img src="/images/ksnsk-logo.svg" alt="KSNSK"
+          <img src="/images/ksnsk-logo.png" alt="KSNSK"
                class="h-7 w-auto transition-transform duration-300 group-hover:scale-105" />
         </a>
 
@@ -224,34 +224,52 @@
             <span class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2 block">What I've built</span>
             <h2 class="text-3xl font-bold text-slate-900">{{ block.data.heading }}</h2>
           </div>
+
+          <!-- DB workspace projects -->
           <div v-if="block.data.workspace_id && workspaces[block.data.workspace_id]?.projects?.length"
             class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div v-for="(project, i) in workspaces[block.data.workspace_id].projects" :key="project.id"
-              class="group rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
-              :style="`transition-delay:${i*0.07}s`">
+              class="group rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer"
+              :style="`transition-delay:${i*0.07}s`"
+              @click="project.demo_url ? openUrl(project.demo_url) : null">
               <h3 class="font-bold text-slate-900 text-lg mb-2 group-hover:text-orange-500 transition-colors">{{ project.name }}</h3>
               <p class="text-sm text-slate-500 flex-1 mb-4 leading-relaxed">{{ project.description }}</p>
-              <p v-if="project.tags?.length" class="text-xs text-slate-400 mb-4">Tech: {{ project.tags.join(', ') }}</p>
-              <div class="flex gap-2 mt-auto">
+              <div v-if="project.tags?.length" class="flex flex-wrap gap-1.5 mb-4">
+                <span v-for="tag in project.tags" :key="tag"
+                  class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{{ tag }}</span>
+              </div>
+              <div class="flex gap-2 mt-auto" @click.stop>
                 <a v-if="project.github_repo" :href="`https://github.com/${project.github_repo}`" target="_blank" rel="noopener"
                   class="px-4 py-1.5 border border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:border-orange-400 hover:text-orange-500 transition-all">GitHub</a>
-                <a :href="project.url ?? '#'"
-                  class="px-4 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-medium hover:bg-orange-600 transition-colors shadow-sm shadow-orange-200">View Details</a>
+                <a v-if="project.demo_url" :href="project.demo_url" target="_blank" rel="noopener"
+                  class="px-4 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-medium hover:bg-orange-600 transition-colors shadow-sm shadow-orange-200">Live Demo →</a>
+                <a v-else :href="`/projects/${project.slug ?? project.id}`"
+                  class="px-4 py-1.5 border border-orange-200 text-orange-600 rounded-lg text-xs font-medium hover:bg-orange-50 transition-colors">View Details</a>
               </div>
             </div>
           </div>
+
+          <!-- Static JSON fallback -->
           <div v-else-if="block.data.projects?.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div v-for="(project, i) in block.data.projects" :key="project.id ?? project.title"
               class="group rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
-              :style="`transition-delay:${i*0.07}s`">
+              :class="project.demo_url ? 'cursor-pointer' : ''"
+              :style="`transition-delay:${i*0.07}s`"
+              @click="project.demo_url ? openUrl(project.demo_url) : null">
               <h3 class="font-bold text-slate-900 text-lg mb-2 group-hover:text-orange-500 transition-colors">{{ project.title }}</h3>
               <p class="text-sm text-slate-500 flex-1 mb-4 leading-relaxed">{{ project.description }}</p>
-              <p v-if="project.tech" class="text-xs text-slate-400 mb-4">Tech: {{ project.tech }}</p>
-              <div class="flex gap-2 mt-auto">
+              <div v-if="project.tags?.length" class="flex flex-wrap gap-1.5 mb-4">
+                <span v-for="tag in project.tags" :key="tag"
+                  class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{{ tag }}</span>
+              </div>
+              <p v-else-if="project.tech" class="text-xs text-slate-400 mb-4">Tech: {{ project.tech }}</p>
+              <div class="flex gap-2 mt-auto" @click.stop>
                 <a v-if="project.github" :href="project.github" target="_blank" rel="noopener"
                   class="px-4 py-1.5 border border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:border-orange-400 hover:text-orange-500 transition-all">GitHub</a>
-                <a :href="project.url ?? '#'"
-                  class="px-4 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-medium hover:bg-orange-600 transition-colors shadow-sm shadow-orange-200">View Details</a>
+                <a v-if="project.demo_url" :href="project.demo_url" target="_blank" rel="noopener"
+                  class="px-4 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-medium hover:bg-orange-600 transition-colors shadow-sm shadow-orange-200">Live Demo →</a>
+                <a v-else-if="project.url && project.url !== '#'" :href="project.url"
+                  class="px-4 py-1.5 border border-orange-200 text-orange-600 rounded-lg text-xs font-medium hover:bg-orange-50 transition-colors">View Details</a>
               </div>
             </div>
           </div>
@@ -327,7 +345,7 @@
 
     <!-- Footer -->
     <footer class="border-t border-slate-100 py-10 text-center">
-      <img src="/images/ksnsk-logo.svg" alt="KSNSK" class="h-6 mx-auto mb-4 opacity-60" />
+      <img src="/images/ksnsk-logo.png" alt="KSNSK" class="h-8 mx-auto mb-4 opacity-60" />
       <p class="text-xs text-slate-400 mb-3">{{ settings.site_name || owner.name }}</p>
       <p class="text-xs text-slate-300">© {{ new Date().getFullYear() }} · Built with Laravel &amp; Vue</p>
       <a href="/donate" class="inline-flex items-center gap-1.5 text-xs text-pink-400 hover:text-pink-600 transition-colors mt-3">
@@ -448,6 +466,9 @@ const pageDescription = computed(() => {
   const b = (props.page.blocks ?? []).find(b => b.type === 'hero')
   return b?.data?.subheading || `${props.owner.name}'s portfolio`
 })
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const openUrl = (url) => window.open(url, '_blank', 'noopener,noreferrer')
 
 // ── Contact form ─────────────────────────────────────────────────────────────
 const contactForm = useForm({ name: '', email: '', message: '', user_id: '', page_slug: '' })

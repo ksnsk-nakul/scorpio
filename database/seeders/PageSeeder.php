@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Page;
 use App\Models\ServiceCard;
+use App\Models\Workspace;
 use Illuminate\Database\Seeder;
 
 class PageSeeder extends Seeder
@@ -14,9 +15,10 @@ class PageSeeder extends Seeder
             return;
         }
 
-        $adminEmail = filled(env('ADMIN_EMAIL')) ? env('ADMIN_EMAIL') : 'admin@example.com';
-        $adminName  = filled(env('ADMIN_NAME'))  ? env('ADMIN_NAME')  : 'Your Name';
-        $adminId    = \App\Models\User::where('email', $adminEmail)->value('id');
+        $adminEmail  = filled(env('ADMIN_EMAIL')) ? env('ADMIN_EMAIL') : 'admin@example.com';
+        $adminName   = filled(env('ADMIN_NAME'))  ? env('ADMIN_NAME')  : 'Your Name';
+        $adminId     = \App\Models\User::where('email', $adminEmail)->value('id');
+        $workspaceId = Workspace::where('user_id', $adminId)->value('id');
         abort_if(is_null($adminId), 1, "Admin user not found for [{$adminEmail}] — run UserSeeder first.");
 
         $page = Page::create([
@@ -78,37 +80,7 @@ class PageSeeder extends Seeder
                     'order' => 3,
                     'data'  => [
                         'heading'      => 'Projects',
-                        'workspace_id' => null,
-                        'projects'     => [
-                            [
-                                'title'       => 'RBAC Management System',
-                                'description' => 'A role-based access control system for managing users, roles, and permissions in web applications. Designed to demonstrate secure authorization flows and scalable backend architecture.',
-                                'tech'        => 'Laravel, MySQL, Authentication, Authorization',
-                                'github'      => null,
-                                'url'         => '#',
-                            ],
-                            [
-                                'title'       => 'EPUB Reader Dashboard',
-                                'description' => 'A web-based EPUB reader and management dashboard that allows users to upload, organize, and read ebooks online. Built as the foundation for a future ebook marketplace platform.',
-                                'tech'        => 'Laravel, Vue.js, MySQL, File Storage',
-                                'github'      => null,
-                                'url'         => '#',
-                            ],
-                            [
-                                'title'       => 'Task Management (Kanban) App',
-                                'description' => 'A Kanban-style task management application for organizing workflows, tracking progress, and managing project tasks. Supports structured task stages and collaborative project flow.',
-                                'tech'        => 'Laravel, Vue.js, REST API, MySQL',
-                                'github'      => null,
-                                'url'         => '#',
-                            ],
-                            [
-                                'title'       => 'FlowHaven SaaS Platform',
-                                'description' => 'A decoupled SaaS platform built with an API-first architecture. The backend provides Laravel REST APIs while the frontend uses Vue, Pinia, and TypeScript to build a scalable single-page application.',
-                                'tech'        => 'Laravel API, Vue.js, Pinia, TypeScript',
-                                'github'      => null,
-                                'url'         => '#',
-                            ],
-                        ],
+                        'workspace_id' => $workspaceId,
                     ],
                 ],
                 [
