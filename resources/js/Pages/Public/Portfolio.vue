@@ -129,13 +129,13 @@
               <span class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2 block">Who I am</span>
               <h2 class="text-3xl font-bold text-slate-900 mb-6">About</h2>
               <div class="space-y-4 text-slate-600 leading-relaxed">
-                <p v-for="(para, i) in aboutParagraphs((dbAbout ?? block.data).bio)" :key="i">{{ para }}</p>
+                <p v-for="(para, i) in aboutParagraphs((block.data.bio || dbAbout?.bio))" :key="i">{{ para }}</p>
               </div>
             </div>
             <div class="reveal" style="transition-delay:0.15s">
               <h3 class="text-orange-500 font-bold text-lg mb-5">Skills Overview</h3>
               <ul class="space-y-3">
-                <li v-for="(item, i) in ((dbAbout ?? block.data).overview ?? [])" :key="item"
+                <li v-for="(item, i) in ((block.data.overview?.length ? block.data.overview : dbAbout?.overview) ?? [])" :key="item"
                   class="flex items-start gap-3 text-slate-600">
                   <span class="mt-1 w-2 h-2 rounded-full bg-orange-400 flex-shrink-0"></span>
                   {{ item }}
@@ -152,7 +152,7 @@
             <span class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2 block">What I use</span>
             <h2 class="text-3xl font-bold text-slate-900 mb-12">{{ block.data.heading ?? 'Skills' }}</h2>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              <div v-for="(skill, i) in (dbSkills?.length ? dbSkills : (block.data.skills ?? []))"
+              <div v-for="(skill, i) in (block.data.skills?.length ? block.data.skills : (dbSkills ?? []))"
                 :key="skill.name"
                 class="skill-card bg-white rounded-2xl p-5 flex flex-col items-center gap-2 shadow-sm cursor-default"
                 :style="`animation-delay:${i * 0.05}s`">
@@ -172,7 +172,7 @@
             <!-- vertical line -->
             <div class="absolute left-3 top-2 bottom-2 w-0.5 bg-orange-200 rounded-full"></div>
             <div class="space-y-10 pl-12">
-              <div v-for="(exp, i) in (dbExperience?.length ? dbExperience : (block.data.items ?? []))"
+              <div v-for="(exp, i) in (block.data.items?.length ? block.data.items : (dbExperience ?? []))"
                 :key="exp.title"
                 class="relative reveal"
                 :style="`transition-delay:${i*0.12}s`">

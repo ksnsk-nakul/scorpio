@@ -172,6 +172,75 @@
         </div>
       </template>
 
+      <!-- About block -->
+      <template v-else-if="block.type === 'about'">
+        <div @click.stop class="space-y-3">
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Bio</label>
+            <textarea v-model="block.data.bio" placeholder="Write your bio here…"
+              rows="4" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none resize-none focus:border-blue-400" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Overview bullets</label>
+            <div v-for="(item, i) in (block.data.overview ?? [])" :key="i" class="flex gap-2 mb-1.5">
+              <span class="text-slate-300 mt-2 text-sm">•</span>
+              <input v-model="block.data.overview[i]" placeholder="e.g. Backend with Laravel"
+                class="flex-1 border border-slate-200 rounded-lg px-2 py-1.5 text-sm outline-none focus:border-blue-400" />
+              <button @click="block.data.overview = block.data.overview.filter((_, j) => j !== i)"
+                class="text-red-400 hover:text-red-600 text-xs px-1 mt-1">✕</button>
+            </div>
+            <button @click="block.data.overview = [...(block.data.overview ?? []), '']"
+              class="text-xs text-blue-500 hover:text-blue-700">+ Add bullet</button>
+          </div>
+        </div>
+      </template>
+
+      <!-- Skills block -->
+      <template v-else-if="block.type === 'skills'">
+        <div @click.stop class="space-y-3">
+          <input v-model="block.data.heading" placeholder="Section heading (e.g. Skills)"
+            class="w-full bg-transparent outline-none text-sm font-medium border-b border-slate-100 pb-1" />
+          <div class="grid grid-cols-2 gap-1.5">
+            <div v-for="(skill, i) in (block.data.skills ?? [])" :key="i"
+              class="flex items-center gap-1.5 border border-slate-100 rounded-lg px-2 py-1.5 bg-white group">
+              <input v-model="skill.icon" placeholder="🔧" maxlength="4"
+                class="w-8 text-center text-sm outline-none bg-transparent shrink-0" />
+              <input v-model="skill.name" placeholder="Skill name"
+                class="flex-1 text-xs outline-none bg-transparent min-w-0" />
+              <button @click="block.data.skills = block.data.skills.filter((_, j) => j !== i)"
+                class="text-red-300 hover:text-red-500 text-xs opacity-0 group-hover:opacity-100 shrink-0">✕</button>
+            </div>
+          </div>
+          <button @click="block.data.skills = [...(block.data.skills ?? []), { icon: '', name: '' }]"
+            class="text-xs text-blue-500 hover:text-blue-700">+ Add skill</button>
+        </div>
+      </template>
+
+      <!-- Experience block -->
+      <template v-else-if="block.type === 'experience'">
+        <div @click.stop class="space-y-3">
+          <input v-model="block.data.heading" placeholder="Section heading (e.g. Experience)"
+            class="w-full bg-transparent outline-none text-sm font-medium border-b border-slate-100 pb-1" />
+          <div v-for="(exp, i) in (block.data.items ?? [])" :key="i"
+            class="border border-slate-100 rounded-xl p-3 bg-white space-y-1.5">
+            <div class="flex items-center justify-between">
+              <input v-model="exp.period" placeholder="2023 – Present"
+                class="text-xs font-bold text-orange-500 outline-none bg-transparent w-40" />
+              <button @click="block.data.items = block.data.items.filter((_, j) => j !== i)"
+                class="text-red-300 hover:text-red-500 text-xs">✕</button>
+            </div>
+            <input v-model="exp.title" placeholder="Job title"
+              class="w-full text-sm font-semibold text-slate-800 outline-none bg-transparent" />
+            <input v-model="exp.company" placeholder="Company (optional)"
+              class="w-full text-xs text-slate-400 outline-none bg-transparent" />
+            <textarea v-model="exp.description" placeholder="Role description…" rows="2"
+              class="w-full text-xs text-slate-500 outline-none bg-transparent resize-none" />
+          </div>
+          <button @click="block.data.items = [...(block.data.items ?? []), { period: '', title: '', company: '', description: '' }]"
+            class="text-xs text-blue-500 hover:text-blue-700">+ Add experience</button>
+        </div>
+      </template>
+
       <template v-else>
         <p class="text-sm text-slate-400 italic">{{ blockDescription(block.type) }}</p>
       </template>
@@ -302,6 +371,9 @@ const blockColor = (t) => ({
   service_cards: 'bg-violet-500',
   project_grid:  'bg-teal-500',
   contact_form:  'bg-rose-500',
+  about:         'bg-indigo-500',
+  skills:        'bg-cyan-500',
+  experience:    'bg-emerald-600',
 }[t] ?? 'bg-slate-500')
 
 const blockDescription = (t) => ({
