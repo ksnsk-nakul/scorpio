@@ -53,23 +53,27 @@ import { Link, usePage } from '@inertiajs/vue3'
 
 const page = usePage()
 
-const isAdmin = computed(() => page.props.auth.roles?.includes('admin'))
+const userRoles  = computed(() => page.props.auth.roles ?? [])
+const isAdmin    = computed(() => userRoles.value.includes('admin'))
+const isEditor   = computed(() => userRoles.value.includes('editor'))
+const isViewer   = computed(() => userRoles.value.includes('viewer'))
 
+// roles: which roles can see this link (matches backend middleware)
 const allNav = [
-  { label: 'Dashboard',     href: '/admin/dashboard',      adminOnly: false },
-  { label: 'Pages',         href: '/admin/pages',          adminOnly: false },
-  { label: 'Service Cards', href: '/admin/service-cards',  adminOnly: false },
-  { label: 'Products',      href: '/admin/products',       adminOnly: false },
-  { label: 'GitHub',        href: '/admin/github',         adminOnly: false },
-  { label: 'Content',       href: '/admin/content',        adminOnly: false },
-  { label: 'Profile',       href: '/admin/profile',        adminOnly: false },
-  { label: 'Billing',       href: '/admin/billing',        adminOnly: false },
-  { label: 'Users',         href: '/admin/users',          adminOnly: true  },
-  { label: 'Payment',       href: '/admin/payment',        adminOnly: true  },
-  { label: 'Settings',      href: '/admin/settings',       adminOnly: true  },
+  { label: 'Dashboard',     href: '/admin/dashboard',     roles: ['admin','editor','viewer'] },
+  { label: 'Pages',         href: '/admin/pages',         roles: ['admin','editor'] },
+  { label: 'Service Cards', href: '/admin/service-cards', roles: ['admin','editor'] },
+  { label: 'Products',      href: '/admin/products',      roles: ['admin','editor'] },
+  { label: 'GitHub',        href: '/admin/github',        roles: ['admin','editor','viewer'] },
+  { label: 'Content',       href: '/admin/content',       roles: ['admin','editor'] },
+  { label: 'Profile',       href: '/admin/profile',       roles: ['admin','editor','viewer'] },
+  { label: 'Billing',       href: '/admin/billing',       roles: ['admin','editor','viewer'] },
+  { label: 'Users',         href: '/admin/users',         roles: ['admin'] },
+  { label: 'Payment',       href: '/admin/payment',       roles: ['admin'] },
+  { label: 'Settings',      href: '/admin/settings',      roles: ['admin'] },
 ]
 
-const nav = computed(() => allNav.filter(item => !item.adminOnly || isAdmin.value))
+const nav = computed(() => allNav.filter(item => item.roles.some(r => userRoles.value.includes(r))))
 
 const isActive = (href) => page.url.startsWith(href)
 </script>
