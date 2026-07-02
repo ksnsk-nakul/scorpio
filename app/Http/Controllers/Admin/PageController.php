@@ -66,12 +66,22 @@ class PageController extends Controller
         return back()->with('success', 'Page saved.');
     }
 
-    public function publish(Page $page)
+    public function publish(Request $request, Page $page)
     {
         $this->authorize('update', $page);
 
-        $page->update(['status' => 'published', 'published_at' => now()]);
-        return back()->with('success', 'Page published.');
+        $data = $request->validate([
+            'name'   => 'sometimes|string|max:255',
+            'blocks' => 'sometimes|array',
+        ]);
+
+        $data['status'] = 'published';
+        if ($page->status !== 'published') {
+            $data['published_at'] = now();
+        }
+
+        $page->update($data);
+        return back()->with('success', 'Page saved.');
     }
 
     public function destroy(Page $page)

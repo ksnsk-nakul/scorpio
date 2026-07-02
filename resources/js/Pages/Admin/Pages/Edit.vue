@@ -18,11 +18,7 @@
           <p v-if="form.hasErrors" class="text-xs text-red-500">{{ Object.values(form.errors)[0] }}</p>
           <button @click="save" :disabled="form.processing"
             class="w-full bg-slate-800 text-white text-sm rounded-lg py-2 hover:bg-slate-900 disabled:opacity-50">
-            Save Draft
-          </button>
-          <button @click="publish" :disabled="form.processing"
-            class="w-full bg-green-600 text-white text-sm rounded-lg py-2 hover:bg-green-700 disabled:opacity-50">
-            Publish
+            Save
           </button>
           <button @click="showPreview = true"
             class="block w-full text-center text-sm text-blue-600 hover:underline">Preview</button>
@@ -59,6 +55,5 @@ const form = useForm({
 const showPreview = ref(false)
 const previewPage = computed(() => ({ ...props.page, name: form.name, blocks: form.blocks, service_cards: props.page.service_cards ?? [] }))
 
-const save    = () => form.patch(`/admin/pages/${props.page.id}`, { preserveScroll: true })
-const publish = () => form.patch(`/admin/pages/${props.page.id}/publish`)
+const save = () => form.patch(`/admin/pages/${props.page.id}/publish`)
 </script>
