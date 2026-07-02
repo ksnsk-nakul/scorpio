@@ -8,8 +8,8 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $email    = filled(env('ADMIN_EMAIL')) ? env('ADMIN_EMAIL') : 'admin@example.com';
-        $name     = filled(env('ADMIN_NAME'))  ? env('ADMIN_NAME')  : 'Admin';
+        $email    = filled(env('ADMIN_EMAIL'))    ? env('ADMIN_EMAIL')    : 'admin@example.com';
+        $name     = filled(env('ADMIN_NAME'))     ? env('ADMIN_NAME')     : 'Nakul Sri Kuber';
         $password = filled(env('ADMIN_PASSWORD')) ? env('ADMIN_PASSWORD') : 'password';
 
         $admin = User::firstOrCreate(
@@ -25,8 +25,13 @@ class UserSeeder extends Seeder
             $admin->assignRole('admin');
         }
 
+        // Sync site branding on every seed run
+        $admin->fill([
+            'site_name' => $admin->site_name ?: 'KSNSK',
+            'og_image'  => $admin->og_image  ?: '/images/profile.png',
+        ])->save();
+
         if (empty($admin->username)) {
-            // Use the admin's name (not 'admin') to avoid colliding with the /admin route prefix
             $base = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $name));
             $admin->update(['username' => \App\Models\User::uniqueUsername($base)]);
         }
