@@ -81,9 +81,16 @@
                   </a>
                   <p class="text-xs text-slate-400 mt-0.5 truncate">{{ repo.description }}</p>
                 </div>
-                <div class="flex items-center gap-1.5 shrink-0 text-xs text-slate-400 mt-0.5">
-                  <span v-if="repo.language" class="bg-slate-100 px-1.5 py-0.5 rounded">{{ repo.language }}</span>
-                  <span v-if="repo.private" class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">private</span>
+                <div class="flex items-center gap-1.5 shrink-0 mt-0.5">
+                  <span v-if="repo.language" class="text-xs bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded">{{ repo.language }}</span>
+                  <span v-if="repo.private" class="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">private</span>
+                  <span v-if="linkedRepoNames.has(repo.full_name.toLowerCase())"
+                    class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">linked</span>
+                  <button v-else @click="addAsProduct(repo)"
+                    :disabled="linking === repo.full_name"
+                    class="text-xs bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100 px-2 py-0.5 rounded transition-colors disabled:opacity-50">
+                    {{ linking === repo.full_name ? '…' : '+ Product' }}
+                  </button>
                 </div>
               </div>
             </li>
@@ -209,6 +216,22 @@ const filteredRepos = computed(() =>
     ? props.repos.filter(r => r.full_name.toLowerCase().includes(repoSearch.value.toLowerCase()))
     : props.repos
 )
+
+// ── Already-linked repo names (for "linked" badge) ────────────────────────────
+const linkedRepoNames = computed(() =>
+  new Set(props.projects.map(p => p.github_repo?.toLowerCase()).filter(Boolean))
+)
+
+// ── Add repo as Product ───────────────────────────────────────────────────────
+const linking = ref(null)
+const addAsProduct = (repo) => {
+  linking.value = repo.full_name
+  router.post('/admin/github/repos/link', { full_name: repo.full_name, description: repo.description ?? '' }, {
+    preserveScroll: true,
+    onFinish: () => { linking.value = null },
+    onSuccess: () => refresh(),
+  })
+}
 
 // ── Copy to clipboard ─────────────────────────────────────────────────────────
 const copy = (text) => navigator.clipboard?.writeText(text)

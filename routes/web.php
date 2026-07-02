@@ -22,6 +22,7 @@ Route::middleware(['auth', 'role:admin,editor,viewer'])
     ->name('admin.')
     ->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::patch('/dashboard/contacts/{submission}/read', [DashboardController::class, 'markContactRead'])->name('dashboard.contact.read');
     });
 
 Route::middleware(['auth', 'role:admin,editor'])
@@ -86,6 +87,7 @@ Route::middleware(['auth', 'role:admin,editor,viewer'])
     ->prefix('admin')->name('admin.')
     ->group(function () {
         Route::get('github', [GitHubController::class, 'index'])->name('github.index');
+        Route::post('github/repos/link', [GitHubController::class, 'linkRepoAsProduct'])->name('github.repo.link');
         Route::post('github/projects/{project}/sync', [GitHubController::class, 'sync'])->name('github.sync');
     });
 

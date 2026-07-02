@@ -3,6 +3,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\Workspace;
 use App\Services\GitHubService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -43,6 +44,43 @@ class GitHubController extends Controller
             'hasToken'       => $hasToken,
             'hasOAuthClient' => filled(config('services.github.client_id')),
         ]);
+    }
+
+    public function linkRepoAsProduct(Request $request)
+    {
+        $data = $request->validate([
+            'full_name'   => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        $user = auth()->user();
+
+        // Already linked to one of this user's projects?
+        $ownedWorkspaceIds = $user->workspaces()->pluck('id');
+        $exists = Project::whereIn('workspace_id', $ownedWorkspaceIds)
+            ->where('github_repo', $data['full_name'])
+            ->exists();
+
+        if ($exists) {
+            return back()->with('info', 'This repository is already linked to a product.');
+        }
+
+        // Use the user's first workspace, or create one
+        $workspace = $user->workspaces()->first()
+            ?? Workspace::create(['user_id' => $user->id, 'name' => 'My Projects']);
+
+        $repoName = last(explode('/', $data['full_name']));
+
+        Project::create([
+            'workspace_id' => $workspace->id,
+            'name'         => str($repoName)->replace(['-', '_'], ' ')->title()->toString(),
+            'slug'         => \Illuminate\Support\Str::slug($repoName),
+            'description'  => $data['description'] ?? '',
+            'github_repo'  => $data['full_name'],
+            'status'       => 'active',
+        ]);
+
+        return back()->with('success', ""{$repoName}" added as a product.");
     }
 
     public function connectToken(Request $request)

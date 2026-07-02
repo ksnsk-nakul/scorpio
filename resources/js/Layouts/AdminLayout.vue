@@ -61,11 +61,11 @@ const isViewer   = computed(() => userRoles.value.includes('viewer'))
 // roles: which roles can see this link (matches backend middleware)
 const allNav = [
   { label: 'Dashboard',     href: '/admin/dashboard',     roles: ['admin','editor','viewer'] },
-  { label: 'Pages',         href: '/admin/pages',         roles: ['admin','editor'] },
-  { label: 'Service Cards', href: '/admin/service-cards', roles: ['admin','editor'] },
-  { label: 'Products',      href: '/admin/products',      roles: ['admin','editor'] },
+  { label: 'Pages',         href: '/admin/pages',         roles: ['admin','editor','viewer'] },
+  { label: 'Service Cards', href: '/admin/service-cards', roles: ['admin','editor','viewer'] },
+  { label: 'Products',      href: '/admin/products',      roles: ['admin','editor','viewer'] },
   { label: 'GitHub',        href: '/admin/github',        roles: ['admin','editor','viewer'] },
-  { label: 'Content',       href: '/admin/content',       roles: ['admin'] },
+  { label: 'Content',       href: '/admin/content',       roles: ['admin','editor','viewer'] },
   { label: 'Profile',       href: '/admin/profile',       roles: ['admin','editor','viewer'] },
   { label: 'Billing',       href: '/admin/billing',       roles: ['admin','editor','viewer'] },
   { label: 'Users',         href: '/admin/users',         roles: ['admin'] },
