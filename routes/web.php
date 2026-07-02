@@ -144,6 +144,15 @@ Route::middleware(['auth'])
         Route::post('billing/cancel', [BillingController::class, 'cancel'])->name('billing.cancel');
     });
 
+use App\Http\Controllers\Admin\PaymentController;
+
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::get('payment',   [PaymentController::class, 'index'])->name('payment.index');
+        Route::post('payment',  [PaymentController::class, 'update'])->name('payment.update');
+    });
+
 use App\Http\Controllers\Admin\ProfileController;
 
 Route::middleware(['auth'])
@@ -186,6 +195,10 @@ Route::get('/donate', [DonationController::class, 'show'])->name('donate');
 Route::post('/donate/order', [DonationController::class, 'createOrder'])->name('donate.order');
 Route::post('/donate/verify', [DonationController::class, 'verify'])->name('donate.verify');
 
+// Contact form submission (public)
+use App\Http\Controllers\ContactController;
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store')->middleware('throttle:5,1');
+
 // Public portfolio
 Route::get('/', [\App\Http\Controllers\PublicController::class, 'index'])->name('home');
 
@@ -197,5 +210,10 @@ Route::get('/portfolio/{username}', [\App\Http\Controllers\PublicController::cla
 Route::get('/portfolio/{username}/{slug}', [\App\Http\Controllers\PublicController::class, 'portfolioPage'])
     ->name('portfolio.page')
     ->where('username', '[a-z0-9_\-]+')
+    ->where('slug', '[a-z0-9\-]+');
+
+// Admin portfolio inner pages at root (must be last to avoid shadowing other routes)
+Route::get('/{slug}', [\App\Http\Controllers\PublicController::class, 'adminPage'])
+    ->name('admin.page')
     ->where('slug', '[a-z0-9\-]+');
 

@@ -8,6 +8,54 @@ use Inertia\Response;
 
 class PublicController extends Controller
 {
+    public function index(): Response
+    {
+        $user = $this->adminUser();
+
+        if (! $user) {
+            return Inertia::render('Public/Home', ['pages' => [], 'settings' => Setting::whereIn('key', ['site_name', 'site_tagline', 'meta_description'])->pluck('value', 'key')]);
+        }
+
+        $page = $user->pages()
+            ->where('is_home', true)
+            ->where('status', 'published')
+            ->with('serviceCards')
+            ->first();
+
+        if (! $page) {
+            return Inertia::render('Public/ProfileStub', [
+                'owner' => $user->only('id', 'name', 'username'),
+            ]);
+        }
+
+        return Inertia::render('Public/Portfolio', [
+            'page'       => $page,
+            'owner'      => $user->only('id', 'name', 'username'),
+            'workspaces' => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
+            'settings'   => $this->tenantSettings($user),
+        ]);
+    }
+
+    public function adminPage(string $slug): Response
+    {
+        $user = $this->adminUser();
+
+        abort_if(! $user, 404);
+
+        $page = $user->pages()
+            ->where('slug', $slug)
+            ->where('status', 'published')
+            ->with('serviceCards')
+            ->firstOrFail();
+
+        return Inertia::render('Public/Portfolio', [
+            'page'       => $page,
+            'owner'      => $user->only('id', 'name', 'username'),
+            'workspaces' => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
+            'settings'   => $this->tenantSettings($user),
+        ]);
+    }
+
     public function portfolio(string $username): Response
     {
         // select() prevents loading sensitive columns (password, github_token, etc.)
@@ -21,17 +69,15 @@ class PublicController extends Controller
             ->with('serviceCards')
             ->first();
 
-        // User exists but hasn't published a home page yet — show a stub
-        // instead of a hard 404, since the username itself is valid.
         if (! $page) {
             return Inertia::render('Public/ProfileStub', [
-                'owner' => $user->only('name', 'username'),
+                'owner' => $user->only('id', 'name', 'username'),
             ]);
         }
 
         return Inertia::render('Public/Portfolio', [
             'page'       => $page,
-            'owner'      => $user->only('name', 'username'),
+            'owner'      => $user->only('id', 'name', 'username'),
             'workspaces' => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
             'settings'   => $this->tenantSettings($user),
         ]);
@@ -51,44 +97,26 @@ class PublicController extends Controller
 
         return Inertia::render('Public/Portfolio', [
             'page'       => $page,
-            'owner'      => $user->only('name', 'username'),
+            'owner'      => $user->only('id', 'name', 'username'),
             'workspaces' => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
             'settings'   => $this->tenantSettings($user),
         ]);
     }
 
-    /**
-     * Per-tenant branding falls back to the platform-wide site_name when a
-     * user hasn't set their own; og_image has no global fallback since it's
-     * inherently tied to one tenant's content.
-     */
+    private function adminUser(): ?\App\Models\User
+    {
+        return \App\Models\User::role('admin')
+            ->select(['id', 'name', 'username', 'site_name', 'og_image'])
+            ->orderBy('id')
+            ->first();
+    }
+
     private function tenantSettings(\App\Models\User $user): array
     {
         return [
-            'site_name' => $user->site_name ?? Setting::get('site_name'),
-            'og_image'  => $user->og_image,
+            'site_name'          => $user->site_name ?? Setting::get('site_name'),
+            'og_image'           => $user->og_image,
+            'show_donate_banner' => (bool) Setting::get('show_donate_banner', false),
         ];
-    }
-
-    public function index(): Response|\Illuminate\Http\RedirectResponse
-    {
-        // Root domain isn't tied to a single tenant — route to the first
-        // user with a published home page rather than mixing every
-        // tenant's blocks into one feed (which would leak cross-tenant content).
-        $homeUser = \App\Models\User::whereHas('pages', fn ($q) => $q->where('is_home', true)->where('status', 'published'))
-            ->orderBy('id')
-            ->first(['id', 'username']);
-
-        if ($homeUser) {
-            return redirect("/portfolio/{$homeUser->username}");
-        }
-
-        $settings = Setting::whereIn('key', ['site_name', 'site_tagline', 'meta_description'])
-            ->pluck('value', 'key');
-
-        return Inertia::render('Public/Home', [
-            'pages'    => [],
-            'settings' => $settings,
-        ]);
     }
 }

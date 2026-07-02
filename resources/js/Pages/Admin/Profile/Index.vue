@@ -17,7 +17,7 @@
             <div>
               <label class="block text-xs font-medium text-slate-500 mb-1">Username</label>
               <div class="flex items-center border border-slate-200 rounded-lg overflow-hidden">
-                <span class="px-3 py-2 text-sm text-slate-400 bg-slate-50 border-r border-slate-200">scorpio.app/</span>
+                <span class="px-3 py-2 text-sm text-slate-400 bg-slate-50 border-r border-slate-200">portfolio/</span>
                 <input v-model="profileForm.username" type="text"
                   class="flex-1 px-3 py-2 text-sm outline-none" />
               </div>
@@ -41,7 +41,7 @@
       <!-- Public site branding -->
       <div class="bg-white border border-slate-200 rounded-xl p-6">
         <h2 class="font-semibold text-slate-800 mb-1">Site Branding</h2>
-        <p class="text-xs text-slate-400 mb-4">Shown on your public portfolio at scorpio.app/{{ profileForm.username }}</p>
+        <p class="text-xs text-slate-400 mb-4">Shown on your public portfolio at <a href="/" target="_blank" class="hover:underline">{{ window?.location?.host ?? 'your domain' }}/</a></p>
         <form @submit.prevent="profileForm.patch('/admin/profile')">
           <div class="space-y-4">
             <div>
@@ -61,7 +61,7 @@
               <p v-if="profileForm.errors.custom_domain" class="text-xs text-red-500 mt-1">{{ profileForm.errors.custom_domain }}</p>
               <p class="text-xs text-slate-400 mt-1">
                 Point an A/CNAME record at this server, then enter the domain here.
-                Your portfolio will be served at that domain instead of /{{ profileForm.username }}.
+                Your portfolio will be served at that domain instead of the default URL.
               </p>
             </div>
           </div>

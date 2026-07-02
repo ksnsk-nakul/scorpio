@@ -18,6 +18,8 @@ class SettingSeeder extends Seeder
             ['key' => 'og_image',          'value' => '',          'group' => 'seo'],
             ['key' => 'media_max_size_mb', 'value' => '50',        'group' => 'general'],
 
+            ['key' => 'show_donate_banner', 'value' => '0', 'group' => 'general'],
+
             // Social — left blank; fill in from Profile or Settings
             ['key' => 'social_github',   'value' => '', 'group' => 'social'],
             ['key' => 'social_linkedin', 'value' => '', 'group' => 'social'],

@@ -36,6 +36,9 @@ import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import MediaUploader from '@/Components/Admin/MediaUploader.vue'
 
-const props = defineProps({ project: Object, media: Array })
+const props = defineProps({
+  project: { type: Object, default: () => ({}) },
+  media:   { type: Array,  default: () => [] },
+})
 const newMediaIds = ref([])
 </script>

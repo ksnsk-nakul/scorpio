@@ -12,11 +12,31 @@
         </button>
       </div>
 
-      <form @submit.prevent="save" class="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+      <div v-if="isDemo" class="mb-4 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-xl px-4 py-3">
+        Settings are read-only in demo mode.
+      </div>
+
+      <form @submit.prevent="!isDemo && save()" class="bg-white border border-slate-200 rounded-xl p-6 space-y-4"
+        :class="isDemo ? 'opacity-60 pointer-events-none select-none' : ''">
         <div v-for="(value, key) in currentGroup" :key="key">
-          <label class="block text-sm text-slate-600 mb-1">{{ formatKey(String(key)) }}</label>
-          <input v-model="form[key]"
-            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+          <template v-if="isBoolKey(String(key))">
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" :checked="form[key] === '1' || form[key] === true"
+                @change="form[key] = $event.target.checked ? '1' : '0'"
+                class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+              <span class="text-sm text-slate-600">{{ formatKey(String(key)) }}</span>
+            </label>
+          </template>
+          <template v-else-if="isImageKey(String(key))">
+            <label class="block text-sm text-slate-600 mb-1">{{ formatKey(String(key)) }}</label>
+            <p class="text-xs text-slate-400 mb-2">This image appears in link previews when sharing your site on social media (Twitter/X, LinkedIn, iMessage, etc.).</p>
+            <ImagePicker v-model="form[key]" context="branding" />
+          </template>
+          <template v-else>
+            <label class="block text-sm text-slate-600 mb-1">{{ formatKey(String(key)) }}</label>
+            <input v-model="form[key]"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+          </template>
         </div>
 
         <div class="pt-2 flex items-center gap-3">
@@ -33,11 +53,13 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import ImagePicker from '@/Components/Admin/ImagePicker.vue'
 
 const props = defineProps({ settings: Object, groups: Array })
 const activeGroup = ref(props.groups[0])
+const isDemo = usePage().props.demo
 
 const allSettings = Object.values(props.settings).reduce((acc, g) => ({ ...acc, ...g }), {})
 const form = useForm(allSettings)
@@ -45,4 +67,8 @@ const form = useForm(allSettings)
 const currentGroup = computed(() => props.settings[activeGroup.value] ?? {})
 const save = () => form.patch('/admin/settings')
 const formatKey = k => k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+const boolKeys  = ['show_donate_banner']
+const imageKeys = ['og_image']
+const isBoolKey  = k => boolKeys.includes(k)
+const isImageKey = k => imageKeys.includes(k)
 </script>

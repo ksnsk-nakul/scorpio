@@ -38,7 +38,7 @@
         <span>⚡ Demo Mode</span>
         <span class="opacity-60">—</span>
         <span>You're exploring a live demo — any edits are visible on the public site and reset periodically.</span>
-        <a :href="`/portfolio/${page.props.auth.user?.username}`" target="_blank" class="ml-auto underline hover:no-underline flex-shrink-0">View public site ↗</a>
+        <a href="/" target="_blank" class="ml-auto underline hover:no-underline flex-shrink-0">View public site ↗</a>
       </div>
       <div class="p-6">
         <slot />
@@ -64,6 +64,7 @@ const allNav = [
   { label: 'Profile',       href: '/admin/profile',        adminOnly: false },
   { label: 'Billing',       href: '/admin/billing',        adminOnly: false },
   { label: 'Users',         href: '/admin/users',          adminOnly: true  },
+  { label: 'Payment',       href: '/admin/payment',        adminOnly: true  },
   { label: 'Settings',      href: '/admin/settings',       adminOnly: true  },
 ]
 

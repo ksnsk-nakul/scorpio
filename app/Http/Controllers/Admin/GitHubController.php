@@ -19,12 +19,13 @@ class GitHubController extends Controller
         $ownedWorkspaceIds = $user->workspaces()->pluck('id');
 
         return Inertia::render('Admin/GitHub/Index', [
-            'repos'    => $hasToken ? $this->github->withToken($user->github_token)->getRepos() : [],
-            'projects' => Project::whereNotNull('github_repo')
+            'repos'            => $hasToken ? $this->github->withToken($user->github_token)->getRepos() : [],
+            'projects'         => Project::whereNotNull('github_repo')
                 ->whereIn('workspace_id', $ownedWorkspaceIds)
                 ->with('workspace:id,name')
                 ->get(['id','name','github_repo','github_project_id','workspace_id']),
-            'hasToken' => $hasToken,
+            'hasToken'         => $hasToken,
+            'hasOAuthClient'   => filled(config('services.github.client_id')),
         ]);
     }
 
