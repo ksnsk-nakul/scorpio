@@ -21,6 +21,7 @@ class ContentController extends Controller
             'about'       => AboutSection::where('user_id', $user->id)->first(),
             'experiences' => ExperienceItem::where('user_id', $user->id)->orderBy('sort_order')->get(),
             'isDemo'      => app()->environment('demo'),
+            'skillLimit'  => $user->planLimit('skills'),
         ]);
     }
 
@@ -45,8 +46,10 @@ class ContentController extends Controller
             return back()->withErrors(['name' => 'You already have a skill with this name.']);
         }
 
-        if (Skill::where('user_id', $user->id)->count() >= 50) {
-            return back()->withErrors(['name' => 'Maximum 50 skills allowed.']);
+        $count = Skill::where('user_id', $user->id)->count();
+        if (! $user->withinLimit('skills', $count)) {
+            $limit = $user->planLimit('skills');
+            return back()->withErrors(['name' => "Your plan allows up to {$limit} skills. Upgrade to add more."]);
         }
 
         $max = Skill::where('user_id', $user->id)->max('sort_order') ?? -1;
@@ -58,7 +61,7 @@ class ContentController extends Controller
     public function updateSkill(Request $request, Skill $skill)
     {
         abort_if($skill->user_id !== $request->user()->id, 403);
-        abort_if(app()->environment('demo') && $skill->is_seeded, 403, 'Cannot edit seeded content in demo mode.');
+        abort_if(app()->environment('demo') && $skill->is_seeded && ! $request->user()->hasRole('admin'), 403, 'Cannot edit seeded content in demo mode.');
 
         $data = $request->validate([
             'name' => 'required|string|max:60',
@@ -84,7 +87,7 @@ class ContentController extends Controller
     public function destroySkill(Request $request, Skill $skill)
     {
         abort_if($skill->user_id !== $request->user()->id, 403);
-        abort_if(app()->environment('demo') && $skill->is_seeded, 403, 'Cannot delete seeded content in demo mode.');
+        abort_if(app()->environment('demo') && $skill->is_seeded && ! $request->user()->hasRole('admin'), 403, 'Cannot delete seeded content in demo mode.');
         $skill->delete();
         return back()->with('success', 'Skill removed.');
     }
@@ -111,7 +114,7 @@ class ContentController extends Controller
         ]);
 
         $about = AboutSection::firstOrNew(['user_id' => $user->id]);
-        abort_if(app()->environment('demo') && $about->exists && $about->is_seeded, 403, 'Cannot edit seeded content in demo mode.');
+        abort_if(app()->environment('demo') && $about->exists && $about->is_seeded && ! $user->hasRole('admin'), 403, 'Cannot edit seeded content in demo mode.');
 
         $about->fill(array_merge($data, ['user_id' => $user->id]));
         $about->save();
@@ -144,7 +147,7 @@ class ContentController extends Controller
     public function updateExperience(Request $request, ExperienceItem $experience)
     {
         abort_if($experience->user_id !== $request->user()->id, 403);
-        abort_if(app()->environment('demo') && $experience->is_seeded, 403, 'Cannot edit seeded content in demo mode.');
+        abort_if(app()->environment('demo') && $experience->is_seeded && ! $request->user()->hasRole('admin'), 403, 'Cannot edit seeded content in demo mode.');
 
         $data = $request->validate([
             'period'      => 'required|string|max:30',
@@ -164,7 +167,7 @@ class ContentController extends Controller
     public function destroyExperience(Request $request, ExperienceItem $experience)
     {
         abort_if($experience->user_id !== $request->user()->id, 403);
-        abort_if(app()->environment('demo') && $experience->is_seeded, 403, 'Cannot delete seeded content in demo mode.');
+        abort_if(app()->environment('demo') && $experience->is_seeded && ! $request->user()->hasRole('admin'), 403, 'Cannot delete seeded content in demo mode.');
         $experience->delete();
         return back()->with('success', 'Experience removed.');
     }

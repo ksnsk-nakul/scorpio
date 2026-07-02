@@ -12,9 +12,11 @@ class ServiceCardController extends Controller
 {
     public function index(): Response
     {
+        $user = auth()->user();
         return Inertia::render('Admin/ServiceCards/Index', [
-            'cards' => auth()->user()->serviceCards()->with('page:id,name')->orderBy('sort_order')->get(),
-            'pages' => auth()->user()->pages()->where('status', 'published')->get(['id','name']),
+            'cards'            => $user->serviceCards()->with('page:id,name')->orderBy('sort_order')->get(),
+            'pages'            => $user->pages()->where('status', 'published')->get(['id','name']),
+            'serviceCardLimit' => $user->planLimit('service_cards'),
         ]);
     }
 
@@ -38,8 +40,15 @@ class ServiceCardController extends Controller
             'external_url' => 'nullable|url',
         ]);
 
-        $data['sort_order'] = (auth()->user()->serviceCards()->max('sort_order') ?? 0) + 1;
-        $data['user_id'] = auth()->id();
+        $user  = auth()->user();
+        $count = $user->serviceCards()->count();
+        if (! $user->withinLimit('service_cards', $count)) {
+            $limit = $user->planLimit('service_cards');
+            return back()->withErrors(['title' => "Your plan allows up to {$limit} service cards. Upgrade to add more."]);
+        }
+
+        $data['sort_order'] = ($user->serviceCards()->max('sort_order') ?? 0) + 1;
+        $data['user_id'] = $user->id;
         ServiceCard::create($data);
 
         return redirect('/admin/service-cards')->with('success', 'Card created.');

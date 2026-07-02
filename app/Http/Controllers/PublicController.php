@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AboutSection;
 use App\Models\ExperienceItem;
+use App\Models\Project;
 use App\Models\Setting;
 use App\Models\Skill;
 use App\Models\User;
@@ -117,6 +118,36 @@ class PublicController extends Controller
             'dbSkills'     => $this->userSkills($user),
             'dbAbout'      => $this->userAbout($user),
             'dbExperience' => $this->userExperience($user),
+        ]);
+    }
+
+    public function projectDetail(string $username, string $projectSlug): Response
+    {
+        $user = User::where('username', $username)
+            ->select(['id', 'name', 'username', 'site_name', 'og_image'])
+            ->firstOrFail();
+
+        // Find project in any of this user's workspaces
+        $workspaceIds = $user->workspaces()->pluck('id');
+        $project = Project::whereIn('workspace_id', $workspaceIds)
+            ->where('slug', $projectSlug)
+            ->where('status', 'active')
+            ->firstOrFail();
+
+        $media = $project->media()->get()->map(fn ($m) => [
+            'id'       => $m->id,
+            'url'      => $m->url,
+            'alt_text' => $m->alt_text,
+            'filename' => $m->filename,
+            'is_image' => $m->isImage(),
+            'is_video' => $m->isVideo(),
+        ]);
+
+        return Inertia::render('Public/ProjectDetail', [
+            'project'  => $project->only('id','name','slug','description','details','github_repo','demo_url','tags'),
+            'media'    => $media,
+            'owner'    => $user->only('id', 'name', 'username'),
+            'settings' => $this->tenantSettings($user),
         ]);
     }
 

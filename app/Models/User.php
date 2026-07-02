@@ -85,4 +85,19 @@ class User extends Authenticatable
     {
         return $this->plan ?? 'free';
     }
+
+    public function planLimit(string $key): ?int
+    {
+        if ($this->hasRole('admin')) {
+            return null; // unlimited
+        }
+        $plan = $this->currentPlan();
+        return config("billing.limits.{$plan}.{$key}");
+    }
+
+    public function withinLimit(string $key, int $current): bool
+    {
+        $limit = $this->planLimit($key);
+        return $limit === null || $current < $limit;
+    }
 }

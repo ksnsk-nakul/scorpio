@@ -232,6 +232,11 @@ Route::get('/portfolio/{username}/{slug}', [\App\Http\Controllers\PublicControll
     ->where('username', '[a-z0-9_\-]+')
     ->where('slug', '[a-z0-9\-]+');
 
+Route::get('/portfolio/{username}/projects/{projectSlug}', [\App\Http\Controllers\PublicController::class, 'projectDetail'])
+    ->name('portfolio.project')
+    ->where('username', '[a-z0-9_\-]+')
+    ->where('projectSlug', '[a-z0-9\-]+');
+
 // Admin portfolio inner pages at root (must be last to avoid shadowing other routes)
 Route::get('/{slug}', [\App\Http\Controllers\PublicController::class, 'adminPage'])
     ->name('admin.page')

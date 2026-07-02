@@ -89,6 +89,57 @@
 
     </div>
 
+    <!-- Project Details Form -->
+    <div class="bg-white border border-slate-200 rounded-xl p-5">
+      <h2 class="font-semibold text-slate-800 text-sm mb-4">Project Details</h2>
+      <form @submit.prevent="saveDetails" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Short description (card)</label>
+          <textarea v-model="detailForm.description" rows="2"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-400 resize-none"
+            placeholder="One-paragraph summary shown on the portfolio card…"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Full details (project page)</label>
+          <textarea v-model="detailForm.details" rows="6"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-400 resize-y"
+            placeholder="Technologies, architecture, challenges, outcomes… Displayed on the public project detail page."/>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Demo / Live URL</label>
+            <input v-model="detailForm.demo_url" type="url"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-400"
+              placeholder="https://…"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">GitHub repo (owner/repo)</label>
+            <input v-model="detailForm.github_repo"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-400"
+              placeholder="username/repo-name"/>
+          </div>
+        </div>
+        <div class="flex items-center justify-between pt-1">
+          <div>
+            <label class="text-xs font-medium text-slate-600 mr-2">Status</label>
+            <select v-model="detailForm.status"
+              class="border border-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-orange-400">
+              <option value="active">Active</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-3">
+            <span v-if="saveSuccess" class="text-xs text-green-600">✓ Saved</span>
+            <span v-if="saveError" class="text-xs text-red-500">{{ saveError }}</span>
+            <button type="submit" :disabled="saving"
+              class="px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
+              {{ saving ? 'Saving…' : 'Save changes' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
     <!-- Lightbox -->
     <Teleport to="body">
       <div v-if="lightbox" class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
@@ -152,8 +203,8 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { ref, reactive, onUnmounted } from 'vue'
+import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import axios from 'axios'
 
@@ -161,6 +212,30 @@ const props = defineProps({
   project: { type: Object, default: () => ({}) },
   media:   { type: Array,  default: () => [] },
 })
+
+// ── Details form ──────────────────────────────────────────────────────────────
+const detailForm = reactive({
+  description: props.project.description ?? '',
+  details:     props.project.details ?? '',
+  demo_url:    props.project.demo_url ?? '',
+  github_repo: props.project.github_repo ?? '',
+  status:      props.project.status ?? 'active',
+})
+const saving      = ref(false)
+const saveSuccess = ref(false)
+const saveError   = ref(null)
+
+const saveDetails = () => {
+  saving.value = true
+  saveSuccess.value = false
+  saveError.value = null
+  router.put(`/admin/products/${props.project.id}`, detailForm, {
+    preserveScroll: true,
+    onSuccess: () => { saveSuccess.value = true; setTimeout(() => { saveSuccess.value = false }, 2500) },
+    onError:   (e) => { saveError.value = Object.values(e)[0] ?? 'Save failed' },
+    onFinish:  () => { saving.value = false },
+  })
+}
 
 const acceptedTypes  = 'image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime'
 const fileInput      = ref(null)

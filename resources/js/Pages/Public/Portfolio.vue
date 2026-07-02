@@ -229,21 +229,20 @@
           <div v-if="block.data.workspace_id && workspaces[block.data.workspace_id]?.projects?.length"
             class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div v-for="(project, i) in workspaces[block.data.workspace_id].projects" :key="project.id"
-              class="group rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer"
-              :style="`transition-delay:${i*0.07}s`"
-              @click="project.demo_url ? openUrl(project.demo_url) : null">
+              class="group rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
+              :style="`transition-delay:${i*0.07}s`">
               <h3 class="font-bold text-slate-900 text-lg mb-2 group-hover:text-orange-500 transition-colors">{{ project.name }}</h3>
               <p class="text-sm text-slate-500 flex-1 mb-4 leading-relaxed">{{ project.description }}</p>
               <div v-if="project.tags?.length" class="flex flex-wrap gap-1.5 mb-4">
                 <span v-for="tag in project.tags" :key="tag"
                   class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{{ tag }}</span>
               </div>
-              <div class="flex gap-2 mt-auto" @click.stop>
+              <div class="flex flex-wrap gap-2 mt-auto">
                 <a v-if="project.github_repo" :href="`https://github.com/${project.github_repo}`" target="_blank" rel="noopener"
                   class="px-4 py-1.5 border border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:border-orange-400 hover:text-orange-500 transition-all">GitHub</a>
                 <a v-if="project.demo_url" :href="project.demo_url" target="_blank" rel="noopener"
                   class="px-4 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-medium hover:bg-orange-600 transition-colors shadow-sm shadow-orange-200">Live Demo →</a>
-                <a v-else :href="`/projects/${project.slug ?? project.id}`"
+                <a :href="`/portfolio/${owner.username}/projects/${project.slug}`"
                   class="px-4 py-1.5 border border-orange-200 text-orange-600 rounded-lg text-xs font-medium hover:bg-orange-50 transition-colors">View Details</a>
               </div>
             </div>

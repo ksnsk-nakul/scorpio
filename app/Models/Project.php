@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 class Project extends Model
 {
     protected $fillable = [
-        'workspace_id','name','slug','description',
+        'workspace_id','name','slug','description','details',
         'github_repo','demo_url','tags','github_project_id','github_webhook_secret','cover_image','status','sort_order',
     ];
 

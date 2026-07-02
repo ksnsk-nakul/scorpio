@@ -68,6 +68,8 @@ class ProjectController extends Controller
         $data = $request->validate([
             'name'              => 'required|string|max:255',
             'description'       => 'nullable|string',
+            'details'           => 'nullable|string',
+            'demo_url'          => 'nullable|url|max:500',
             'github_repo'       => 'nullable|string|max:255',
             'github_project_id' => 'nullable|string|max:255',
             'status'            => 'in:active,archived',
