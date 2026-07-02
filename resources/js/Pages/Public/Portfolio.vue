@@ -110,10 +110,10 @@
             <div class="relative">
               <!-- Decorative ring -->
               <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-orange-100 to-blue-100 scale-110 opacity-60 animate-pulse-slow"></div>
-              <img src="/images/hero.png" :alt="owner.name"
-                   class="relative w-[340px] h-[340px] object-contain drop-shadow-2xl animate-float rounded-3xl"
+              <img :src="block.data.image || '/images/profile.png'" :alt="owner.name"
+                   class="relative w-[340px] h-[340px] object-cover drop-shadow-2xl animate-float rounded-3xl"
                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
-              <!-- Fallback if hero.png not yet placed -->
+              <!-- Fallback -->
               <div class="relative w-[340px] h-[340px] rounded-3xl bg-gradient-to-br from-orange-50 to-blue-50 items-center justify-center text-9xl select-none hidden">
                 👨‍💻
               </div>

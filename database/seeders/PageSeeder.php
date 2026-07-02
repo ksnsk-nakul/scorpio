@@ -35,6 +35,7 @@ class PageSeeder extends Seeder
                     'data'  => [
                         'heading'       => $adminName,
                         'subheading'    => 'Full Stack Developer | Laravel | Vue | API Development',
+                        'image'         => '/images/profile.png',
                         'rotating_text' => [
                             'Deploying reliable software.',
                             'Building scalable APIs.',

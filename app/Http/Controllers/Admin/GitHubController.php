@@ -18,14 +18,30 @@ class GitHubController extends Controller
 
         $ownedWorkspaceIds = $user->workspaces()->pluck('id');
 
+        $repos = [];
+        if ($hasToken) {
+            $repos = $this->github->withToken($user->github_token)->getRepos(100);
+
+            // Auto-unlink projects whose GitHub repo was deleted/renamed
+            $existingFullNames = collect($repos)->pluck('full_name')->map(fn($n) => strtolower($n));
+            Project::whereNotNull('github_repo')
+                ->whereIn('workspace_id', $ownedWorkspaceIds)
+                ->get(['id', 'github_repo'])
+                ->each(function (Project $project) use ($existingFullNames) {
+                    if (! $existingFullNames->contains(strtolower($project->github_repo))) {
+                        $project->update(['github_repo' => null, 'github_webhook_secret' => null]);
+                    }
+                });
+        }
+
         return Inertia::render('Admin/GitHub/Index', [
-            'repos'            => $hasToken ? $this->github->withToken($user->github_token)->getRepos() : [],
-            'projects'         => Project::whereNotNull('github_repo')
+            'repos'          => $repos,
+            'projects'       => Project::whereNotNull('github_repo')
                 ->whereIn('workspace_id', $ownedWorkspaceIds)
                 ->with('workspace:id,name')
                 ->get(['id','name','github_repo','github_project_id','workspace_id']),
-            'hasToken'         => $hasToken,
-            'hasOAuthClient'   => filled(config('services.github.client_id')),
+            'hasToken'       => $hasToken,
+            'hasOAuthClient' => filled(config('services.github.client_id')),
         ]);
     }
 
