@@ -65,7 +65,7 @@ const allNav = [
   { label: 'Service Cards', href: '/admin/service-cards', roles: ['admin','editor'] },
   { label: 'Products',      href: '/admin/products',      roles: ['admin','editor'] },
   { label: 'GitHub',        href: '/admin/github',        roles: ['admin','editor','viewer'] },
-  { label: 'Content',       href: '/admin/content',       roles: ['admin','editor'] },
+  { label: 'Content',       href: '/admin/content',       roles: ['admin'] },
   { label: 'Profile',       href: '/admin/profile',       roles: ['admin','editor','viewer'] },
   { label: 'Billing',       href: '/admin/billing',       roles: ['admin','editor','viewer'] },
   { label: 'Users',         href: '/admin/users',         roles: ['admin'] },

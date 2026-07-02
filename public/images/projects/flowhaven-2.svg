@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0d0d1a"/><stop offset="100%" stop-color="#13111f"/></linearGradient></defs>
+  <rect width="800" height="500" fill="url(#g)"/>
+  <!-- Pricing section -->
+  <text x="400" y="55" text-anchor="middle" font-family="system-ui,sans-serif" font-size="24" font-weight="bold" fill="white">Choose your plan</text>
+  <text x="400" y="82" text-anchor="middle" font-family="system-ui,sans-serif" font-size="14" fill="#9ca3af">Start free. Scale when you're ready.</text>
+  <!-- Starter -->
+  <rect x="55" y="105" width="200" height="280" rx="16" fill="#1f2937"/>
+  <text x="155" y="145" text-anchor="middle" font-family="system-ui,sans-serif" font-size="14" font-weight="bold" fill="#9ca3af">STARTER</text>
+  <text x="155" y="185" text-anchor="middle" font-family="system-ui,sans-serif" font-size="36" font-weight="bold" fill="white">Free</text>
+  <line x1="75" y1="200" x2="235" y2="200" stroke="#374151" stroke-width="1"/>
+  <text x="85" y="225" font-family="system-ui,sans-serif" font-size="12" fill="#6b7280">✓  5 pipelines</text>
+  <text x="85" y="248" font-family="system-ui,sans-serif" font-size="12" fill="#6b7280">✓  1,000 API calls/mo</text>
+  <text x="85" y="271" font-family="system-ui,sans-serif" font-size="12" fill="#6b7280">✓  Community support</text>
+  <rect x="75" y="330" width="160" height="38" rx="10" fill="#374151"/>
+  <text x="155" y="355" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" fill="#e5e7eb">Get started</text>
+  <!-- Pro -->
+  <rect x="295" y="85" width="215" height="310" rx="16" fill="#6366f1"/>
+  <rect x="355" y="93" width="95" height="22" rx="11" fill="#4f46e5"/>
+  <text x="403" y="109" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="white">MOST POPULAR</text>
+  <text x="403" y="148" text-anchor="middle" font-family="system-ui,sans-serif" font-size="14" font-weight="bold" fill="#c7d2fe">PRO</text>
+  <text x="403" y="188" text-anchor="middle" font-family="system-ui,sans-serif" font-size="36" font-weight="bold" fill="white">$29</text>
+  <text x="403" y="208" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#c7d2fe">/month</text>
+  <line x1="315" y1="220" x2="490" y2="220" stroke="#818cf8" stroke-width="1"/>
+  <text x="325" y="244" font-family="system-ui,sans-serif" font-size="12" fill="#e0e7ff">✓  50 pipelines</text>
+  <text x="325" y="266" font-family="system-ui,sans-serif" font-size="12" fill="#e0e7ff">✓  100k API calls/mo</text>
+  <text x="325" y="288" font-family="system-ui,sans-serif" font-size="12" fill="#e0e7ff">✓  Priority support</text>
+  <text x="325" y="310" font-family="system-ui,sans-serif" font-size="12" fill="#e0e7ff">✓  Analytics</text>
+  <rect x="315" y="346" width="175" height="38" rx="10" fill="white"/>
+  <text x="403" y="371" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="bold" fill="#6366f1">Start Pro trial</text>
+  <!-- Enterprise -->
+  <rect x="548" y="105" width="200" height="280" rx="16" fill="#1f2937" stroke="#4b5563" stroke-width="1"/>
+  <text x="648" y="145" text-anchor="middle" font-family="system-ui,sans-serif" font-size="14" font-weight="bold" fill="#9ca3af">ENTERPRISE</text>
+  <text x="648" y="185" text-anchor="middle" font-family="system-ui,sans-serif" font-size="36" font-weight="bold" fill="white">Custom</text>
+  <line x1="568" y1="200" x2="728" y2="200" stroke="#374151" stroke-width="1"/>
+  <text x="578" y="225" font-family="system-ui,sans-serif" font-size="12" fill="#6b7280">✓  Unlimited pipelines</text>
+  <text x="578" y="248" font-family="system-ui,sans-serif" font-size="12" fill="#6b7280">✓  Unlimited API calls</text>
+  <text x="578" y="271" font-family="system-ui,sans-serif" font-size="12" fill="#6b7280">✓  Dedicated support</text>
+  <rect x="568" y="330" width="160" height="38" rx="10" fill="#374151"/>
+  <text x="648" y="355" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" fill="#e5e7eb">Contact sales</text>
+  <text x="400" y="440" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="bold" fill="white">Multi-tier SaaS Billing</text>
+  <text x="400" y="465" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" fill="#9ca3af">Razorpay-powered subscription management</text>
+  <rect x="335" y="480" width="130" height="3" rx="2" fill="#6366f1"/>
+</svg>

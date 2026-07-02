@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0a0f1e"/><stop offset="100%" stop-color="#0d2240"/></linearGradient></defs>
+  <rect width="800" height="500" fill="url(#g)"/>
+  <!-- Kanban columns -->
+  <g>
+    <!-- Backlog -->
+    <rect x="30" y="50" width="175" height="360" rx="12" fill="#1e293b"/>
+    <text x="117" y="82" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="bold" fill="#94a3b8">BACKLOG</text>
+    <circle cx="150" cy="76" r="10" fill="#334155"/>
+    <text x="150" y="81" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#94a3b8">4</text>
+    <rect x="44" y="98" width="147" height="60" rx="8" fill="#0f172a"/>
+    <text x="60" y="120" font-family="system-ui,sans-serif" font-size="12" fill="#e2e8f0">User auth system</text>
+    <rect x="56" y="135" width="50" height="16" rx="8" fill="#1e3a8a"/><text x="81" y="147" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#93c5fd">backend</text>
+    <rect x="44" y="170" width="147" height="60" rx="8" fill="#0f172a"/>
+    <text x="60" y="192" font-family="system-ui,sans-serif" font-size="12" fill="#e2e8f0">Email templates</text>
+    <rect x="56" y="207" width="44" height="16" rx="8" fill="#374151"/><text x="78" y="219" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#9ca3af">design</text>
+    <!-- In Progress -->
+    <rect x="215" y="50" width="175" height="360" rx="12" fill="#1e293b"/>
+    <text x="300" y="82" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="bold" fill="#fbbf24">IN PROGRESS</text>
+    <circle cx="368" cy="76" r="10" fill="#78350f"/>
+    <text x="368" y="81" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#fcd34d">3</text>
+    <rect x="229" y="98" width="147" height="60" rx="8" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="245" y="120" font-family="system-ui,sans-serif" font-size="12" fill="#e2e8f0">Kanban drag</text>
+    <rect x="241" y="135" width="64" height="16" rx="8" fill="#7c2d12"/><text x="273" y="147" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#fdba74">frontend</text>
+    <rect x="229" y="170" width="147" height="60" rx="8" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="245" y="192" font-family="system-ui,sans-serif" font-size="12" fill="#e2e8f0">API endpoints</text>
+    <!-- Review -->
+    <rect x="400" y="50" width="175" height="360" rx="12" fill="#1e293b"/>
+    <text x="487" y="82" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="bold" fill="#a78bfa">REVIEW</text>
+    <circle cx="552" cy="76" r="10" fill="#4c1d95"/>
+    <text x="552" y="81" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#c4b5fd">2</text>
+    <rect x="414" y="98" width="147" height="60" rx="8" fill="#0f172a"/>
+    <text x="430" y="120" font-family="system-ui,sans-serif" font-size="12" fill="#e2e8f0">DB schema</text>
+    <!-- Done -->
+    <rect x="585" y="50" width="185" height="360" rx="12" fill="#1e293b"/>
+    <text x="677" y="82" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="bold" fill="#34d399">DONE</text>
+    <circle cx="748" cy="76" r="10" fill="#064e3b"/>
+    <text x="748" y="81" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#6ee7b7">6</text>
+    <rect x="599" y="98" width="157" height="60" rx="8" fill="#0f172a"/>
+    <text x="615" y="120" font-family="system-ui,sans-serif" font-size="12" fill="#94a3b8">✓ Project setup</text>
+    <rect x="599" y="170" width="157" height="60" rx="8" fill="#0f172a"/>
+    <text x="615" y="192" font-family="system-ui,sans-serif" font-size="12" fill="#94a3b8">✓ CI/CD pipeline</text>
+  </g>
+  <text x="400" y="445" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="bold" fill="white">Kanban Task Board</text>
+  <rect x="340" y="463" width="120" height="3" rx="2" fill="#f59e0b"/>
+</svg>

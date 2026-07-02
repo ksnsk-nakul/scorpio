@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f0f23"/><stop offset="100%" stop-color="#1a1a4e"/></linearGradient></defs>
+  <rect width="800" height="500" fill="url(#g)"/>
+  <!-- Reader UI mockup -->
+  <rect x="100" y="60" width="600" height="360" rx="16" fill="#1e1e3a" opacity="0.95"/>
+  <!-- Toolbar -->
+  <rect x="100" y="60" width="600" height="44" rx="16" fill="#312e81"/>
+  <rect x="100" y="88" width="600" height="16" rx="0" fill="#312e81"/>
+  <text x="140" y="87" font-family="system-ui,sans-serif" font-size="13" fill="#c7d2fe">📖  Chapter 3: The Laravel Way</text>
+  <text x="640" y="87" font-family="system-ui,sans-serif" font-size="12" fill="#a5b4fc" text-anchor="end">Aa  🔆  ⚙</text>
+  <!-- Reading content lines -->
+  <g fill="#e2e8f0" opacity="0.7">
+    <rect x="140" y="130" width="480" height="10" rx="5"/>
+    <rect x="140" y="152" width="460" height="10" rx="5"/>
+    <rect x="140" y="174" width="490" height="10" rx="5"/>
+    <rect x="140" y="196" width="420" height="10" rx="5"/>
+    <rect x="140" y="230" width="480" height="10" rx="5"/>
+    <rect x="140" y="252" width="455" height="10" rx="5"/>
+    <rect x="140" y="274" width="475" height="10" rx="5"/>
+    <rect x="140" y="296" width="430" height="10" rx="5"/>
+    <rect x="140" y="318" width="460" height="10" rx="5"/>
+  </g>
+  <!-- Progress bar -->
+  <rect x="140" y="385" width="480" height="6" rx="3" fill="#374151"/>
+  <rect x="140" y="385" width="180" height="6" rx="3" fill="#6366f1"/>
+  <text x="140" y="408" font-family="system-ui,sans-serif" font-size="11" fill="#94a3b8">37% · Est. 2h 14m left</text>
+  <text x="400" y="455" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="bold" fill="white">Immersive Reading Experience</text>
+  <rect x="340" y="475" width="120" height="3" rx="2" fill="#6366f1"/>
+</svg>

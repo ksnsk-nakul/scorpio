@@ -23,6 +23,10 @@ class Media extends Model
         if ($this->disk === 'public') {
             return asset('storage/' . $this->path);
         }
+        // Static files served directly from public/ directory
+        if ($this->disk === 'static') {
+            return asset($this->path);
+        }
         return Storage::disk($this->disk)->url($this->path);
     }
 
