@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AboutSection;
+use App\Models\ExperienceItem;
 use App\Models\Setting;
+use App\Models\Skill;
+use App\Models\User;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -13,7 +17,10 @@ class PublicController extends Controller
         $user = $this->adminUser();
 
         if (! $user) {
-            return Inertia::render('Public/Home', ['pages' => [], 'settings' => Setting::whereIn('key', ['site_name', 'site_tagline', 'meta_description'])->pluck('value', 'key')]);
+            return Inertia::render('Public/Home', [
+                'pages'    => [],
+                'settings' => Setting::whereIn('key', ['site_name', 'site_tagline', 'meta_description'])->pluck('value', 'key'),
+            ]);
         }
 
         $page = $user->pages()
@@ -33,13 +40,15 @@ class PublicController extends Controller
             'owner'      => $user->only('id', 'name', 'username'),
             'workspaces' => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
             'settings'   => $this->tenantSettings($user),
+            'dbSkills'   => $this->userSkills($user),
+            'dbAbout'    => $this->userAbout($user),
+            'dbExperience' => $this->userExperience($user),
         ]);
     }
 
     public function adminPage(string $slug): Response
     {
         $user = $this->adminUser();
-
         abort_if(! $user, 404);
 
         $page = $user->pages()
@@ -49,17 +58,19 @@ class PublicController extends Controller
             ->firstOrFail();
 
         return Inertia::render('Public/Portfolio', [
-            'page'       => $page,
-            'owner'      => $user->only('id', 'name', 'username'),
-            'workspaces' => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
-            'settings'   => $this->tenantSettings($user),
+            'page'         => $page,
+            'owner'        => $user->only('id', 'name', 'username'),
+            'workspaces'   => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
+            'settings'     => $this->tenantSettings($user),
+            'dbSkills'     => $this->userSkills($user),
+            'dbAbout'      => $this->userAbout($user),
+            'dbExperience' => $this->userExperience($user),
         ]);
     }
 
     public function portfolio(string $username): Response
     {
-        // select() prevents loading sensitive columns (password, github_token, etc.)
-        $user = \App\Models\User::where('username', $username)
+        $user = User::where('username', $username)
             ->select(['id', 'name', 'username', 'site_name', 'og_image'])
             ->firstOrFail();
 
@@ -76,16 +87,19 @@ class PublicController extends Controller
         }
 
         return Inertia::render('Public/Portfolio', [
-            'page'       => $page,
-            'owner'      => $user->only('id', 'name', 'username'),
-            'workspaces' => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
-            'settings'   => $this->tenantSettings($user),
+            'page'         => $page,
+            'owner'        => $user->only('id', 'name', 'username'),
+            'workspaces'   => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
+            'settings'     => $this->tenantSettings($user),
+            'dbSkills'     => $this->userSkills($user),
+            'dbAbout'      => $this->userAbout($user),
+            'dbExperience' => $this->userExperience($user),
         ]);
     }
 
     public function portfolioPage(string $username, string $slug): Response
     {
-        $user = \App\Models\User::where('username', $username)
+        $user = User::where('username', $username)
             ->select(['id', 'name', 'username', 'site_name', 'og_image'])
             ->firstOrFail();
 
@@ -96,27 +110,46 @@ class PublicController extends Controller
             ->firstOrFail();
 
         return Inertia::render('Public/Portfolio', [
-            'page'       => $page,
-            'owner'      => $user->only('id', 'name', 'username'),
-            'workspaces' => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
-            'settings'   => $this->tenantSettings($user),
+            'page'         => $page,
+            'owner'        => $user->only('id', 'name', 'username'),
+            'workspaces'   => $user->workspaces()->with('projects:id,workspace_id,name,description,github_repo,status')->get(['id','name'])->keyBy('id'),
+            'settings'     => $this->tenantSettings($user),
+            'dbSkills'     => $this->userSkills($user),
+            'dbAbout'      => $this->userAbout($user),
+            'dbExperience' => $this->userExperience($user),
         ]);
     }
 
-    private function adminUser(): ?\App\Models\User
+    private function adminUser(): ?User
     {
-        return \App\Models\User::role('admin')
+        return User::role('admin')
             ->select(['id', 'name', 'username', 'site_name', 'og_image'])
             ->orderBy('id')
             ->first();
     }
 
-    private function tenantSettings(\App\Models\User $user): array
+    private function tenantSettings(User $user): array
     {
         return [
             'site_name'          => $user->site_name ?? Setting::get('site_name'),
             'og_image'           => $user->og_image,
             'show_donate_banner' => (bool) Setting::get('show_donate_banner', false),
         ];
+    }
+
+    private function userSkills(User $user): array
+    {
+        return Skill::where('user_id', $user->id)->orderBy('sort_order')->orderBy('name')->get(['name', 'icon'])->toArray();
+    }
+
+    private function userAbout(User $user): ?array
+    {
+        $a = AboutSection::where('user_id', $user->id)->first();
+        return $a ? ['bio' => $a->bio, 'overview' => $a->overview ?? []] : null;
+    }
+
+    private function userExperience(User $user): array
+    {
+        return ExperienceItem::where('user_id', $user->id)->orderBy('sort_order')->get(['period', 'title', 'company', 'description'])->toArray();
     }
 }

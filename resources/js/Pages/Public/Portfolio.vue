@@ -100,13 +100,13 @@
             <div>
               <h2 class="text-3xl font-bold text-slate-900 mb-6">About</h2>
               <div class="space-y-4 text-slate-600 leading-relaxed">
-                <p v-for="(para, i) in aboutParagraphs(block.data.bio)" :key="i">{{ para }}</p>
+                <p v-for="(para, i) in aboutParagraphs((dbAbout ?? block.data).bio)" :key="i">{{ para }}</p>
               </div>
             </div>
             <div>
               <h3 class="text-orange-500 font-bold text-lg mb-4">Skills Overview</h3>
               <ul class="space-y-2">
-                <li v-for="item in (block.data.overview ?? [])" :key="item"
+                <li v-for="item in ((dbAbout ?? block.data).overview ?? [])" :key="item"
                   class="text-slate-600">{{ item }}</li>
               </ul>
             </div>
@@ -118,7 +118,8 @@
           class="py-20 px-6 max-w-6xl mx-auto bg-slate-50 rounded-3xl">
           <h2 class="text-3xl font-bold text-slate-900 mb-10">{{ block.data.heading ?? 'Skills' }}</h2>
           <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            <div v-for="skill in (block.data.skills ?? [])" :key="skill.name"
+            <div v-for="skill in (dbSkills?.length ? dbSkills : (block.data.skills ?? []))"
+              :key="skill.name"
               class="bg-white rounded-2xl p-6 flex flex-col items-center gap-2 shadow-sm hover:shadow-md transition-shadow">
               <span class="text-3xl">{{ skill.icon }}</span>
               <span class="text-sm font-medium text-slate-700">{{ skill.name }}</span>
@@ -131,7 +132,8 @@
           class="py-20 px-6 max-w-6xl mx-auto">
           <h2 class="text-3xl font-bold text-slate-900 mb-10">{{ block.data.heading ?? 'Experience' }}</h2>
           <div class="space-y-8">
-            <div v-for="exp in (block.data.items ?? [])" :key="exp.title"
+            <div v-for="exp in (dbExperience?.length ? dbExperience : (block.data.items ?? []))"
+              :key="exp.title"
               class="flex gap-6">
               <div class="w-1 bg-orange-400 rounded-full flex-shrink-0"></div>
               <div>
@@ -321,11 +323,14 @@ import { usePage, Head, useForm } from '@inertiajs/vue3'
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
-  page:       { type: Object, default: () => ({}) },
-  owner:      { type: Object, default: () => ({}) },
-  settings:   { type: Object, default: () => ({}) },
-  workspaces: { type: Object, default: () => ({}) },
-  auth:       { type: Object, default: () => ({}) },
+  page:         { type: Object, default: () => ({}) },
+  owner:        { type: Object, default: () => ({}) },
+  settings:     { type: Object, default: () => ({}) },
+  workspaces:   { type: Object, default: () => ({}) },
+  auth:         { type: Object, default: () => ({}) },
+  dbSkills:     { type: Array,  default: null },
+  dbAbout:      { type: Object, default: null },
+  dbExperience: { type: Array,  default: null },
 })
 
 const { props: pageProps } = usePage()

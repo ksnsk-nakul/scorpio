@@ -113,6 +113,26 @@ Route::middleware(['auth', 'role:admin,editor'])
         Route::delete('github/token', [GitHubController::class, 'disconnectToken'])->name('github.token.disconnect');
     });
 
+use App\Http\Controllers\Admin\ContentController;
+
+Route::middleware(['auth', 'role:admin,editor'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::get('content', [ContentController::class, 'index'])->name('content.index');
+
+        Route::post('content/skills',                  [ContentController::class, 'storeSkill'])->name('content.skills.store');
+        Route::patch('content/skills/{skill}',         [ContentController::class, 'updateSkill'])->name('content.skills.update');
+        Route::delete('content/skills/{skill}',        [ContentController::class, 'destroySkill'])->name('content.skills.destroy');
+        Route::post('content/skills/reorder',          [ContentController::class, 'reorderSkills'])->name('content.skills.reorder');
+
+        Route::patch('content/about',                  [ContentController::class, 'updateAbout'])->name('content.about.update');
+
+        Route::post('content/experience',              [ContentController::class, 'storeExperience'])->name('content.experience.store');
+        Route::patch('content/experience/{experience}',[ContentController::class, 'updateExperience'])->name('content.experience.update');
+        Route::delete('content/experience/{experience}',[ContentController::class, 'destroyExperience'])->name('content.experience.destroy');
+        Route::post('content/experience/reorder',      [ContentController::class, 'reorderExperience'])->name('content.experience.reorder');
+    });
+
 use App\Http\Controllers\Admin\SettingController;
 
 Route::middleware(['auth', 'role:admin'])
