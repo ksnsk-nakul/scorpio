@@ -50,7 +50,7 @@ class PageController extends Controller
 
     public function update(Request $request, Page $page)
     {
-        abort_if($page->user_id !== auth()->id(), 403);
+        $this->authorize('update', $page);
 
         $data = $request->validate([
             'name'   => 'sometimes|string|max:255',
@@ -68,7 +68,7 @@ class PageController extends Controller
 
     public function publish(Page $page)
     {
-        abort_if($page->user_id !== auth()->id(), 403);
+        $this->authorize('update', $page);
 
         $page->update(['status' => 'published', 'published_at' => now()]);
         return back()->with('success', 'Page published.');
@@ -76,7 +76,7 @@ class PageController extends Controller
 
     public function destroy(Page $page)
     {
-        abort_if($page->user_id !== auth()->id(), 403);
+        $this->authorize('update', $page);
         abort_if($page->is_home, 403, 'Home page cannot be deleted.');
 
         $page->delete();

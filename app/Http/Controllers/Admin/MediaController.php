@@ -34,11 +34,7 @@ class MediaController extends Controller
     public function destroy(int $id): JsonResponse
     {
         $media = Media::findOrFail($id);
-        abort_if(
-            $media->user_id !== auth()->id() && ! auth()->user()->hasRole('admin'),
-            403,
-            'You do not own this file.'
-        );
+        $this->authorize('delete', $media);
         Storage::disk($media->disk)->delete($media->path);
         $media->delete();
         return response()->json(['ok' => true]);

@@ -221,6 +221,10 @@ Route::post('/donate/verify', [DonationController::class, 'verify'])->name('dona
 use App\Http\Controllers\ContactController;
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store')->middleware('throttle:5,1');
 
+// Legal pages (required for Google OAuth)
+Route::get('/terms', [\App\Http\Controllers\PublicController::class, 'terms'])->name('terms');
+Route::get('/privacy', [\App\Http\Controllers\PublicController::class, 'privacy'])->name('privacy');
+
 // Public portfolio
 Route::get('/', [\App\Http\Controllers\PublicController::class, 'index'])->name('home');
 

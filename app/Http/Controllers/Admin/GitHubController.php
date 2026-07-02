@@ -103,7 +103,7 @@ class GitHubController extends Controller
     public function createGitHubProject(Request $request, Project $project)
     {
         abort_if(! filled(auth()->user()->github_token), 403, 'No GitHub token configured.');
-        abort_unless(auth()->user()->workspaces()->where('id', $project->workspace_id)->exists(), 403);
+        $this->authorize('update', $project);
 
         $data = $request->validate([
             'owner' => 'required|string',
@@ -128,7 +128,7 @@ class GitHubController extends Controller
      */
     public function webhookCredentials(Project $project)
     {
-        abort_unless(auth()->user()->workspaces()->where('id', $project->workspace_id)->exists(), 403);
+        $this->authorize('update', $project);
         abort_if(! $project->github_repo, 422, 'Link a GitHub repo to this product first.');
 
         $project->github_webhook_secret = bin2hex(random_bytes(20));
@@ -144,7 +144,7 @@ class GitHubController extends Controller
     public function sync(Project $project)
     {
         abort_if(! filled(auth()->user()->github_token), 403, 'No GitHub token configured.');
-        abort_unless(auth()->user()->workspaces()->where('id', $project->workspace_id)->exists(), 403);
+        $this->authorize('update', $project);
 
         $token = auth()->user()->github_token;
         $count = $this->github->withToken($token)->syncIssuesToProject($project);

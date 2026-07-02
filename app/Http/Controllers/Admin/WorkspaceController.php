@@ -28,7 +28,7 @@ class WorkspaceController extends Controller
 
     public function update(Request $request, Workspace $workspace)
     {
-        abort_if($workspace->user_id !== auth()->id(), 403);
+        $this->authorize('update', $workspace);
 
         $workspace->update($request->validate([
             'name'        => 'required|string|max:255',
@@ -39,7 +39,7 @@ class WorkspaceController extends Controller
 
     public function destroy(Workspace $workspace)
     {
-        abort_if($workspace->user_id !== auth()->id(), 403);
+        $this->authorize('delete', $workspace);
 
         $workspace->delete();
         return redirect('/admin/workspaces')->with('success', 'Workspace deleted.');

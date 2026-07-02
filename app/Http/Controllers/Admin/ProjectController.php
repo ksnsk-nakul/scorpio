@@ -31,7 +31,8 @@ class ProjectController extends Controller
         ]);
 
         abort_unless(
-            auth()->user()->workspaces()->where('id', $data['workspace_id'])->exists(),
+            auth()->user()->workspaces()->where('id', $data['workspace_id'])->exists()
+            || auth()->user()->hasRole('admin'),
             403
         );
 
@@ -41,10 +42,7 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
-        abort_unless(
-            auth()->user()->workspaces()->where('id', $project->workspace_id)->exists(),
-            403
-        );
+        $this->authorize('view', $project);
 
         return Inertia::render('Admin/Products/Show', [
             'project' => $project->load('workspace:id,name'),
@@ -60,10 +58,7 @@ class ProjectController extends Controller
 
     public function update(Request $request, Project $project)
     {
-        abort_unless(
-            auth()->user()->workspaces()->where('id', $project->workspace_id)->exists(),
-            403
-        );
+        $this->authorize('update', $project);
 
         $data = $request->validate([
             'name'              => 'required|string|max:255',
@@ -103,10 +98,7 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
-        abort_unless(
-            auth()->user()->workspaces()->where('id', $project->workspace_id)->exists(),
-            403
-        );
+        $this->authorize('delete', $project);
 
         $project->delete();
         return redirect('/admin/products')->with('success', 'Project deleted.');

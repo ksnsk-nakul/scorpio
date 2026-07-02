@@ -56,7 +56,7 @@ class ServiceCardController extends Controller
 
     public function edit(ServiceCard $serviceCard): Response
     {
-        abort_if($serviceCard->user_id !== auth()->id(), 403);
+        $this->authorize('update', $serviceCard);
 
         return Inertia::render('Admin/ServiceCards/Form', [
             'card'  => $serviceCard,
@@ -66,7 +66,7 @@ class ServiceCardController extends Controller
 
     public function update(Request $request, ServiceCard $serviceCard)
     {
-        abort_if($serviceCard->user_id !== auth()->id(), 403);
+        $this->authorize('update', $serviceCard);
 
         $data = $request->validate([
             'title'        => 'required|string|max:255',
@@ -85,7 +85,7 @@ class ServiceCardController extends Controller
 
     public function destroy(ServiceCard $serviceCard)
     {
-        abort_if($serviceCard->user_id !== auth()->id(), 403);
+        $this->authorize('delete', $serviceCard);
 
         $serviceCard->delete();
         return redirect('/admin/service-cards')->with('success', 'Card deleted.');

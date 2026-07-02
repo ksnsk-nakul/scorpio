@@ -151,6 +151,20 @@ class PublicController extends Controller
         ]);
     }
 
+    public function terms(): Response
+    {
+        return Inertia::render('Public/Terms', [
+            'site_name' => Setting::get('site_name', 'KSNSK'),
+        ]);
+    }
+
+    public function privacy(): Response
+    {
+        return Inertia::render('Public/Privacy', [
+            'site_name' => Setting::get('site_name', 'KSNSK'),
+        ]);
+    }
+
     private function adminUser(): ?User
     {
         return User::role('admin')

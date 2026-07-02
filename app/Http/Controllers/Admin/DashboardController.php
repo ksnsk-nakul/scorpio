@@ -47,7 +47,7 @@ class DashboardController extends Controller
 
     public function markContactRead(ContactSubmission $submission)
     {
-        abort_if($submission->user_id !== auth()->id(), 403);
+        $this->authorize('update', $submission);
         $submission->update(['read' => true]);
         return response()->noContent();
     }

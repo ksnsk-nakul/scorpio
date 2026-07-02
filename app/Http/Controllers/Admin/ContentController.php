@@ -60,7 +60,7 @@ class ContentController extends Controller
 
     public function updateSkill(Request $request, Skill $skill)
     {
-        abort_if($skill->user_id !== $request->user()->id, 403);
+        $this->authorize('update', $skill);
         abort_if(app()->environment('demo') && $skill->is_seeded && ! $request->user()->hasRole('admin'), 403, 'Cannot edit seeded content in demo mode.');
 
         $data = $request->validate([
@@ -86,7 +86,7 @@ class ContentController extends Controller
 
     public function destroySkill(Request $request, Skill $skill)
     {
-        abort_if($skill->user_id !== $request->user()->id, 403);
+        $this->authorize('delete', $skill);
         abort_if(app()->environment('demo') && $skill->is_seeded && ! $request->user()->hasRole('admin'), 403, 'Cannot delete seeded content in demo mode.');
         $skill->delete();
         return back()->with('success', 'Skill removed.');
@@ -146,7 +146,7 @@ class ContentController extends Controller
 
     public function updateExperience(Request $request, ExperienceItem $experience)
     {
-        abort_if($experience->user_id !== $request->user()->id, 403);
+        $this->authorize('update', $experience);
         abort_if(app()->environment('demo') && $experience->is_seeded && ! $request->user()->hasRole('admin'), 403, 'Cannot edit seeded content in demo mode.');
 
         $data = $request->validate([
@@ -166,7 +166,7 @@ class ContentController extends Controller
 
     public function destroyExperience(Request $request, ExperienceItem $experience)
     {
-        abort_if($experience->user_id !== $request->user()->id, 403);
+        $this->authorize('delete', $experience);
         abort_if(app()->environment('demo') && $experience->is_seeded && ! $request->user()->hasRole('admin'), 403, 'Cannot delete seeded content in demo mode.');
         $experience->delete();
         return back()->with('success', 'Experience removed.');
