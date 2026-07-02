@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 160">
+  <defs>
+    <linearGradient id="ko" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f97316"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient>
+    <linearGradient id="kb" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#a855f7"/></linearGradient>
+    <linearGradient id="kp" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#a855f7"/><stop offset="100%" stop-color="#f97316"/></linearGradient>
+    <linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f97316"/><stop offset="50%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#a855f7"/></linearGradient>
+    <linearGradient id="ng" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#a855f7"/></linearGradient>
+  </defs>
+
+  <!-- K1: vertical bar + two diagonals -->
+  <rect x="4" y="8" width="22" height="144" rx="4" fill="url(#ko)"/>
+  <polygon points="26,80 86,8 62,8 26,56"   fill="url(#kb)"/>
+  <polygon points="26,80 86,152 62,152 26,104" fill="url(#kp)"/>
+
+  <!-- S1 -->
+  <path d="M100 8 h52 a20 20 0 0 1 0 34 h-34 a14 14 0 0 0 0 28 h34 a20 20 0 0 1 0 34 h-52 a14 14 0 0 1 0-28 h34 a6 6 0 0 0 0-12 h-34 a20 20 0 0 1 0-56z"
+        fill="url(#sg)"/>
+
+  <!-- N -->
+  <rect x="202" y="8"  width="22" height="144" rx="4" fill="url(#ng)"/>
+  <rect x="284" y="8"  width="22" height="144" rx="4" fill="url(#ng)"/>
+  <polygon points="202,8 224,8 306,120 306,152 284,152 202,40" fill="url(#kb)"/>
+
+  <!-- S2 -->
+  <path d="M318 8 h52 a20 20 0 0 1 0 34 h-34 a14 14 0 0 0 0 28 h34 a20 20 0 0 1 0 34 h-52 a14 14 0 0 1 0-28 h34 a6 6 0 0 0 0-12 h-34 a20 20 0 0 1 0-56z"
+        fill="url(#kp)"/>
+
+  <!-- K2: vertical bar + two diagonals -->
+  <rect x="420" y="8" width="22" height="144" rx="4" fill="url(#ko)"/>
+  <polygon points="442,80 496,8  478,8  442,56"  fill="url(#kb)"/>
+  <polygon points="442,80 496,152 478,152 442,104" fill="url(#kp)"/>
+</svg>
