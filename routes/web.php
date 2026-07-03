@@ -214,8 +214,6 @@ Route::post('/login/otp/verify', [OtpAuthController::class, 'verify'])->name('lo
 // Donation — public, no auth required
 use App\Http\Controllers\DonationController;
 Route::get('/donate', [DonationController::class, 'show'])->name('donate');
-Route::post('/donate/order', [DonationController::class, 'createOrder'])->name('donate.order');
-Route::post('/donate/verify', [DonationController::class, 'verify'])->name('donate.verify');
 
 // Contact form submission (public)
 use App\Http\Controllers\ContactController;

@@ -65,7 +65,7 @@
         class="bg-gradient-to-r from-pink-50 to-rose-50 border-b border-pink-100 px-6 py-3 text-center animate-fade-down">
         <p class="text-sm text-slate-700">
           Enjoying my work?
-          <a href="/donate" class="font-medium text-pink-600 hover:text-pink-800 underline ml-1 transition-colors">Support me with a donation ♥</a>
+          <a href="/donate" class="font-medium text-pink-600 hover:text-pink-800 underline ml-1 transition-colors">Support me ♥</a>
         </p>
       </div>
 
@@ -307,7 +307,7 @@
                 <a href="/donate"
                   class="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-semibold hover:bg-orange-600 active:scale-95 transition-all duration-200 shadow-md shadow-orange-200">
                   <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                  Donate ♥
+                  Support me ♥
                 </a>
               </div>
             </div>
