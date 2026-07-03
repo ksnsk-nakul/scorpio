@@ -222,6 +222,7 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 // Legal pages (required for Google OAuth)
 Route::get('/terms', [\App\Http\Controllers\PublicController::class, 'terms'])->name('terms');
 Route::get('/privacy', [\App\Http\Controllers\PublicController::class, 'privacy'])->name('privacy');
+Route::get('/refund', [\App\Http\Controllers\PublicController::class, 'refund'])->name('refund');
 
 // Public portfolio
 Route::get('/', [\App\Http\Controllers\PublicController::class, 'index'])->name('home');

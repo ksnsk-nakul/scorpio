@@ -165,6 +165,13 @@ class PublicController extends Controller
         ]);
     }
 
+    public function refund(): Response
+    {
+        return Inertia::render('Public/Refund', [
+            'site_name' => Setting::get('site_name', 'KSNSK'),
+        ]);
+    }
+
     private function adminUser(): ?User
     {
         return User::role('admin')
