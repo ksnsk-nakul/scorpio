@@ -25,11 +25,17 @@ Route::middleware(['auth', 'role:admin,editor,viewer'])
         Route::patch('/dashboard/contacts/{submission}/read', [DashboardController::class, 'markContactRead'])->name('dashboard.contact.read');
     });
 
+Route::middleware(['auth', 'role:admin,editor,viewer'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::get('pages', [PageController::class, 'index'])->name('pages.index');
+    });
+
 Route::middleware(['auth', 'role:admin,editor'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-        Route::resource('pages', PageController::class)->except(['show']);
+        Route::resource('pages', PageController::class)->except(['index', 'show']);
         Route::patch('pages/{page}/publish', [PageController::class, 'publish'])->name('pages.publish');
     });
 
@@ -38,12 +44,18 @@ Route::get('/preview/pages/{page}', [PageController::class, 'preview'])->name('p
 
 use App\Http\Controllers\Admin\ServiceCardController;
 
+Route::middleware(['auth', 'role:admin,editor,viewer'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::get('service-cards', [ServiceCardController::class, 'index'])->name('service-cards.index');
+    });
+
 Route::middleware(['auth', 'role:admin,editor'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
         Route::post('service-cards/reorder', [ServiceCardController::class, 'reorder'])->name('service-cards.reorder');
-        Route::resource('service-cards', ServiceCardController::class)->except(['show']);
+        Route::resource('service-cards', ServiceCardController::class)->except(['index', 'show']);
     });
 
 use App\Http\Controllers\Admin\MediaController;
@@ -59,12 +71,19 @@ Route::middleware(['auth', 'role:admin,editor'])
 use App\Http\Controllers\Admin\WorkspaceController;
 use App\Http\Controllers\Admin\ProjectController;
 
+Route::middleware(['auth', 'role:admin,editor,viewer'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::get('products', [ProjectController::class, 'index'])->name('products.index');
+        Route::get('products/{project}', [ProjectController::class, 'show'])->name('products.show');
+    });
+
 Route::middleware(['auth', 'role:admin,editor'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
         Route::resource('workspaces', WorkspaceController::class)->except(['create','edit','show']);
-        Route::resource('products', ProjectController::class, ['parameters' => ['products' => 'project']])->except(['create','edit']);
+        Route::resource('products', ProjectController::class, ['parameters' => ['products' => 'project']])->except(['create','edit','index','show']);
         Route::post('products/reorder', [ProjectController::class, 'reorder'])->name('products.reorder');
     });
 
@@ -117,11 +136,15 @@ Route::middleware(['auth', 'role:admin,editor'])
 
 use App\Http\Controllers\Admin\ContentController;
 
-Route::middleware(['auth', 'role:admin,editor'])
+Route::middleware(['auth', 'role:admin,editor,viewer'])
     ->prefix('admin')->name('admin.')
     ->group(function () {
         Route::get('content', [ContentController::class, 'index'])->name('content.index');
+    });
 
+Route::middleware(['auth', 'role:admin,editor'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
         Route::post('content/skills',                  [ContentController::class, 'storeSkill'])->name('content.skills.store');
         Route::patch('content/skills/{skill}',         [ContentController::class, 'updateSkill'])->name('content.skills.update');
         Route::delete('content/skills/{skill}',        [ContentController::class, 'destroySkill'])->name('content.skills.destroy');

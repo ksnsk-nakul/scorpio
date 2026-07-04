@@ -80,7 +80,7 @@ class GitHubController extends Controller
             'status'       => 'active',
         ]);
 
-        return back()->with('success', ""{$repoName}" added as a product.");
+        return back()->with('success', "\"{$repoName}\" added as a product.");
     }
 
     public function connectToken(Request $request)
