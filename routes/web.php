@@ -189,6 +189,27 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
     });
 
+use App\Http\Controllers\Admin\OrganizationController;
+
+Route::middleware(['auth', 'role:admin,editor,viewer'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::get('organizations',                [OrganizationController::class, 'index'])->name('organizations.index');
+        Route::get('organizations/{organization}', [OrganizationController::class, 'show'])->name('organizations.show');
+    });
+
+Route::middleware(['auth', 'role:admin,editor'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::post('organizations',                   [OrganizationController::class, 'store'])->name('organizations.store');
+        Route::patch('organizations/{organization}',   [OrganizationController::class, 'update'])->name('organizations.update');
+        Route::delete('organizations/{organization}',  [OrganizationController::class, 'destroy'])->name('organizations.destroy');
+        Route::post('organizations/{organization}/members',             [OrganizationController::class, 'addMember'])->name('organizations.members.add');
+        Route::delete('organizations/{organization}/members/{member}',  [OrganizationController::class, 'removeMember'])->name('organizations.members.remove');
+        Route::post('organizations/{organization}/achievements',                    [OrganizationController::class, 'addAchievement'])->name('organizations.achievements.add');
+        Route::delete('organizations/{organization}/achievements/{achievement}',    [OrganizationController::class, 'removeAchievement'])->name('organizations.achievements.remove');
+    });
+
 use App\Http\Controllers\Admin\BillingController;
 
 Route::middleware(['auth'])
