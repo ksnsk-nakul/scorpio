@@ -131,7 +131,7 @@ const planBadge = (key) => {
   return map[key] ?? 'bg-slate-100 text-slate-500'
 }
 
-const formatDate = (ts) => new Date(ts * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+const formatDate = (ts) => new Date(ts).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 
 const subscribe = async (planKey) => {
   subscribing.value = planKey
@@ -145,7 +145,10 @@ const subscribe = async (planKey) => {
       },
       body: JSON.stringify({ plan: planKey }),
     })
-    if (!res.ok) throw new Error()
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.message ?? 'Payment initiation failed.')
+    }
     const data = await res.json()
     const rzp = new window.Razorpay({
       key: data.key,
@@ -159,9 +162,9 @@ const subscribe = async (planKey) => {
       modal: { ondismiss: () => { subscribing.value = null } },
     })
     rzp.open()
-  } catch {
+  } catch (e) {
     subscribing.value = null
-    alert('Could not initiate payment. Please try again.')
+    alert(e.message ?? 'Could not initiate payment. Please try again.')
   }
 }
 

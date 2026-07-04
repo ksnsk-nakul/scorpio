@@ -69,6 +69,7 @@ class BillingController extends Controller
             'order_id' => $order->id,
             'amount'   => $order->amount,
             'currency' => $order->currency,
+            'key'      => config('billing.razorpay.key_id'),
         ]);
     }
 
