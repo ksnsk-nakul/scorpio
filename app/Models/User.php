@@ -83,6 +83,14 @@ class User extends Authenticatable
 
     public function currentPlan(): string
     {
+        try {
+            $orgMember = $this->organizationMemberships()->with('organization')->first();
+            if ($orgMember && $orgMember->organization) {
+                return $orgMember->organization->plan ?? 'team';
+            }
+        } catch (\Exception $e) {
+            // organization_members table may not exist yet
+        }
         return $this->plan ?? 'free';
     }
 
@@ -99,5 +107,12 @@ class User extends Authenticatable
     {
         $limit = $this->planLimit($key);
         return $limit === null || $current < $limit;
+    }
+
+    public function planFeature(string $key): bool
+    {
+        if ($this->hasRole('admin')) return true;
+        $plan = $this->currentPlan();
+        return (bool) config("billing.features.{$plan}.{$key}", false);
     }
 }
