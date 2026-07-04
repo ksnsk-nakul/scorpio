@@ -172,6 +172,39 @@ class PublicController extends Controller
         ]);
     }
 
+    public function orgPage(string $slug): Response
+    {
+        $org = \App\Models\Organization::where('slug', $slug)
+            ->firstOrFail();
+
+        $org->load([
+            'owner:id,name,username',
+            'members.user:id,name,username',
+            'achievements.user:id,name,username',
+        ]);
+
+        return Inertia::render('Public/OrgPage', [
+            'organization' => $org->only('id', 'name', 'slug', 'description', 'logo', 'white_label', 'custom_brand_name'),
+            'owner'        => $org->owner->only('id', 'name', 'username'),
+            'members'      => $org->members->map(fn ($m) => [
+                'id'       => $m->user->id,
+                'name'     => $m->user->name,
+                'username' => $m->user->username,
+                'role'     => $m->role,
+            ]),
+            'achievements' => $org->achievements->map(fn ($a) => [
+                'id'          => $a->id,
+                'title'       => $a->title,
+                'icon'        => $a->icon,
+                'achieved_at' => $a->achieved_at,
+                'user'        => $a->user ? $a->user->only('id', 'name', 'username') : null,
+            ]),
+            'settings' => [
+                'site_name' => \App\Models\Setting::get('site_name', 'KSNSK'),
+            ],
+        ]);
+    }
+
     private function adminUser(): ?User
     {
         return User::role('admin')
