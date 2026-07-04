@@ -40,6 +40,27 @@ class HandleInertiaRequests extends Middleware
             'auth' => $request->user() ? [
                 'user'  => $request->user()->only('id', 'name', 'email', 'avatar', 'username', 'plan'),
                 'roles' => $request->user()->getRoleNames(),
+                'plan'  => [
+                    'current'  => $request->user()->currentPlan(),
+                    'features' => [
+                        'github_sync'         => $request->user()->planFeature('github_sync'),
+                        'analytics'           => $request->user()->planFeature('analytics'),
+                        'seo_control'         => $request->user()->planFeature('seo_control'),
+                        'password_pages'      => $request->user()->planFeature('password_pages'),
+                        'scheduled_publish'   => $request->user()->planFeature('scheduled_publish'),
+                        'contact_attachments' => $request->user()->planFeature('contact_attachments'),
+                        'white_label'         => $request->user()->planFeature('white_label'),
+                        'api_access'          => $request->user()->planFeature('api_access'),
+                        'priority_support'    => $request->user()->planFeature('priority_support'),
+                    ],
+                    'limits' => [
+                        'pages'         => $request->user()->planLimit('pages'),
+                        'workspaces'    => $request->user()->planLimit('workspaces'),
+                        'projects'      => $request->user()->planLimit('projects'),
+                        'skills'        => $request->user()->planLimit('skills'),
+                        'service_cards' => $request->user()->planLimit('service_cards'),
+                    ],
+                ],
             ] : null,
             'flash' => [
                 'status'             => fn () => $request->session()->get('status'),

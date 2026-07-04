@@ -43,6 +43,26 @@ class DashboardController extends Controller
                 ->get(['id','title','status','priority','project_id','assignee_id','due_date']),
             'contacts' => $contacts,
             'announcements' => \App\Models\Announcement::active()->get(['id','title','body','type','display','cta_label','cta_url']),
+            'planLimits' => [
+                'pages'        => $user->planLimit('pages'),
+                'workspaces'   => $user->planLimit('workspaces'),
+                'projects'     => $user->planLimit('projects'),
+                'skills'       => $user->planLimit('skills'),
+                'service_cards'=> $user->planLimit('service_cards'),
+            ],
+            'planFeatures' => [
+                'github_sync'          => $user->planFeature('github_sync'),
+                'analytics'            => $user->planFeature('analytics'),
+                'seo_control'          => $user->planFeature('seo_control'),
+                'password_pages'       => $user->planFeature('password_pages'),
+                'scheduled_publish'    => $user->planFeature('scheduled_publish'),
+                'contact_attachments'  => $user->planFeature('contact_attachments'),
+                'white_label'          => $user->planFeature('white_label'),
+                'audit_logs'           => $user->planFeature('audit_logs'),
+                'api_access'           => $user->planFeature('api_access'),
+                'priority_support'     => $user->planFeature('priority_support'),
+            ],
+            'currentPlan' => $user->currentPlan(),
         ]);
     }
 

@@ -1,5 +1,6 @@
 <template>
   <AdminLayout>
+    <UpgradeGate :allowed="hasFeature('github_sync').value" title="GitHub Sync" message="Available on Pro and above.">
     <div class="max-w-4xl mx-auto">
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-slate-800">GitHub</h1>
@@ -167,6 +168,7 @@
 
       </div>
     </div>
+    </UpgradeGate>
   </AdminLayout>
 </template>
 
@@ -174,6 +176,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { Link, useForm, usePage, router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import UpgradeGate from '@/Components/UpgradeGate.vue'
+import { usePlan } from '@/composables/usePlan'
 
 const props = defineProps({
   repos:          { type: Array, default: () => [] },
@@ -183,6 +187,8 @@ const props = defineProps({
 })
 
 const connectForm = useForm({ token: '' })
+
+const { hasFeature } = usePlan()
 
 const { props: pageProps } = usePage()
 const webhookFor    = computed(() => pageProps.flash?.webhook_project_id ?? null)
