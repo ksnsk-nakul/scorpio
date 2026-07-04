@@ -42,6 +42,7 @@ class DashboardController extends Controller
                 ->limit(5)
                 ->get(['id','title','status','priority','project_id','assignee_id','due_date']),
             'contacts' => $contacts,
+            'announcements' => \App\Models\Announcement::active()->get(['id','title','body','type','display','cta_label','cta_url']),
         ]);
     }
 

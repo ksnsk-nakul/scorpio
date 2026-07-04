@@ -71,6 +71,7 @@ const allNav = [
   { label: 'Users',         href: '/admin/users',         roles: ['admin'] },
   { label: 'Payment',       href: '/admin/payment',       roles: ['admin'] },
   { label: 'Settings',      href: '/admin/settings',      roles: ['admin'] },
+  { label: 'Announcements', href: '/admin/announcements', roles: ['admin'] },
 ]
 
 const nav = computed(() => allNav.filter(item => item.roles.some(r => userRoles.value.includes(r))))

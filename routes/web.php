@@ -178,6 +178,17 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 
+use App\Http\Controllers\Admin\AnnouncementController;
+
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::get('announcements',                   [AnnouncementController::class, 'index'])->name('announcements.index');
+        Route::post('announcements',                  [AnnouncementController::class, 'store'])->name('announcements.store');
+        Route::patch('announcements/{announcement}',  [AnnouncementController::class, 'update'])->name('announcements.update');
+        Route::delete('announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
+    });
+
 use App\Http\Controllers\Admin\BillingController;
 
 Route::middleware(['auth'])
