@@ -7,7 +7,7 @@ export function usePlan() {
 
     return {
         currentPlan: computed(() => plan.value.current),
-        hasFeature:  (key) => computed(() => plan.value.features?.[key] ?? false),
-        getLimit:    (key) => computed(() => plan.value.limits?.[key] ?? null),
+        hasFeature:  (key) => plan.value.features?.[key] ?? false,
+        getLimit:    (key) => plan.value.limits?.[key] ?? null,
     }
 }

@@ -1,6 +1,6 @@
 <template>
   <AdminLayout>
-    <UpgradeGate :allowed="hasFeature('github_sync').value" title="GitHub Sync" message="Available on Pro and above.">
+    <UpgradeGate :allowed="hasFeature('github_sync')" title="GitHub Sync" message="Available on Pro and above.">
     <div class="max-w-4xl mx-auto">
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-slate-800">GitHub</h1>
