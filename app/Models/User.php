@@ -88,7 +88,7 @@ class User extends Authenticatable
             if ($orgMember && $orgMember->organization) {
                 return $orgMember->organization->plan ?? 'team';
             }
-        } catch (\Exception $e) {
+        } catch (\Illuminate\Database\QueryException $e) {
             // organization_members table may not exist yet
         }
         return $this->plan ?? 'free';

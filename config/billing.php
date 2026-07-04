@@ -56,7 +56,8 @@ return [
         ],
         'enterprise' => [
             'name' => 'Enterprise', 'slug' => 'enterprise', 'type' => 'org',
-            'price' => 'dynamic', 'currency' => 'INR', 'interval' => 'month',
+            'price' => null, // dynamic — see base_price + per-seat pricing
+            'currency' => 'INR', 'interval' => 'month',
             'base_price' => 499900,
             'member_limit' => null,
             'extra_member_price' => 20000,
