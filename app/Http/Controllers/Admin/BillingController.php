@@ -21,15 +21,17 @@ class BillingController extends Controller
         return new Api($key, $secret);
     }
 
-    public function index()
+    public function index(): \Inertia\Response
     {
-        $user = auth()->user()->load('activeSubscription');
+        $user         = auth()->user()->load('activeSubscription');
+        $subscription = $user->activeSubscription;
+        $plans        = config('billing.plans');
 
         return Inertia::render('Admin/Billing/Index', [
-            'plans'        => config('billing.plans'),
             'currentPlan'  => $user->currentPlan(),
-            'subscription' => $user->activeSubscription,
-            'razorpayKey'  => config('billing.razorpay.key_id'),
+            'subscription' => $subscription,
+            'soloPlans'    => collect($plans)->filter(fn($p) => ($p['type'] ?? '') === 'solo')->toArray(),
+            'orgPlans'     => collect($plans)->filter(fn($p) => ($p['type'] ?? '') === 'org')->toArray(),
         ]);
     }
 
