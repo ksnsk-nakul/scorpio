@@ -7,12 +7,14 @@ use App\Models\Organization;
 use App\Models\OrganizationMember;
 use App\Models\OrganizationAchievement;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class OrganizationController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $user = auth()->user();
         $this->authorize('viewAny', Organization::class);
@@ -20,10 +22,10 @@ class OrganizationController extends Controller
         if ($user->hasRole('admin')) {
             $orgs = Organization::with('owner:id,name,email')->get();
         } else {
-            $orgs = Organization::where('owner_id', $user->id)
-                ->orWhereHas('members', fn ($q) => $q->where('user_id', $user->id))
-                ->with('owner:id,name,email')
-                ->get();
+            $orgs = Organization::where(function ($q) use ($user) {
+                $q->where('owner_id', $user->id)
+                  ->orWhereHas('members', fn ($m) => $m->where('user_id', $user->id));
+            })->with('owner:id,name,email')->get();
         }
 
         return Inertia::render('Admin/Organizations/Index', [
@@ -31,7 +33,7 @@ class OrganizationController extends Controller
         ]);
     }
 
-    public function show(Organization $organization)
+    public function show(Organization $organization): Response
     {
         $this->authorize('view', $organization);
 
@@ -46,7 +48,7 @@ class OrganizationController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $this->authorize('create', Organization::class);
 
@@ -67,7 +69,7 @@ class OrganizationController extends Controller
         return redirect()->route('admin.organizations.show', $org)->with('success', 'Organization created.');
     }
 
-    public function update(Request $request, Organization $organization)
+    public function update(Request $request, Organization $organization): RedirectResponse
     {
         $this->authorize('update', $organization);
 
@@ -82,18 +84,19 @@ class OrganizationController extends Controller
         return back()->with('success', 'Organization updated.');
     }
 
-    public function destroy(Organization $organization)
+    public function destroy(Organization $organization): RedirectResponse
     {
         $this->authorize('delete', $organization);
         $organization->delete();
         return redirect()->route('admin.organizations.index')->with('success', 'Organization deleted.');
     }
 
-    public function addMember(Request $request, Organization $organization)
+    public function addMember(Request $request, Organization $organization): RedirectResponse
     {
         $this->authorize('manageMember', $organization);
 
-        if (! $organization->withinMemberLimit()) {
+        $limit = $organization->memberLimit();
+        if ($limit !== null && $organization->members()->count() >= $limit) {
             return back()->withErrors(['members' => 'Member limit reached for your plan.']);
         }
 
@@ -104,15 +107,16 @@ class OrganizationController extends Controller
 
         $user = User::where('email', $data['email'])->firstOrFail();
 
-        OrganizationMember::firstOrCreate(
+        $member = OrganizationMember::firstOrCreate(
             ['organization_id' => $organization->id, 'user_id' => $user->id],
             ['role' => $data['role']]
         );
 
-        return back()->with('success', 'Member added.');
+        $message = $member->wasRecentlyCreated ? 'Member added.' : 'User is already a member.';
+        return back()->with('success', $message);
     }
 
-    public function removeMember(Organization $organization, OrganizationMember $member)
+    public function removeMember(Organization $organization, OrganizationMember $member): RedirectResponse
     {
         $this->authorize('manageMember', $organization);
         abort_if($member->organization_id !== $organization->id, 404);
@@ -120,7 +124,7 @@ class OrganizationController extends Controller
         return back()->with('success', 'Member removed.');
     }
 
-    public function addAchievement(Request $request, Organization $organization)
+    public function addAchievement(Request $request, Organization $organization): RedirectResponse
     {
         $this->authorize('update', $organization);
 
@@ -140,7 +144,7 @@ class OrganizationController extends Controller
         return back()->with('success', 'Achievement added.');
     }
 
-    public function removeAchievement(Organization $organization, OrganizationAchievement $achievement)
+    public function removeAchievement(Organization $organization, OrganizationAchievement $achievement): RedirectResponse
     {
         $this->authorize('update', $organization);
         abort_if($achievement->organization_id !== $organization->id, 404);
