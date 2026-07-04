@@ -81,6 +81,16 @@ class User extends Authenticatable
         return $this->hasOne(Subscription::class)->where('status', 'active')->latestOfMany();
     }
 
+    public function ownedOrganizations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Organization::class, 'owner_id');
+    }
+
+    public function organizationMemberships(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(OrganizationMember::class);
+    }
+
     public function currentPlan(): string
     {
         try {
