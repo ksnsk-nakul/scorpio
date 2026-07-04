@@ -38,6 +38,6 @@ class Organization extends Model
     public function withinMemberLimit(): bool
     {
         $limit = $this->memberLimit();
-        return $limit === null || $this->members()->count() < $limit;
+        return $limit === null || $this->members()->count() <= $limit;
     }
 }

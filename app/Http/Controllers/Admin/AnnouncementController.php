@@ -45,7 +45,7 @@ class AnnouncementController extends Controller
             'cta_url'   => 'nullable|url|max:255',
             'active'    => 'boolean',
             'starts_at' => 'nullable|date',
-            'ends_at'   => 'nullable|date',
+            'ends_at'   => 'nullable|date|after_or_equal:starts_at',
         ]);
 
         $announcement->update($data);
