@@ -40,18 +40,23 @@
         <span>You're exploring a live demo — any edits are visible on the public site and reset periodically.</span>
         <a href="/" target="_blank" class="ml-auto underline hover:no-underline flex-shrink-0">View public site ↗</a>
       </div>
+      <AnnouncementBanner :announcements="announcements" />
       <div class="p-6">
         <slot />
       </div>
     </main>
+    <AnnouncementModal :announcements="announcements" />
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
+import AnnouncementBanner from '@/Components/AnnouncementBanner.vue'
+import AnnouncementModal from '@/Components/AnnouncementModal.vue'
 
 const page = usePage()
+const announcements = computed(() => page.props.announcements ?? [])
 
 const userRoles  = computed(() => page.props.auth.roles ?? [])
 const isAdmin    = computed(() => userRoles.value.includes('admin'))
