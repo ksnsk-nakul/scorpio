@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 
 class AnnouncementController extends Controller
@@ -31,6 +32,7 @@ class AnnouncementController extends Controller
         ]);
 
         Announcement::create($data);
+        Cache::forget('announcements.active');
         return back()->with('success', 'Announcement created.');
     }
 
@@ -49,12 +51,14 @@ class AnnouncementController extends Controller
         ]);
 
         $announcement->update($data);
+        Cache::forget('announcements.active');
         return back()->with('success', 'Announcement updated.');
     }
 
     public function destroy(Announcement $announcement)
     {
         $announcement->delete();
+        Cache::forget('announcements.active');
         return back()->with('success', 'Announcement deleted.');
     }
 }

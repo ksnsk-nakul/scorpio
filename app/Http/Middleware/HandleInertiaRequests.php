@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Announcement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -73,7 +74,7 @@ class HandleInertiaRequests extends Middleware
                 'webhook_url'        => fn () => $request->session()->get('webhook_url'),
                 'webhook_secret'     => fn () => $request->session()->get('webhook_secret'),
             ],
-            'announcements'  => fn () => Announcement::active()->get(['id', 'title', 'body', 'type', 'display', 'cta_label', 'cta_url']),
+            'announcements'  => fn () => Cache::remember('announcements.active', 60, fn () => Announcement::active()->get(['id', 'title', 'body', 'type', 'display', 'cta_label', 'cta_url'])),
             'wallet_balance' => fn () => $request->user()?->wallet_balance_paise ?? 0,
             'demo' => env('DEMO_MODE', false) ? [
                 'enabled'  => true,
