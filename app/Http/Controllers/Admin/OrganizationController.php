@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Organization;
+use App\Models\OrganizationInvitation;
 use App\Models\OrganizationMember;
 use App\Models\OrganizationAchievement;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -101,19 +104,80 @@ class OrganizationController extends Controller
         }
 
         $data = $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email',
             'role'  => 'required|in:viewer,editor',
         ]);
 
-        $user = User::where('email', $data['email'])->firstOrFail();
+        $user = User::where('email', $data['email'])->first();
 
-        $member = OrganizationMember::firstOrCreate(
-            ['organization_id' => $organization->id, 'user_id' => $user->id],
-            ['role' => $data['role']]
+        if ($user) {
+            $member = OrganizationMember::firstOrCreate(
+                ['organization_id' => $organization->id, 'user_id' => $user->id],
+                ['role' => $data['role']]
+            );
+
+            if ($member->wasRecentlyCreated) {
+                Mail::to($user->email)
+                    ->queue(new \App\Mail\MemberAddedMail($organization, $data['role']));
+            }
+
+            $message = $member->wasRecentlyCreated ? 'Member added.' : 'User is already a member.';
+            return back()->with('success', $message);
+        }
+
+        // User doesn't exist — create invitation
+        $existing = OrganizationInvitation::where('organization_id', $organization->id)
+            ->where('email', $data['email'])
+            ->whereNull('accepted_at')
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if ($existing) {
+            return back()->with('success', 'An invitation was already sent to this email.');
+        }
+
+        $invitation = OrganizationInvitation::create([
+            'organization_id' => $organization->id,
+            'email'           => $data['email'],
+            'role'            => $data['role'],
+            'token'           => Str::random(64),
+            'invited_by'      => auth()->id(),
+            'expires_at'      => now()->addDays(7),
+        ]);
+
+        $invitation->load(['organization', 'invitedBy']);
+        Mail::to($data['email'])
+            ->queue(new \App\Mail\OrgInvitationMail($invitation));
+
+        return back()->with('success', 'Invitation sent to ' . $data['email'] . '.');
+    }
+
+    public function acceptInvitation(string $token): RedirectResponse
+    {
+        $invitation = OrganizationInvitation::where('token', $token)
+            ->whereNull('accepted_at')
+            ->where('expires_at', '>', now())
+            ->firstOrFail();
+
+        if (! auth()->check()) {
+            session(['invite_token' => $token]);
+            return redirect()->route('register', ['invite' => $token]);
+        }
+
+        $this->processInvitationAcceptance($invitation, auth()->user());
+
+        return redirect()->route('admin.organizations.show', $invitation->organization_id)
+            ->with('success', 'You have joined ' . $invitation->organization->name . '!');
+    }
+
+    private function processInvitationAcceptance(OrganizationInvitation $invitation, User $user): void
+    {
+        OrganizationMember::firstOrCreate(
+            ['organization_id' => $invitation->organization_id, 'user_id' => $user->id],
+            ['role' => $invitation->role]
         );
 
-        $message = $member->wasRecentlyCreated ? 'Member added.' : 'User is already a member.';
-        return back()->with('success', $message);
+        $invitation->update(['accepted_at' => now()]);
     }
 
     public function removeMember(Organization $organization, OrganizationMember $member): RedirectResponse

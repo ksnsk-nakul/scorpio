@@ -304,6 +304,10 @@ Route::get('/portfolio/{username}/projects/{projectSlug}', [\App\Http\Controller
     ->where('username', '[a-z0-9_\-]+')
     ->where('projectSlug', '[a-z0-9\-]+');
 
+// Organization invitation acceptance (public, no auth)
+Route::get('/org-invite/{token}', [\App\Http\Controllers\Admin\OrganizationController::class, 'acceptInvitation'])
+    ->name('org.invite.accept');
+
 // Organization public page
 Route::get('/org/{slug}', [\App\Http\Controllers\PublicController::class, 'orgPage'])
     ->name('org.page')

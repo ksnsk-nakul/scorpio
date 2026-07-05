@@ -34,6 +34,21 @@ class PasswordAuthController extends Controller
         $user->assignRole('viewer');
         Auth::login($user);
 
+        if ($token = session('invite_token')) {
+            $invitation = \App\Models\OrganizationInvitation::where('token', $token)
+                ->whereNull('accepted_at')
+                ->where('expires_at', '>', now())
+                ->first();
+            if ($invitation) {
+                \App\Models\OrganizationMember::firstOrCreate(
+                    ['organization_id' => $invitation->organization_id, 'user_id' => $user->id],
+                    ['role' => $invitation->role]
+                );
+                $invitation->update(['accepted_at' => now()]);
+            }
+            session()->forget('invite_token');
+        }
+
         return redirect('/admin/dashboard');
     }
 
