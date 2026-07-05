@@ -22,6 +22,23 @@ class BillingController extends Controller
         return new Api($key, $secret);
     }
 
+    private function getRazorpayCustomer(\App\Models\User $user): string
+    {
+        if ($user->razorpay_customer_id) {
+            return $user->razorpay_customer_id;
+        }
+
+        $customer = $this->razorpay()->customer->create([
+            'name'          => $user->name,
+            'email'         => $user->email,
+            'fail_existing' => '0',
+        ]);
+
+        $user->update(['razorpay_customer_id' => $customer->id]);
+
+        return $customer->id;
+    }
+
     public function index(): \Inertia\Response
     {
         $user         = auth()->user()->load('activeSubscription');
@@ -29,10 +46,11 @@ class BillingController extends Controller
         $plans        = config('billing.plans');
 
         return Inertia::render('Admin/Billing/Index', [
-            'currentPlan'  => $user->currentPlan(),
-            'subscription' => $subscription,
-            'soloPlans'    => collect($plans)->filter(fn($p) => ($p['type'] ?? '') === 'solo')->toArray(),
-            'orgPlans'     => collect($plans)->filter(fn($p) => ($p['type'] ?? '') === 'org')->map(fn($p, $key) => [...$p, 'key' => $key])->values()->toArray(),
+            'currentPlan'   => $user->currentPlan(),
+            'subscription'  => $subscription,
+            'soloPlans'     => collect($plans)->filter(fn($p) => ($p['type'] ?? '') === 'solo')->toArray(),
+            'orgPlans'      => collect($plans)->filter(fn($p) => ($p['type'] ?? '') === 'org')->map(fn($p, $key) => [...$p, 'key' => $key])->values()->toArray(),
+            'walletBalance' => $user->wallet_balance_paise,
         ]);
     }
 
@@ -66,11 +84,14 @@ class BillingController extends Controller
             'razorpay_order_id' => $order->id,
         ]);
 
+        $customerId = $this->getRazorpayCustomer(auth()->user());
+
         return response()->json([
-            'order_id' => $order->id,
-            'amount'   => $order->amount,
-            'currency' => $order->currency,
-            'key'      => config('billing.razorpay.key_id'),
+            'order_id'    => $order->id,
+            'amount'      => $order->amount,
+            'currency'    => $order->currency,
+            'key'         => config('billing.razorpay.key_id'),
+            'customer_id' => $customerId,
         ]);
     }
 
@@ -132,5 +153,47 @@ class BillingController extends Controller
 
         return redirect()->route('admin.billing.index')
             ->with('success', 'Subscription cancelled. Your plan reverts to Free.');
+    }
+
+    public function payWithWallet(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        abort_if(app()->environment('demo'), 403, 'Wallet payments are disabled in demo mode.');
+
+        $data = $request->validate([
+            'plan' => 'required|in:pro,creator',
+        ]);
+
+        $plan       = config('billing.plans.' . $data['plan']);
+        $pricePaise = (int) $plan['price'];
+        $user       = auth()->user();
+
+        if ($user->wallet_balance_paise < $pricePaise) {
+            return redirect()->route('admin.billing.index')
+                ->withErrors(['wallet' => 'Insufficient wallet balance. Please top up first.']);
+        }
+
+        DB::transaction(function () use ($user, $data, $pricePaise) {
+            $user->debitWallet(
+                $pricePaise,
+                'subscription',
+                ucfirst($data['plan']) . ' plan subscription',
+            );
+
+            Subscription::where('user_id', $user->id)
+                ->where('status', 'active')
+                ->update(['status' => 'cancelled']);
+
+            Subscription::create([
+                'user_id'            => $user->id,
+                'plan'               => $data['plan'],
+                'status'             => 'active',
+                'current_period_end' => now()->addMonth(),
+            ]);
+
+            $user->update(['plan' => $data['plan']]);
+        });
+
+        return redirect()->route('admin.billing.index')
+            ->with('success', 'Plan upgraded using wallet balance!');
     }
 }
