@@ -8,8 +8,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class OrganizationInvitation extends Model
 {
     protected $fillable = [
-        'organization_id', 'email', 'role', 'token', 'invited_by', 'accepted_at', 'expires_at',
+        'organization_id', 'email', 'role', 'invited_by', 'accepted_at', 'expires_at',
     ];
+
+    protected $guarded = ['token'];
 
     protected $casts = [
         'accepted_at' => 'datetime',
@@ -28,6 +30,6 @@ class OrganizationInvitation extends Model
 
     public function isPending(): bool
     {
-        return $this->accepted_at === null && $this->expires_at->isFuture();
+        return $this->accepted_at === null && $this->expires_at !== null && $this->expires_at->isFuture();
     }
 }

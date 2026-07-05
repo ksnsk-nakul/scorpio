@@ -5,14 +5,16 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Organization;
 use App\Models\Subscription;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Razorpay\Api\Api;
 
 class OrgUpgradeController extends Controller
 {
-    public function createOrder(Request $request): \Illuminate\Http\JsonResponse
+    public function createOrder(Request $request): JsonResponse
     {
         $data = $request->validate([
             'plan'            => 'required|in:team,business,enterprise',
@@ -21,7 +23,7 @@ class OrgUpgradeController extends Controller
             'org_description' => 'nullable|string|max:500',
         ]);
 
-        // Enterprise has no Razorpay price — redirect to contact
+        // Enterprise has no Razorpay price — caller shows "Contact us"
         $price = config("billing.plans.{$data['plan']}.price");
         if ($price === null) {
             return response()->json(['contact' => true]);
@@ -38,7 +40,7 @@ class OrgUpgradeController extends Controller
             'notes'    => ['plan' => $data['plan']],
         ]);
 
-        // Store org details in session for use during verify
+        // Stash org details in session — verified and applied atomically in verify()
         session([
             'org_upgrade' => [
                 'plan'            => $data['plan'],
@@ -48,11 +50,7 @@ class OrgUpgradeController extends Controller
             ],
         ]);
 
-        // Create pending subscription
-        Subscription::where('user_id', auth()->id())
-            ->where('status', 'active')
-            ->update(['status' => 'cancelled']);
-
+        // Create pending subscription without touching existing active ones
         Subscription::create([
             'user_id'           => auth()->id(),
             'plan'              => $data['plan'],
@@ -75,7 +73,7 @@ class OrgUpgradeController extends Controller
             'razorpay_signature'  => 'required|string',
         ]);
 
-        // Verify HMAC signature
+        // HMAC verification before any DB writes
         $expectedSignature = hash_hmac(
             'sha256',
             $request->razorpay_order_id . '|' . $request->razorpay_payment_id,
@@ -88,14 +86,18 @@ class OrgUpgradeController extends Controller
 
         $upgrade = session('org_upgrade');
         if (! $upgrade) {
-            return redirect()->route('admin.billing.index')->withErrors(['payment' => 'Session expired. Please try again.']);
+            return redirect()->route('admin.billing.index')
+                ->withErrors(['payment' => 'Session expired. Please try again.']);
         }
 
         $org = DB::transaction(function () use ($request, $upgrade) {
             $user = auth()->user();
 
-            // Activate subscription
-            $subscription = Subscription::where('razorpay_order_id', $request->razorpay_order_id)->firstOrFail();
+            // Activate the pending subscription
+            $subscription = Subscription::where('razorpay_order_id', $request->razorpay_order_id)
+                ->where('user_id', $user->id)
+                ->firstOrFail();
+
             $subscription->update([
                 'status'              => 'active',
                 'razorpay_payment_id' => $request->razorpay_payment_id,
@@ -103,7 +105,7 @@ class OrgUpgradeController extends Controller
                 'current_period_end'  => now()->addMonth(),
             ]);
 
-            // Cancel other active subscriptions
+            // Cancel all other active subscriptions inside the transaction
             Subscription::where('user_id', $user->id)
                 ->where('id', '!=', $subscription->id)
                 ->where('status', 'active')
@@ -112,7 +114,13 @@ class OrgUpgradeController extends Controller
             // Update user plan
             $user->update(['plan' => $upgrade['plan']]);
 
-            // Create organization
+            // Re-validate slug uniqueness at write time (race condition guard)
+            if (Organization::where('slug', $upgrade['org_slug'])->exists()) {
+                throw ValidationException::withMessages([
+                    'org_slug' => 'This slug was just taken. Please choose another.',
+                ]);
+            }
+
             return Organization::create([
                 'owner_id'    => $user->id,
                 'name'        => $upgrade['org_name'],
