@@ -33,6 +33,7 @@ class PasswordAuthController extends Controller
 
         $user->assignRole('viewer');
         Auth::login($user);
+        $request->session()->regenerate();
 
         if ($token = session('invite_token')) {
             $invitation = \App\Models\OrganizationInvitation::where('token', $token)

@@ -224,6 +224,16 @@ Route::middleware(['auth'])
 use App\Http\Controllers\Admin\OrgUpgradeController;
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('org-upgrade', function () {
+        $plans = config('billing.plans');
+        $orgPlans = collect($plans)
+            ->filter(fn ($p) => $p['type'] === 'org')
+            ->map(fn ($p, $key) => [...$p, 'key' => $key])
+            ->values();
+        return \Inertia\Inertia::render('Admin/Organizations/Upgrade', [
+            'orgPlans' => $orgPlans,
+        ]);
+    })->name('org-upgrade.index');
     Route::post('org-upgrade/order',  [OrgUpgradeController::class, 'createOrder'])->name('org-upgrade.order');
     Route::post('org-upgrade/verify', [OrgUpgradeController::class, 'verify'])->name('org-upgrade.verify');
 });
@@ -304,9 +314,10 @@ Route::get('/portfolio/{username}/projects/{projectSlug}', [\App\Http\Controller
     ->where('username', '[a-z0-9_\-]+')
     ->where('projectSlug', '[a-z0-9\-]+');
 
-// Organization invitation acceptance (public, no auth)
+// Organization invitation acceptance (public, no auth; throttled against enumeration)
 Route::get('/org-invite/{token}', [\App\Http\Controllers\Admin\OrganizationController::class, 'acceptInvitation'])
-    ->name('org.invite.accept');
+    ->name('org.invite.accept')
+    ->middleware('throttle:20,1');
 
 // Organization public page
 Route::get('/org/{slug}', [\App\Http\Controllers\PublicController::class, 'orgPage'])

@@ -157,6 +157,7 @@ class OrganizationController extends Controller
         $invitation = OrganizationInvitation::where('token', $token)
             ->whereNull('accepted_at')
             ->where('expires_at', '>', now())
+            ->with('organization')
             ->firstOrFail();
 
         if (! auth()->check()) {
@@ -164,7 +165,12 @@ class OrganizationController extends Controller
             return redirect()->route('register', ['invite' => $token]);
         }
 
-        $this->processInvitationAcceptance($invitation, auth()->user());
+        $user = auth()->user();
+
+        // Only the invited email may accept; others see a generic 404
+        abort_if($user->email !== $invitation->email, 404);
+
+        $this->processInvitationAcceptance($invitation, $user);
 
         return redirect()->route('admin.organizations.show', $invitation->organization_id)
             ->with('success', 'You have joined ' . $invitation->organization->name . '!');
