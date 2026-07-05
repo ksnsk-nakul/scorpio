@@ -221,6 +221,26 @@ Route::middleware(['auth'])
         Route::post('billing/cancel', [BillingController::class, 'cancel'])->name('billing.cancel');
     });
 
+use App\Http\Controllers\Admin\WalletController;
+use App\Http\Controllers\Admin\PaymentMethodController;
+
+Route::middleware(['auth'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        // Wallet dashboard
+        Route::get('wallet', [WalletController::class, 'index'])->name('wallet.index');
+
+        // Pay subscription from wallet
+        Route::post('billing/pay-wallet', [BillingController::class, 'payWithWallet'])->name('billing.pay-wallet');
+
+        // Payment methods
+        Route::get('payment-methods',                    [PaymentMethodController::class, 'index'])->name('payment-methods.index');
+        Route::post('payment-methods/upi',               [PaymentMethodController::class, 'storeUpi'])->name('payment-methods.store-upi');
+        Route::post('payment-methods/card',              [PaymentMethodController::class, 'storeCard'])->name('payment-methods.store-card');
+        Route::patch('payment-methods/{method}/default', [PaymentMethodController::class, 'setDefault'])->name('payment-methods.default');
+        Route::delete('payment-methods/{method}',        [PaymentMethodController::class, 'destroy'])->name('payment-methods.destroy');
+    });
+
 use App\Http\Controllers\Admin\OrgUpgradeController;
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
@@ -282,6 +302,12 @@ use App\Http\Controllers\Auth\OtpAuthController;
 Route::get('/login/otp', fn () => redirect('/login'))->name('login.otp');
 Route::post('/login/otp/send', [OtpAuthController::class, 'send'])->name('login.otp.send')->middleware('throttle:5,1');
 Route::post('/login/otp/verify', [OtpAuthController::class, 'verify'])->name('login.otp.verify')->middleware('throttle:10,1');
+
+// Public pay-to-wallet (no auth required)
+Route::get('/pay/{username}/wallet',         [\App\Http\Controllers\WalletTopUpController::class, 'show'])->name('wallet.pay.show');
+Route::post('/pay/{username}/wallet/order',  [\App\Http\Controllers\WalletTopUpController::class, 'createOrder'])->name('wallet.pay.order')->middleware('throttle:10,1');
+Route::post('/pay/{username}/wallet/verify', [\App\Http\Controllers\WalletTopUpController::class, 'verify'])->name('wallet.pay.verify')->middleware('throttle:10,1');
+Route::get('/pay/{username}/wallet/done',    [\App\Http\Controllers\WalletTopUpController::class, 'done'])->name('wallet.pay.done');
 
 // Donation — public, no auth required
 use App\Http\Controllers\DonationController;
