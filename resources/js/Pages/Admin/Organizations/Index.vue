@@ -3,10 +3,13 @@
     <div class="max-w-4xl mx-auto px-6 py-10">
       <div class="flex items-center justify-between mb-8">
         <h1 class="text-2xl font-bold text-slate-900">Organizations</h1>
-        <Link href="/admin/organizations" method="get" as="button"
-          class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-lg transition-colors"
-          @click.prevent="showForm = !showForm">
+        <Link v-if="isOrgPlan" href="#" @click.prevent="showForm = !showForm"
+          class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-lg transition-colors">
           + New Organization
+        </Link>
+        <Link v-else href="/admin/org-upgrade"
+          class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-lg transition-colors">
+          Create Organization
         </Link>
       </div>
 
@@ -60,9 +63,13 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link, useForm } from '@inertiajs/vue3'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { usePlan } from '@/composables/usePlan'
 
 const props = defineProps({ organizations: Array })
+
+const { currentPlan } = usePlan()
+const isOrgPlan = computed(() => ['team', 'business', 'enterprise'].includes(currentPlan.value))
 
 const showForm = ref(false)
 const form = useForm({ name: '', slug: '', description: '' })

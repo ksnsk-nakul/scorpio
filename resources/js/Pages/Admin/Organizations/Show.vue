@@ -20,17 +20,20 @@
         <h2 class="text-base font-semibold text-slate-800 mb-4">Members</h2>
 
         <!-- Add member form -->
-        <form @submit.prevent="addMember" class="flex gap-2 mb-4">
-          <input v-model="memberForm.email" type="email" required placeholder="Email address"
-            class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
-          <select v-model="memberForm.role" class="border border-slate-300 rounded-lg px-3 py-2 text-sm">
-            <option value="viewer">Viewer</option>
-            <option value="editor">Editor</option>
-          </select>
-          <button type="submit" :disabled="memberForm.processing"
-            class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-lg disabled:opacity-50">
-            Add
-          </button>
+        <form @submit.prevent="addMember" class="mb-4">
+          <div class="flex gap-2">
+            <input v-model="memberForm.email" type="email" required placeholder="Email address (invite if not registered)"
+              class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+            <select v-model="memberForm.role" class="border border-slate-300 rounded-lg px-3 py-2 text-sm">
+              <option value="viewer">Viewer</option>
+              <option value="editor">Editor</option>
+            </select>
+            <button type="submit" :disabled="memberForm.processing"
+              class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-lg disabled:opacity-50">
+              Add
+            </button>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Non-registered emails will receive an invitation link.</p>
         </form>
         <p v-if="memberForm.errors.email" class="text-red-500 text-xs mb-2">{{ memberForm.errors.email }}</p>
         <p v-if="memberForm.errors.members" class="text-red-500 text-xs mb-2">{{ memberForm.errors.members }}</p>

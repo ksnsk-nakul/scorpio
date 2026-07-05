@@ -31,7 +31,7 @@ class BillingController extends Controller
             'currentPlan'  => $user->currentPlan(),
             'subscription' => $subscription,
             'soloPlans'    => collect($plans)->filter(fn($p) => ($p['type'] ?? '') === 'solo')->toArray(),
-            'orgPlans'     => collect($plans)->filter(fn($p) => ($p['type'] ?? '') === 'org')->toArray(),
+            'orgPlans'     => collect($plans)->filter(fn($p) => ($p['type'] ?? '') === 'org')->map(fn($p, $key) => [...$p, 'key' => $key])->values()->toArray(),
         ]);
     }
 
