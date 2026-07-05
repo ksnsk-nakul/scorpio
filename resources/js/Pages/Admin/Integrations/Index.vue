@@ -188,7 +188,28 @@
               </div>
             </div>
 
-            <button type="submit" class="mt-5 w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold rounded-xl transition">
+            <!-- Test mail section -->
+            <div class="mt-5 border border-slate-200 rounded-xl p-4 bg-slate-50">
+              <p class="text-xs font-semibold text-slate-600 mb-3">Test configuration before saving</p>
+              <div class="flex gap-2">
+                <input v-model="testMailTo" type="email" placeholder="Send test to…"
+                  class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white" />
+                <button type="button" @click="sendTestMail"
+                  :disabled="testMailLoading || !testMailTo"
+                  class="px-4 py-2 rounded-xl text-sm font-semibold transition flex-shrink-0"
+                  :class="testMailLoading || !testMailTo
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'">
+                  {{ testMailLoading ? 'Sending…' : 'Send test' }}
+                </button>
+              </div>
+              <div v-if="testMailResult" class="mt-2.5 text-xs px-3 py-2 rounded-lg"
+                :class="testMailResult.success ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'">
+                {{ testMailResult.message }}
+              </div>
+            </div>
+
+            <button type="submit" class="mt-4 w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold rounded-xl transition">
               Save Mail Settings
             </button>
           </form>
@@ -303,6 +324,34 @@ const smsForm = reactive({
   TWILIO_AUTH_TOKEN: props.sms.TWILIO_AUTH_TOKEN,
   TWILIO_FROM:       props.sms.TWILIO_FROM,
 })
+
+const testMailTo      = ref('')
+const testMailLoading = ref(false)
+const testMailResult  = ref(null)
+
+const sendTestMail = async () => {
+  if (!testMailTo.value || testMailLoading.value) return
+  testMailLoading.value = true
+  testMailResult.value  = null
+
+  try {
+    const res = await fetch('/admin/integrations/mail/test', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ ...mailForm, test_to: testMailTo.value }),
+    })
+    const data = await res.json()
+    testMailResult.value = { success: data.success, message: data.message }
+  } catch {
+    testMailResult.value = { success: false, message: 'Network error — could not reach the server.' }
+  } finally {
+    testMailLoading.value = false
+  }
+}
 
 const savePayment = () => router.post('/admin/integrations/payment', payForm)
 const saveMail    = () => router.post('/admin/integrations/mail',    mailForm)
