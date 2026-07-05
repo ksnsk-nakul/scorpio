@@ -178,12 +178,14 @@ class OrganizationController extends Controller
 
     private function processInvitationAcceptance(OrganizationInvitation $invitation, User $user): void
     {
-        OrganizationMember::firstOrCreate(
-            ['organization_id' => $invitation->organization_id, 'user_id' => $user->id],
-            ['role' => $invitation->role]
-        );
+        \Illuminate\Support\Facades\DB::transaction(function () use ($invitation, $user) {
+            OrganizationMember::firstOrCreate(
+                ['organization_id' => $invitation->organization_id, 'user_id' => $user->id],
+                ['role' => $invitation->role]
+            );
 
-        $invitation->update(['accepted_at' => now()]);
+            $invitation->update(['accepted_at' => now()]);
+        });
     }
 
     public function removeMember(Organization $organization, OrganizationMember $member): RedirectResponse
