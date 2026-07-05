@@ -221,6 +221,13 @@ Route::middleware(['auth'])
         Route::post('billing/cancel', [BillingController::class, 'cancel'])->name('billing.cancel');
     });
 
+use App\Http\Controllers\Admin\OrgUpgradeController;
+
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    Route::post('org-upgrade/order',  [OrgUpgradeController::class, 'createOrder'])->name('org-upgrade.order');
+    Route::post('org-upgrade/verify', [OrgUpgradeController::class, 'verify'])->name('org-upgrade.verify');
+});
+
 use App\Http\Controllers\Admin\PaymentController;
 
 Route::middleware(['auth', 'role:admin'])
