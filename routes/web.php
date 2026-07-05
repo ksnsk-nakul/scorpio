@@ -176,6 +176,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('users', [UserController::class, 'index'])->name('users.index');
         Route::patch('users/{user}/role', [UserController::class, 'updateRole'])->name('users.role');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::post('users/{user}/wallet-adjust', [UserController::class, 'walletAdjust'])->name('users.wallet-adjust');
     });
 
 use App\Http\Controllers\Admin\AnnouncementController;
