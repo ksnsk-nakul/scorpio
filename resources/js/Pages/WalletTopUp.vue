@@ -38,25 +38,74 @@
       </div>
 
       <form @submit.prevent="submit" class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Your Name *</label>
-          <input v-model="form.payer_name" type="text" required maxlength="100"
-            class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            :class="errors.payer_name ? 'border-red-400' : ''"
-            placeholder="John Doe" />
-          <p v-if="errors.payer_name" class="text-xs text-red-500 mt-1">{{ errors.payer_name[0] }}</p>
-        </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Your Email *</label>
-          <input v-model="form.payer_email" type="email" required maxlength="255"
-            class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            :class="errors.payer_email ? 'border-red-400' : ''"
-            placeholder="john@example.com" />
-          <p v-if="errors.payer_email" class="text-xs text-red-500 mt-1">{{ errors.payer_email[0] }}</p>
-          <p class="text-xs text-slate-400 mt-1">Stored securely and encrypted.</p>
-        </div>
+        <!-- Authenticated: show who is paying + saved payment methods -->
+        <template v-if="isAuthenticated">
+          <div class="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center gap-3">
+            <span class="text-blue-500 text-lg">👤</span>
+            <div>
+              <p class="text-sm font-semibold text-slate-800">{{ payerName }}</p>
+              <p class="text-xs text-slate-500">{{ payerEmail }}</p>
+            </div>
+          </div>
 
+          <!-- Saved payment methods selector -->
+          <div v-if="paymentMethods.length > 0">
+            <label class="block text-xs font-semibold text-slate-600 mb-2">Pay with saved method</label>
+            <div class="space-y-2">
+              <label v-for="m in paymentMethods" :key="m.id"
+                class="flex items-center gap-3 border rounded-xl px-4 py-3 cursor-pointer transition"
+                :class="form.payment_method_id === m.id
+                  ? 'border-blue-400 bg-blue-50'
+                  : 'border-slate-200 hover:border-blue-200'">
+                <input type="radio" :value="m.id" v-model="form.payment_method_id" class="accent-blue-600" />
+                <span class="text-lg">{{ m.type === 'upi' ? '💸' : '💳' }}</span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-slate-800 truncate">{{ m.label }}</p>
+                  <p class="text-xs text-slate-400 capitalize">
+                    {{ m.type }}<span v-if="m.is_default" class="ml-2 text-green-600">· Default</span>
+                  </p>
+                </div>
+              </label>
+              <!-- Pay via Razorpay (no saved method) -->
+              <label class="flex items-center gap-3 border rounded-xl px-4 py-3 cursor-pointer transition"
+                :class="form.payment_method_id === null
+                  ? 'border-blue-400 bg-blue-50'
+                  : 'border-slate-200 hover:border-blue-200'">
+                <input type="radio" :value="null" v-model="form.payment_method_id" class="accent-blue-600" />
+                <span class="text-lg">🏦</span>
+                <div>
+                  <p class="text-sm font-medium text-slate-800">Pay via Razorpay</p>
+                  <p class="text-xs text-slate-400">Enter card / UPI / netbanking</p>
+                </div>
+              </label>
+            </div>
+          </div>
+        </template>
+
+        <!-- Unauthenticated: must fill name + email -->
+        <template v-else>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Your Name *</label>
+            <input v-model="form.payer_name" type="text" required maxlength="100"
+              class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              :class="errors.payer_name ? 'border-red-400' : ''"
+              placeholder="John Doe" />
+            <p v-if="errors.payer_name" class="text-xs text-red-500 mt-1">{{ errors.payer_name[0] }}</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Your Email *</label>
+            <input v-model="form.payer_email" type="email" required maxlength="255"
+              class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              :class="errors.payer_email ? 'border-red-400' : ''"
+              placeholder="john@example.com" />
+            <p v-if="errors.payer_email" class="text-xs text-red-500 mt-1">{{ errors.payer_email[0] }}</p>
+            <p class="text-xs text-slate-400 mt-1">Stored securely and encrypted.</p>
+          </div>
+        </template>
+
+        <!-- Amount (everyone fills this) -->
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Amount (₹) *</label>
           <div class="flex gap-2 flex-wrap mb-2">
@@ -77,6 +126,7 @@
           <p class="text-xs text-slate-400 mt-1">Min ₹100 · Max ₹10,000</p>
         </div>
 
+        <!-- Note -->
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Note / Purpose</label>
           <input v-model="form.note" type="text" maxlength="255"
@@ -102,20 +152,29 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { Head, router } from '@inertiajs/vue3'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { Head, router, usePage } from '@inertiajs/vue3'
 
 const props = defineProps({
-  recipient:   { type: Object, required: true },
-  razorpayKey: { type: String, default: '' },
-  done:        { type: Object, default: null },
+  recipient:      { type: Object, required: true },
+  razorpayKey:    { type: String, default: '' },
+  done:           { type: Object, default: null },
+  payerName:      { type: String, default: null },
+  payerEmail:     { type: String, default: null },
+  paymentMethods: { type: Array, default: () => [] },
 })
 
+const page           = usePage()
+const isAuthenticated = computed(() => !!page.props.auth?.user)
+
+const defaultMethod = props.paymentMethods.find(m => m.is_default) ?? null
+
 const form = reactive({
-  payer_name:  '',
-  payer_email: '',
-  amount:      500,
-  note:        '',
+  payer_name:        props.payerName ?? '',
+  payer_email:       props.payerEmail ?? '',
+  amount:            500,
+  note:              '',
+  payment_method_id: defaultMethod?.id ?? null,
 })
 
 const errors       = ref({})
@@ -136,6 +195,17 @@ const submit = async () => {
   generalError.value = null
   paying.value       = true
 
+  const body = {
+    amount_paise:      form.amount * 100,
+    note:              form.note || null,
+    payment_method_id: form.payment_method_id,
+  }
+
+  if (!isAuthenticated.value) {
+    body.payer_name  = form.payer_name
+    body.payer_email = form.payer_email
+  }
+
   try {
     const res = await fetch(`/pay/${username}/wallet/order`, {
       method: 'POST',
@@ -144,12 +214,7 @@ const submit = async () => {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
         'Accept':       'application/json',
       },
-      body: JSON.stringify({
-        amount_paise: form.amount * 100,
-        payer_name:   form.payer_name,
-        payer_email:  form.payer_email,
-        note:         form.note || null,
-      }),
+      body: JSON.stringify(body),
     })
 
     if (res.status === 422) {
@@ -163,7 +228,7 @@ const submit = async () => {
 
     const data = await res.json()
 
-    const rzp = new window.Razorpay({
+    const rzpOptions = {
       key:         data.key,
       order_id:    data.order_id,
       amount:      data.amount,
@@ -171,8 +236,10 @@ const submit = async () => {
       name:        props.recipient.site_name || props.recipient.name || 'Wallet Top-up',
       description: form.note || 'Wallet Top-up',
       prefill: {
-        name:  data.payer_name,
-        email: data.payer_email,
+        name:    data.payer_name,
+        email:   data.payer_email,
+        contact: undefined,
+        ...(data.upi_vpa ? { vpa: data.upi_vpa } : {}),
       },
       theme: { color: '#2563EB' },
       handler: (response) => {
@@ -183,9 +250,16 @@ const submit = async () => {
         )
       },
       modal: { ondismiss: () => { paying.value = false } },
-    })
+    }
 
-    rzp.open()
+    // Pass saved method token to Razorpay if a card method is selected
+    if (data.razorpay_token_id) {
+      rzpOptions['recurring']  = true
+      rzpOptions['customer_id']= data.customer_id
+      rzpOptions['token']      = { id: data.razorpay_token_id }
+    }
+
+    new window.Razorpay(rzpOptions).open()
   } catch (e) {
     generalError.value = e.message ?? 'Something went wrong. Please try again.'
     paying.value = false

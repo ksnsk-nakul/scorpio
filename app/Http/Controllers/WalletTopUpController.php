@@ -27,13 +27,20 @@ class WalletTopUpController extends Controller
 
     public function show(string $username): Response
     {
-        $user = User::where('username', $username)
+        $recipient = User::where('username', $username)
             ->select(['id', 'name', 'username', 'site_name'])
             ->firstOrFail();
 
+        $payer = auth()->user();
+
         return Inertia::render('WalletTopUp', [
-            'recipient'   => $user->only('name', 'username', 'site_name'),
-            'razorpayKey' => config('billing.razorpay.key_id'),
+            'recipient'      => $recipient->only('name', 'username', 'site_name'),
+            'razorpayKey'    => config('billing.razorpay.key_id'),
+            'payerName'      => $payer?->name,
+            'payerEmail'     => $payer?->email,
+            'paymentMethods' => $payer
+                ? $payer->paymentMethods()->get(['id', 'type', 'label', 'is_default'])
+                : [],
         ]);
     }
 
@@ -41,12 +48,42 @@ class WalletTopUpController extends Controller
     {
         $user = User::where('username', $username)->select(['id', 'name', 'email'])->firstOrFail();
 
-        $data = $request->validate([
-            'amount_paise' => ['required', 'integer', 'min:' . self::MIN_PAISE, 'max:' . self::MAX_PAISE],
-            'payer_name'   => ['required', 'string', 'max:100'],
-            'payer_email'  => ['required', 'email', 'max:255'],
-            'note'         => ['nullable', 'string', 'max:255'],
-        ]);
+        $payer = auth()->user();
+
+        // Authenticated users: name/email come from their account, not the form
+        if ($payer) {
+            $data = $request->validate([
+                'amount_paise' => ['required', 'integer', 'min:' . self::MIN_PAISE, 'max:' . self::MAX_PAISE],
+                'note'         => ['nullable', 'string', 'max:255'],
+            ]);
+            $data['payer_name']  = $payer->name;
+            $data['payer_email'] = $payer->email;
+        } else {
+            $data = $request->validate([
+                'amount_paise' => ['required', 'integer', 'min:' . self::MIN_PAISE, 'max:' . self::MAX_PAISE],
+                'payer_name'   => ['required', 'string', 'max:100'],
+                'payer_email'  => ['required', 'email', 'max:255'],
+                'note'         => ['nullable', 'string', 'max:255'],
+            ]);
+        }
+
+        // Resolve saved payment method if payer is authenticated and selected one
+        $savedMethod     = null;
+        $razorpayTokenId = null;
+        $upiVpa          = null;
+
+        if ($payer && $request->filled('payment_method_id')) {
+            $savedMethod = $payer->paymentMethods()
+                ->find((int) $request->payment_method_id);
+
+            if ($savedMethod) {
+                if ($savedMethod->type === 'card') {
+                    $razorpayTokenId = $savedMethod->razorpay_token_id;
+                } elseif ($savedMethod->type === 'upi') {
+                    $upiVpa = $savedMethod->makeVisible('upi_id')->upi_id;
+                }
+            }
+        }
 
         $order = $this->razorpay()->order->create([
             'amount'   => $data['amount_paise'],
@@ -68,12 +105,34 @@ class WalletTopUpController extends Controller
             'note'              => $data['note'] ?? null,
         ]]);
 
+        $customerId = null;
+        if ($payer && $razorpayTokenId) {
+            if ($payer->razorpay_customer_id) {
+                $customerId = $payer->razorpay_customer_id;
+            } else {
+                try {
+                    $customer = $this->razorpay()->customer->create([
+                        'name'          => $payer->name,
+                        'email'         => $payer->email,
+                        'fail_existing' => '0',
+                    ]);
+                    $payer->update(['razorpay_customer_id' => $customer->id]);
+                    $customerId = $customer->id;
+                } catch (\Throwable) {
+                    // non-critical — proceed without customer_id
+                }
+            }
+        }
+
         return response()->json([
-            'order_id'    => $order->id,
-            'amount'      => $data['amount_paise'],
-            'key'         => config('billing.razorpay.key_id'),
-            'payer_name'  => $data['payer_name'],
-            'payer_email' => $data['payer_email'],
+            'order_id'           => $order->id,
+            'amount'             => $data['amount_paise'],
+            'key'                => config('billing.razorpay.key_id'),
+            'payer_name'         => $data['payer_name'],
+            'payer_email'        => $data['payer_email'],
+            'razorpay_token_id'  => $razorpayTokenId,
+            'customer_id'        => $customerId,
+            'upi_vpa'            => $upiVpa,
         ]);
     }
 
