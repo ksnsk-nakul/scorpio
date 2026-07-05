@@ -260,12 +260,19 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 });
 
 use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\IntegrationsController;
 
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')->name('admin.')
     ->group(function () {
-        Route::get('payment',   [PaymentController::class, 'index'])->name('payment.index');
-        Route::post('payment',  [PaymentController::class, 'update'])->name('payment.update');
+        // Integrations wizard (Payment + Mail + SMS)
+        Route::get('integrations',          [IntegrationsController::class, 'index'])->name('integrations.index');
+        Route::post('integrations/payment', [IntegrationsController::class, 'savePayment'])->name('integrations.payment');
+        Route::post('integrations/mail',    [IntegrationsController::class, 'saveMail'])->name('integrations.mail');
+        Route::post('integrations/sms',     [IntegrationsController::class, 'saveSms'])->name('integrations.sms');
+
+        // Keep old payment GET as redirect; POST removed (saves go to integrations/*)
+        Route::get('payment', fn () => redirect()->route('admin.integrations.index'))->name('payment.index');
     });
 
 use App\Http\Controllers\Admin\ProfileController;
