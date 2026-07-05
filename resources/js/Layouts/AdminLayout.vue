@@ -76,7 +76,7 @@ const allNav = [
   { label: 'Wallet',           href: '/admin/wallet',           roles: ['admin','editor','viewer'] },
   { label: 'Payment Methods',  href: '/admin/payment-methods',  roles: ['admin','editor','viewer'] },
   { label: 'Users',         href: '/admin/users',         roles: ['admin'] },
-  { label: 'Payment',       href: '/admin/payment',       roles: ['admin'] },
+  { label: 'Razorpay',      href: '/admin/payment',       roles: ['admin'] },
   { label: 'Settings',      href: '/admin/settings',      roles: ['admin'] },
   { label: 'Organizations', href: '/admin/organizations', roles: ['admin','editor','viewer'] },
   { label: 'Announcements', href: '/admin/announcements', roles: ['admin'] },
