@@ -7,8 +7,12 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->unsignedBigInteger('wallet_balance_paise')->default(0)->after('plan');
-            $table->string('razorpay_customer_id')->nullable()->after('wallet_balance_paise');
+            if (! Schema::hasColumn('users', 'wallet_balance_paise')) {
+                $table->unsignedBigInteger('wallet_balance_paise')->default(0)->after('plan');
+            }
+            if (! Schema::hasColumn('users', 'razorpay_customer_id')) {
+                $table->string('razorpay_customer_id')->nullable()->after('wallet_balance_paise');
+            }
         });
     }
 

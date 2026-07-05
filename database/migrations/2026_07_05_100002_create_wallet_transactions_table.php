@@ -6,6 +6,10 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
+        if (Schema::hasTable('wallet_transactions')) {
+            return;
+        }
+
         Schema::create('wallet_transactions', function (Blueprint $table) {
             $table->id();
             $table->string('txn_ref', 30)->unique();
