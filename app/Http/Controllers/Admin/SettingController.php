@@ -22,6 +22,8 @@ class SettingController extends Controller
 
     public function update(Request $request)
     {
+        abort_if(app()->environment('demo'), 403, 'Settings cannot be changed in demo mode.');
+
         $allowed = Setting::pluck('key')->toArray();
 
         $numericKeys = ['media_max_size_mb'];

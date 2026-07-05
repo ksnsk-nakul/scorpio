@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Subscription;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Razorpay\Api\Api;
 use Razorpay\Api\Errors\BadRequestError;
@@ -37,7 +38,7 @@ class BillingController extends Controller
 
     public function createOrder(Request $request)
     {
-        $request->validate(['plan' => 'required|in:pro,business']);
+        $request->validate(['plan' => 'required|in:pro,creator']);
 
         $plan = config('billing.plans.' . $request->plan);
 
@@ -92,31 +93,36 @@ class BillingController extends Controller
                 ->with('error', 'Payment verification failed. Please contact support.');
         }
 
-        $subscription = Subscription::where('razorpay_order_id', $request->razorpay_order_id)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+        $plan = DB::transaction(function () use ($request) {
+            $subscription = Subscription::where('razorpay_order_id', $request->razorpay_order_id)
+                ->where('user_id', auth()->id())
+                ->firstOrFail();
 
-        $subscription->update([
-            'status'              => 'active',
-            'razorpay_payment_id' => $request->razorpay_payment_id,
-            'razorpay_signature'  => $request->razorpay_signature,
-            'current_period_end'  => now()->addMonth(),
-        ]);
+            $subscription->update([
+                'status'              => 'active',
+                'razorpay_payment_id' => $request->razorpay_payment_id,
+                'razorpay_signature'  => $request->razorpay_signature,
+                'current_period_end'  => now()->addMonth(),
+            ]);
 
-        // Deactivate any other active subscriptions for this user
-        Subscription::where('user_id', auth()->id())
-            ->where('id', '!=', $subscription->id)
-            ->where('status', 'active')
-            ->update(['status' => 'cancelled']);
+            Subscription::where('user_id', auth()->id())
+                ->where('id', '!=', $subscription->id)
+                ->where('status', 'active')
+                ->update(['status' => 'cancelled']);
 
-        auth()->user()->update(['plan' => $subscription->plan]);
+            auth()->user()->update(['plan' => $subscription->plan]);
+
+            return $subscription->plan;
+        });
 
         return redirect()->route('admin.billing.index')
-            ->with('success', 'Subscription activated! Welcome to ' . ucfirst($subscription->plan) . '.');
+            ->with('success', 'Subscription activated! Welcome to ' . ucfirst($plan) . '.');
     }
 
     public function cancel()
     {
+        abort_if(app()->environment('demo'), 403, 'Subscriptions cannot be cancelled in demo mode.');
+
         $subscription = auth()->user()->activeSubscription;
 
         if ($subscription) {

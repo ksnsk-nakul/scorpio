@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Announcement;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -72,6 +73,7 @@ class HandleInertiaRequests extends Middleware
                 'webhook_url'        => fn () => $request->session()->get('webhook_url'),
                 'webhook_secret'     => fn () => $request->session()->get('webhook_secret'),
             ],
+            'announcements' => fn () => Announcement::active()->get(['id', 'title', 'body', 'type', 'display', 'cta_label', 'cta_url']),
             'demo' => env('DEMO_MODE', false) ? [
                 'enabled'  => true,
                 'email'    => filled(env('DEMO_EMAIL')) ? env('DEMO_EMAIL') : env('ADMIN_EMAIL', 'admin@example.com'),
