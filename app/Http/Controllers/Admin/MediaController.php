@@ -28,6 +28,20 @@ class MediaController extends Controller
             'url'       => $record->url,
             'is_image'  => $record->isImage(),
             'is_video'  => $record->isVideo(),
+            'status'    => $record->status,
+        ]);
+    }
+
+    public function status(int $id): JsonResponse
+    {
+        $media = Media::findOrFail($id);
+
+        return response()->json([
+            'id'                => $media->id,
+            'status'            => $media->status,
+            'status_reason'     => $media->status_reason,
+            'converted_pdf_url' => $media->converted_pdf_url,
+            'comic_page_urls'   => $media->comic_page_urls,
         ]);
     }
 

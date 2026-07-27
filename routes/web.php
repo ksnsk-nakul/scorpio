@@ -68,6 +68,13 @@ Route::middleware(['auth', 'role:admin,editor'])
         Route::delete('media/{id}', [MediaController::class, 'destroy'])->name('media.destroy');
     });
 
+Route::middleware(['auth', 'role:admin,editor,viewer'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('media/{id}/status', [MediaController::class, 'status'])->name('media.status');
+    });
+
 use App\Http\Controllers\Admin\WorkspaceController;
 use App\Http\Controllers\Admin\ProjectController;
 
