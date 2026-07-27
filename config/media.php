@@ -19,4 +19,7 @@ return [
         'branding'      => 'users/{user}/branding',
         'default'       => 'users/{user}/uploads',
     ],
+
+    'office_binary' => env('SOFFICE_BINARY', 'soffice'),
+    'unrar_binary'  => env('UNRAR_BINARY', 'unrar'),
 ];
