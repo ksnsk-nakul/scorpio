@@ -268,7 +268,8 @@ Route::middleware(['auth', 'role:admin'])
         // Integrations wizard (Payment + Mail + SMS)
         Route::get('integrations',          [IntegrationsController::class, 'index'])->name('integrations.index');
         Route::post('integrations/payment', [IntegrationsController::class, 'savePayment'])->name('integrations.payment');
-        Route::post('integrations/mail',    [IntegrationsController::class, 'saveMail'])->name('integrations.mail');
+        Route::post('integrations/mail',      [IntegrationsController::class, 'saveMail'])->name('integrations.mail');
+        Route::post('integrations/mail/test',[IntegrationsController::class, 'testMail'])->name('integrations.mail.test')->middleware('throttle:5,1');
         Route::post('integrations/sms',     [IntegrationsController::class, 'saveSms'])->name('integrations.sms');
 
         // Keep old payment GET as redirect; POST removed (saves go to integrations/*)

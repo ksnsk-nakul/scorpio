@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -67,6 +69,49 @@ class IntegrationsController extends Controller
         ]);
 
         return back()->with('success', 'Payment settings saved.');
+    }
+
+    public function testMail(Request $request): JsonResponse
+    {
+        abort_if(app()->environment('demo'), 403, 'Cannot test mail in demo mode.');
+
+        $data = $request->validate([
+            'MAIL_HOST'         => 'required|string|max:255',
+            'MAIL_PORT'         => 'required|integer|min:1|max:65535',
+            'MAIL_USERNAME'     => 'nullable|string|max:255',
+            'MAIL_PASSWORD'     => 'nullable|string|max:255',
+            'MAIL_ENCRYPTION'   => 'nullable|string|in:tls,ssl,starttls,',
+            'MAIL_FROM_ADDRESS' => 'required|email|max:255',
+            'MAIL_FROM_NAME'    => 'required|string|max:100',
+            'test_to'           => 'required|email|max:255',
+        ]);
+
+        // Override mail config at runtime only — does not write to .env
+        config([
+            'mail.default'                      => 'smtp',
+            'mail.mailers.smtp.host'            => $data['MAIL_HOST'],
+            'mail.mailers.smtp.port'            => (int) $data['MAIL_PORT'],
+            'mail.mailers.smtp.username'        => $data['MAIL_USERNAME'] ?? null,
+            'mail.mailers.smtp.password'        => $data['MAIL_PASSWORD'] ?? null,
+            'mail.mailers.smtp.encryption'      => $data['MAIL_ENCRYPTION'] ?: null,
+            'mail.mailers.smtp.timeout'         => 10,
+            'mail.from.address'                 => $data['MAIL_FROM_ADDRESS'],
+            'mail.from.name'                    => $data['MAIL_FROM_NAME'],
+        ]);
+
+        try {
+            Mail::mailer('smtp')->raw(
+                "This is a test email from your Portfolio CMS.\n\nIf you received this, your mail configuration is working correctly.",
+                function ($message) use ($data) {
+                    $message->to($data['test_to'])
+                            ->subject('Test Email — Portfolio CMS');
+                }
+            );
+
+            return response()->json(['success' => true, 'message' => "Test email sent to {$data['test_to']}."]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
     }
 
     public function saveMail(Request $request): RedirectResponse
