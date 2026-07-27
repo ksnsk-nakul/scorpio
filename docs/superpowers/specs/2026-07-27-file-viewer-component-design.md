@@ -18,7 +18,7 @@ This spec covers **only the reusable viewer component and its backend conversion
 | Text | TXT, MD, CSV | Client-side render (markdown parser, table for CSV) |
 | PDF | PDF | pdf.js |
 | Office | DOC, DOCX, ODT | Server-converted to PDF, then rendered via the PDF renderer |
-| Comics | CBZ | Client-side unzip (PHP `ZipArchive` server-side, see below) → paginated images |
+| Comics | CBZ | Server-side extraction via PHP `ZipArchive` → paginated images |
 | Comics | CBR | Server-side extraction via `unrar`/`unar` binary → paginated images |
 | E-book | EPUB | epub.js |
 
