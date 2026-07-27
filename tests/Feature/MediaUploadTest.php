@@ -3,6 +3,7 @@
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
@@ -10,6 +11,7 @@ beforeEach(fn () => $this->seed());
 
 beforeEach(function () {
     Storage::fake('public');
+    Queue::fake();
     $this->admin = User::factory()->create();
     $this->admin->assignRole('admin');
 });
@@ -56,7 +58,7 @@ it('accepts a cbz upload by extension even though the mime is generic zip', func
     $this->actingAs($this->admin)
         ->postJson('/admin/media', ['file' => $file])
         ->assertOk();
-})->skip('needs ExtractComicArchiveJob from Task 5');
+});
 
 it('rejects a zip upload that is not named cbz or cbr', function () {
     $file = UploadedFile::fake()->create('archive.zip', 100, 'application/zip');
