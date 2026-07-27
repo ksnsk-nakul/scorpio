@@ -53,8 +53,8 @@ Every renderer implements the same prop contract: `fileUrl`, `mimeType`, `meta` 
 ### Theming
 
 Two independent theme layers:
-1. **Chrome** — toolbar/background follow the app's existing light/dark CSS variables automatically. Not user-configurable; just consistency with the rest of the admin UI.
-2. **Reader theme** — for text-based renderers only (`TextRenderer`, `EpubRenderer`, `OfficeRenderer`): a picker for sepia/dark/light background plus font-size and line-spacing, tucked in an "Aa" toolbar menu. Persisted per-browser via `localStorage`, independent of the app theme.
+1. **Chrome** — the admin UI has no dark mode today (no `dark:` classes, no theme variables anywhere in `resources/js`); it's a fixed light palette (slate/blue, per `ImagePicker.vue` and similar components). The viewer chrome follows that same fixed palette for consistency — there's no "automatic" theme-following to build, just matching the existing look.
+2. **Reader theme** — for text-based renderers only (`TextRenderer`, `EpubRenderer`, `OfficeRenderer`): a picker for sepia/dark/light background plus font-size and line-spacing, tucked in an "Aa" toolbar menu. Persisted per-browser via `localStorage`. This is the one place dark styling exists in the app, and it's scoped to reading content only, not the chrome or the rest of the admin UI.
 
 ---
 
