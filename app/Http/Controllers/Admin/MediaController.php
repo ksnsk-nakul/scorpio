@@ -35,6 +35,7 @@ class MediaController extends Controller
     public function status(int $id): JsonResponse
     {
         $media = Media::findOrFail($id);
+        $this->authorize('view', $media);
 
         return response()->json([
             'id'                => $media->id,

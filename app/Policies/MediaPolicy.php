@@ -6,6 +6,11 @@ use App\Models\User;
 
 class MediaPolicy
 {
+    public function view(User $user, Media $media): bool
+    {
+        return $user->id === $media->user_id || $user->hasRole('admin');
+    }
+
     public function delete(User $user, Media $media): bool
     {
         return $user->id === $media->user_id || $user->hasRole('admin');
