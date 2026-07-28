@@ -7,14 +7,14 @@ beforeEach(() => {
 
 describe('useReaderTheme', () => {
   it('defaults to the light theme at 16px', async () => {
-    const { useReaderTheme } = await import('@/Composables/useReaderTheme')
+    const { useReaderTheme } = await import('@/composables/useReaderTheme')
     const { preferences } = useReaderTheme()
     expect(preferences.value.theme).toBe('light')
     expect(preferences.value.fontSize).toBe(16)
   })
 
   it('persists theme changes to localStorage', async () => {
-    const { useReaderTheme } = await import('@/Composables/useReaderTheme')
+    const { useReaderTheme } = await import('@/composables/useReaderTheme')
     const { setTheme } = useReaderTheme()
     setTheme('sepia')
     const stored = JSON.parse(localStorage.getItem('file-viewer-reader-theme'))
@@ -22,7 +22,7 @@ describe('useReaderTheme', () => {
   })
 
   it('clamps font size between 12 and 28', async () => {
-    const { useReaderTheme } = await import('@/Composables/useReaderTheme')
+    const { useReaderTheme } = await import('@/composables/useReaderTheme')
     const { preferences, decreaseFontSize, increaseFontSize } = useReaderTheme()
     for (let i = 0; i < 10; i++) decreaseFontSize()
     expect(preferences.value.fontSize).toBe(12)
@@ -31,7 +31,7 @@ describe('useReaderTheme', () => {
   })
 
   it('shares state across multiple calls in the same session', async () => {
-    const { useReaderTheme } = await import('@/Composables/useReaderTheme')
+    const { useReaderTheme } = await import('@/composables/useReaderTheme')
     const a = useReaderTheme()
     const b = useReaderTheme()
     a.setTheme('dark')
