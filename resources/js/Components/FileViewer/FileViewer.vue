@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="root"
     class="relative rounded-lg border border-slate-200 overflow-hidden"
     :class="fullscreen ? 'fixed inset-0 z-50 rounded-none border-0' : 'w-full h-full min-h-[220px]'"
     @mouseenter="showControls = true"
@@ -23,14 +24,14 @@
       <button
         data-testid="toggle-fullscreen"
         class="pointer-events-auto"
-        @click="fullscreen = !fullscreen"
+        @click="toggleFullscreen"
       >{{ fullscreen ? '✕' : '⛶' }}</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { resolveRenderer } from './rendererMap'
 import ImageRenderer from './renderers/ImageRenderer.vue'
 import VideoRenderer from './renderers/VideoRenderer.vue'
@@ -45,8 +46,46 @@ import UnsupportedRenderer from './UnsupportedRenderer.vue'
 
 const props = defineProps({ media: { type: Object, required: true } })
 
+const root = ref(null)
 const fullscreen = ref(false)
 const showControls = ref(false)
+
+async function toggleFullscreen() {
+  if (fullscreen.value) {
+    if (document.fullscreenElement && document.exitFullscreen) {
+      try {
+        await document.exitFullscreen()
+      } catch {
+        // ignore — browser may refuse, fall back to CSS-only state
+      }
+    }
+    fullscreen.value = false
+    return
+  }
+
+  fullscreen.value = true
+  if (root.value?.requestFullscreen) {
+    try {
+      await root.value.requestFullscreen()
+    } catch {
+      // ignore — not called from a user gesture, unsupported, etc. CSS class still applies.
+    }
+  }
+}
+
+function handleFullscreenChange() {
+  if (!document.fullscreenElement) {
+    fullscreen.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('fullscreenchange', handleFullscreenChange)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('fullscreenchange', handleFullscreenChange)
+})
 
 const renderer = computed(() => resolveRenderer(props.media))
 

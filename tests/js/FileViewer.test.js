@@ -43,4 +43,18 @@ describe('FileViewer', () => {
     await wrapper.find('[data-testid="toggle-fullscreen"]').trigger('click')
     expect(wrapper.classes()).toContain('fixed')
   })
+
+  it('syncs fullscreen state back when the browser exits fullscreen natively (e.g. Escape)', async () => {
+    const wrapper = mount(FileViewer, { props: { media: readyImage } })
+
+    await wrapper.find('[data-testid="toggle-fullscreen"]').trigger('click')
+    expect(wrapper.classes()).toContain('fixed')
+
+    // Simulate the browser exiting fullscreen on its own (Escape key), which fires
+    // a native fullscreenchange event with document.fullscreenElement cleared.
+    document.dispatchEvent(new Event('fullscreenchange'))
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.classes()).not.toContain('fixed')
+  })
 })
