@@ -67,3 +67,22 @@ it('rejects a zip upload that is not named cbz or cbr', function () {
         ->postJson('/admin/media', ['file' => $file])
         ->assertStatus(422);
 });
+
+it('accepts an epub upload with the canonical epub mime', function () {
+    $file = UploadedFile::fake()->create('book.epub', 100, 'application/epub+zip');
+
+    $this->actingAs($this->admin)
+        ->postJson('/admin/media', ['file' => $file])
+        ->assertOk();
+});
+
+it('accepts an epub upload by extension even though the mime is generic zip', function () {
+    // Real-world epub generators (e.g. J-Novel Club exports) often produce
+    // files that libmagic sniffs as generic application/zip rather than
+    // application/epub+zip.
+    $file = UploadedFile::fake()->create('book.epub', 100, 'application/zip');
+
+    $this->actingAs($this->admin)
+        ->postJson('/admin/media', ['file' => $file])
+        ->assertOk();
+});

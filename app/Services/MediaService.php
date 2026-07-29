@@ -25,10 +25,14 @@ class MediaService
     ];
 
     // Zip/RAR mime detection varies by OS and PHP build, so archive uploads are
-    // only trusted when the filename extension confirms cbz/cbr.
+    // only trusted when the filename extension confirms cbz/cbr/epub. Real-world
+    // epub files are often sniffed as generic application/zip, so that (and
+    // application/octet-stream) must be trusted alongside the canonical
+    // application/epub+zip when the extension is .epub.
     private const ARCHIVE_MIMES_BY_EXTENSION = [
-        'cbz' => ['application/zip', 'application/vnd.comicbook+zip', 'application/octet-stream'],
-        'cbr' => ['application/vnd.rar', 'application/x-rar-compressed', 'application/octet-stream'],
+        'cbz'  => ['application/zip', 'application/vnd.comicbook+zip', 'application/octet-stream'],
+        'cbr'  => ['application/vnd.rar', 'application/x-rar-compressed', 'application/octet-stream'],
+        'epub' => ['application/epub+zip', 'application/zip', 'application/octet-stream'],
     ];
 
     public function store(UploadedFile $file, User $user, string $context = 'default'): Media
