@@ -25,4 +25,26 @@ class LibraryController extends Controller
                 ]),
         ]);
     }
+
+    public function show(string $slug): Response
+    {
+        $book = Book::where('slug', $slug)
+            ->where('status', 'ready')
+            ->with(['author', 'chapters' => fn ($q) => $q->orderBy('sort_order')])
+            ->firstOrFail();
+
+        return Inertia::render('Public/Library/BookDetail', [
+            'book' => [
+                'title' => $book->title,
+                'slug' => $book->slug,
+                'description' => $book->description,
+                'cover_url' => $book->cover_url,
+                'language' => $book->language,
+                'publisher' => $book->publisher,
+                'published_date' => $book->published_date?->toDateString(),
+                'author' => $book->author ? ['name' => $book->author->name, 'slug' => $book->author->slug] : null,
+                'chapters' => $book->chapters->map(fn ($c) => ['title' => $c->title, 'sort_order' => $c->sort_order])->values(),
+            ],
+        ]);
+    }
 }

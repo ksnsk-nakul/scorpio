@@ -389,6 +389,9 @@ Route::get('/org/{slug}', [\App\Http\Controllers\PublicController::class, 'orgPa
 use App\Http\Controllers\LibraryController;
 
 Route::get('/library', [LibraryController::class, 'index'])->name('library.index');
+Route::get('/library/books/{slug}', [LibraryController::class, 'show'])
+    ->name('library.book')
+    ->where('slug', '[a-z0-9\-]+');
 
 // Admin portfolio inner pages at root (must be last to avoid shadowing other routes)
 Route::get('/{slug}', [\App\Http\Controllers\PublicController::class, 'adminPage'])

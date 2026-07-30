@@ -22,3 +22,28 @@ it('only lists ready books on the public index, paginated 15 per page', function
 it('requires no authentication to view the public index', function () {
     $this->get('/library')->assertOk();
 });
+
+it('shows a ready book with its chapters in order', function () {
+    $book = Book::factory()->create(['status' => 'ready', 'title' => 'A Public Book']);
+    \App\Models\Chapter::factory()->create(['book_id' => $book->id, 'title' => 'Two', 'sort_order' => 1]);
+    \App\Models\Chapter::factory()->create(['book_id' => $book->id, 'title' => 'One', 'sort_order' => 0]);
+
+    $response = $this->get("/library/books/{$book->slug}");
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('Public/Library/BookDetail')
+        ->where('book.title', 'A Public Book')
+        ->where('book.chapters.0.title', 'One')
+        ->where('book.chapters.1.title', 'Two'));
+});
+
+it('404s for a book that is not ready', function () {
+    $book = Book::factory()->create(['status' => 'pending']);
+
+    $this->get("/library/books/{$book->slug}")->assertNotFound();
+});
+
+it('404s for a nonexistent book slug', function () {
+    $this->get('/library/books/does-not-exist')->assertNotFound();
+});
