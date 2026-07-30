@@ -1,11 +1,13 @@
 import { computed, ref, watch } from 'vue'
 
 const THEME_CLASSES = {
-  light: 'bg-white text-slate-900',
+  white: 'bg-white text-slate-900',
+  black: 'bg-[#000000] text-[#e0e0e0]',
   sepia: 'bg-[#f4ecd8] text-[#3b2f1c]',
-  dark: 'bg-[#121212] text-[#d8d8d8]',
+  'sepia-dark': 'bg-[#2b2116] text-[#e8d9b8]',
 }
 
+const DEFAULT_THEME = 'white'
 const STORAGE_KEY = 'file-viewer-reader-theme'
 const MIN_FONT_SIZE = 12
 const MAX_FONT_SIZE = 28
@@ -13,9 +15,9 @@ const MAX_FONT_SIZE = 28
 function loadPreferences() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : { theme: 'light', fontSize: 16, lineHeight: 1.6 }
+    return raw ? JSON.parse(raw) : { theme: DEFAULT_THEME, fontSize: 16, lineHeight: 1.6 }
   } catch {
-    return { theme: 'light', fontSize: 16, lineHeight: 1.6 }
+    return { theme: DEFAULT_THEME, fontSize: 16, lineHeight: 1.6 }
   }
 }
 
@@ -26,7 +28,7 @@ watch(preferences, (value) => {
 }, { deep: true, flush: 'sync' })
 
 export function useReaderTheme() {
-  const themeClass = computed(() => THEME_CLASSES[preferences.value.theme] ?? THEME_CLASSES.light)
+  const themeClass = computed(() => THEME_CLASSES[preferences.value.theme] ?? THEME_CLASSES[DEFAULT_THEME])
   const fontStyle = computed(() => ({
     fontSize: `${preferences.value.fontSize}px`,
     lineHeight: preferences.value.lineHeight,

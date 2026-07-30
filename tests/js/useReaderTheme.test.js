@@ -6,10 +6,10 @@ beforeEach(() => {
 })
 
 describe('useReaderTheme', () => {
-  it('defaults to the light theme at 16px', async () => {
+  it('defaults to the white theme at 16px', async () => {
     const { useReaderTheme } = await import('@/composables/useReaderTheme')
     const { preferences } = useReaderTheme()
-    expect(preferences.value.theme).toBe('light')
+    expect(preferences.value.theme).toBe('white')
     expect(preferences.value.fontSize).toBe(16)
   })
 
@@ -19,6 +19,13 @@ describe('useReaderTheme', () => {
     setTheme('sepia')
     const stored = JSON.parse(localStorage.getItem('file-viewer-reader-theme'))
     expect(stored.theme).toBe('sepia')
+  })
+
+  it.each(['white', 'black', 'sepia', 'sepia-dark'])('can set the %s theme', async (theme) => {
+    const { useReaderTheme } = await import('@/composables/useReaderTheme')
+    const { preferences, setTheme } = useReaderTheme()
+    setTheme(theme)
+    expect(preferences.value.theme).toBe(theme)
   })
 
   it('clamps font size between 12 and 28', async () => {
@@ -34,7 +41,7 @@ describe('useReaderTheme', () => {
     const { useReaderTheme } = await import('@/composables/useReaderTheme')
     const a = useReaderTheme()
     const b = useReaderTheme()
-    a.setTheme('dark')
-    expect(b.preferences.value.theme).toBe('dark')
+    a.setTheme('black')
+    expect(b.preferences.value.theme).toBe('black')
   })
 })
