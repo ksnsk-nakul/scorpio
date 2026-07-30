@@ -178,7 +178,14 @@ const openEdit = (book) => {
 }
 
 const submitEdit = async () => {
-  await axios.patch(`/admin/library/books/${editing.value.id}`, { ...editForm })
+  const payload = { title: editForm.title, description: editForm.description }
+  // Omit author_name entirely when blank so the backend doesn't create/attach
+  // a blank-named Author (see BookController::update -- `sometimes` treats an
+  // empty string as "present", not "absent").
+  if (editForm.author_name.trim() !== '') {
+    payload.author_name = editForm.author_name
+  }
+  await axios.patch(`/admin/library/books/${editing.value.id}`, payload)
   editing.value = null
   router.reload({ only: ['books'] })
 }
