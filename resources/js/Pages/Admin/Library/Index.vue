@@ -69,7 +69,7 @@
                     <img v-if="book.cover_url" :src="book.cover_url" class="w-8 h-11 object-cover rounded" />
                     <div v-else class="w-8 h-11 bg-slate-100 rounded"></div>
                   </td>
-                  <td class="px-5 py-3 font-medium text-slate-800 whitespace-nowrap">{{ book.title }}</td>
+                  <td class="px-5 py-3 font-medium text-slate-800 max-w-xs line-clamp-2" :title="book.title">{{ book.title }}</td>
                   <td class="px-5 py-3 text-slate-500 whitespace-nowrap">{{ book.author ?? '—' }}</td>
                   <td class="px-5 py-3">
                     <span class="text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap" :class="statusBadge(book.status)">
@@ -98,7 +98,7 @@
           <div v-for="book in books.data" :key="book.id" class="bg-white border border-slate-200 rounded-xl p-3">
             <img v-if="book.cover_url" :src="book.cover_url" class="aspect-[2/3] object-cover w-full rounded-lg" />
             <div v-else class="aspect-[2/3] w-full bg-slate-100 rounded-lg"></div>
-            <p class="font-medium text-slate-800 text-sm mt-2">{{ book.title }}</p>
+            <p class="font-medium text-slate-800 text-sm mt-2 line-clamp-2" :title="book.title">{{ book.title }}</p>
             <p class="text-slate-500 text-xs">{{ book.author ?? '—' }}</p>
             <span class="inline-block text-xs px-2 py-0.5 rounded-full font-medium mt-1" :class="statusBadge(book.status)">
               {{ book.status }}
