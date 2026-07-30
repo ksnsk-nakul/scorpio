@@ -47,4 +47,21 @@ class LibraryController extends Controller
             ],
         ]);
     }
+
+    public function chapter(string $slug, int $sortOrder): Response
+    {
+        $book = Book::where('slug', $slug)->where('status', 'ready')->firstOrFail();
+        $chapter = $book->chapters()->where('sort_order', $sortOrder)->firstOrFail();
+
+        return Inertia::render('Public/Library/ChapterReader', [
+            'book' => ['title' => $book->title, 'slug' => $book->slug],
+            'chapter' => [
+                'title' => $chapter->title,
+                'content' => $chapter->content,
+                'sort_order' => $chapter->sort_order,
+            ],
+            'hasPrev' => $sortOrder > 0 && $book->chapters()->where('sort_order', $sortOrder - 1)->exists(),
+            'hasNext' => $book->chapters()->where('sort_order', $sortOrder + 1)->exists(),
+        ]);
+    }
 }

@@ -47,3 +47,38 @@ it('404s for a book that is not ready', function () {
 it('404s for a nonexistent book slug', function () {
     $this->get('/library/books/does-not-exist')->assertNotFound();
 });
+
+it('shows a chapter with correct prev/next flags', function () {
+    $book = Book::factory()->create(['status' => 'ready']);
+    \App\Models\Chapter::factory()->create(['book_id' => $book->id, 'sort_order' => 0, 'title' => 'First']);
+    \App\Models\Chapter::factory()->create(['book_id' => $book->id, 'sort_order' => 1, 'title' => 'Second']);
+    \App\Models\Chapter::factory()->create(['book_id' => $book->id, 'sort_order' => 2, 'title' => 'Third']);
+
+    $response = $this->get("/library/books/{$book->slug}/chapters/1");
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('Public/Library/ChapterReader')
+        ->where('chapter.title', 'Second')
+        ->where('hasPrev', true)
+        ->where('hasNext', true));
+});
+
+it('reports no prev on the first chapter and no next on the last', function () {
+    $book = Book::factory()->create(['status' => 'ready']);
+    \App\Models\Chapter::factory()->create(['book_id' => $book->id, 'sort_order' => 0]);
+    \App\Models\Chapter::factory()->create(['book_id' => $book->id, 'sort_order' => 1]);
+
+    $this->get("/library/books/{$book->slug}/chapters/0")
+        ->assertInertia(fn ($page) => $page->where('hasPrev', false)->where('hasNext', true));
+
+    $this->get("/library/books/{$book->slug}/chapters/1")
+        ->assertInertia(fn ($page) => $page->where('hasPrev', true)->where('hasNext', false));
+});
+
+it('404s for a nonexistent chapter sort_order', function () {
+    $book = Book::factory()->create(['status' => 'ready']);
+    \App\Models\Chapter::factory()->create(['book_id' => $book->id, 'sort_order' => 0]);
+
+    $this->get("/library/books/{$book->slug}/chapters/99")->assertNotFound();
+});
