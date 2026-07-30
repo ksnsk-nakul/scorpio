@@ -24,7 +24,7 @@ import { ref, onMounted, computed } from 'vue'
 import { marked } from 'marked'
 import Papa from 'papaparse'
 import { resolveRenderer } from '../rendererMap'
-import { useReaderTheme } from '@/Composables/useReaderTheme'
+import { useReaderTheme } from '@/composables/useReaderTheme'
 
 const props = defineProps({ media: { type: Object, required: true } })
 
