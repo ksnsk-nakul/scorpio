@@ -1,7 +1,22 @@
 <template>
   <AdminLayout>
     <div class="max-w-5xl mx-auto">
-      <h1 class="text-2xl font-bold text-slate-800 mb-6">Library</h1>
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-slate-800">Library</h1>
+
+        <!-- View mode toggle -->
+        <div class="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+          <button
+            v-for="mode in ['list', 'grid', 'icons']"
+            :key="mode"
+            @click="viewMode = mode"
+            class="px-3 py-1.5 text-xs font-medium rounded-md capitalize transition"
+            :class="viewMode === mode ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+          >
+            {{ mode }}
+          </button>
+        </div>
+      </div>
 
       <!-- Bulk upload -->
       <div
@@ -33,48 +48,88 @@
         No books yet.
       </div>
 
-      <div v-else class="bg-white border border-slate-200 rounded-xl overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Cover</th>
-                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Title</th>
-                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Author</th>
-                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Status</th>
-                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Uploaded</th>
-                <th class="px-5 py-3"></th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-              <tr v-for="book in books.data" :key="book.id" class="hover:bg-slate-50">
-                <td class="px-5 py-3">
-                  <img v-if="book.cover_url" :src="book.cover_url" class="w-8 h-11 object-cover rounded" />
-                  <div v-else class="w-8 h-11 bg-slate-100 rounded"></div>
-                </td>
-                <td class="px-5 py-3 font-medium text-slate-800 whitespace-nowrap">{{ book.title }}</td>
-                <td class="px-5 py-3 text-slate-500 whitespace-nowrap">{{ book.author ?? '—' }}</td>
-                <td class="px-5 py-3">
-                  <span class="text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap" :class="statusBadge(book.status)">
-                    {{ book.status }}
-                  </span>
-                  <span v-if="book.status === 'failed' && book.status_reason" class="block text-xs text-red-400 mt-1">
-                    {{ book.status_reason }}
-                  </span>
-                </td>
-                <td class="px-5 py-3 text-slate-400 text-xs whitespace-nowrap">{{ book.created_at }}</td>
-                <td class="px-5 py-3">
-                  <div class="flex items-center gap-3 whitespace-nowrap">
-                    <button @click="openEdit(book)" class="text-xs text-blue-500 hover:text-blue-700">Edit</button>
-                    <button v-if="book.status === 'failed'" @click="retry(book)" class="text-xs text-amber-500 hover:text-amber-700">Retry</button>
-                    <button @click="destroy(book)" class="text-xs text-red-500 hover:text-red-700">Delete</button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      <template v-else>
+        <!-- List mode -->
+        <div v-if="viewMode === 'list'" class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Cover</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Title</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Author</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Status</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Uploaded</th>
+                  <th class="px-5 py-3"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr v-for="book in books.data" :key="book.id" class="hover:bg-slate-50">
+                  <td class="px-5 py-3">
+                    <img v-if="book.cover_url" :src="book.cover_url" class="w-8 h-11 object-cover rounded" />
+                    <div v-else class="w-8 h-11 bg-slate-100 rounded"></div>
+                  </td>
+                  <td class="px-5 py-3 font-medium text-slate-800 whitespace-nowrap">{{ book.title }}</td>
+                  <td class="px-5 py-3 text-slate-500 whitespace-nowrap">{{ book.author ?? '—' }}</td>
+                  <td class="px-5 py-3">
+                    <span class="text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap" :class="statusBadge(book.status)">
+                      {{ book.status }}
+                    </span>
+                    <span v-if="book.status === 'failed' && book.status_reason" class="block text-xs text-red-400 mt-1">
+                      {{ book.status_reason }}
+                    </span>
+                  </td>
+                  <td class="px-5 py-3 text-slate-400 text-xs whitespace-nowrap">{{ book.created_at }}</td>
+                  <td class="px-5 py-3">
+                    <div class="flex items-center gap-3 whitespace-nowrap">
+                      <button @click="openEdit(book)" class="text-xs text-blue-500 hover:text-blue-700">Edit</button>
+                      <button v-if="book.status === 'failed'" @click="retry(book)" class="text-xs text-amber-500 hover:text-amber-700">Retry</button>
+                      <button @click="destroy(book)" class="text-xs text-red-500 hover:text-red-700">Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+
+        <!-- Grid mode -->
+        <div v-if="viewMode === 'grid'" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div v-for="book in books.data" :key="book.id" class="bg-white border border-slate-200 rounded-xl p-3">
+            <img v-if="book.cover_url" :src="book.cover_url" class="aspect-[2/3] object-cover w-full rounded-lg" />
+            <div v-else class="aspect-[2/3] w-full bg-slate-100 rounded-lg"></div>
+            <p class="font-medium text-slate-800 text-sm mt-2">{{ book.title }}</p>
+            <p class="text-slate-500 text-xs">{{ book.author ?? '—' }}</p>
+            <span class="inline-block text-xs px-2 py-0.5 rounded-full font-medium mt-1" :class="statusBadge(book.status)">
+              {{ book.status }}
+            </span>
+            <span v-if="book.status === 'failed' && book.status_reason" class="block text-xs text-red-400 mt-1">
+              {{ book.status_reason }}
+            </span>
+            <div class="flex items-center gap-3 mt-2">
+              <button @click="openEdit(book)" class="text-xs text-blue-500 hover:text-blue-700">Edit</button>
+              <button v-if="book.status === 'failed'" @click="retry(book)" class="text-xs text-amber-500 hover:text-amber-700">Retry</button>
+              <button @click="destroy(book)" class="text-xs text-red-500 hover:text-red-700">Delete</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Icons mode -->
+        <div v-if="viewMode === 'icons'" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+          <div v-for="book in books.data" :key="book.id" :title="book.title" class="relative group">
+            <img v-if="book.cover_url" :src="book.cover_url" class="aspect-[2/3] object-cover w-full rounded-lg" />
+            <div v-else class="aspect-[2/3] w-full bg-slate-100 rounded-lg"></div>
+
+            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 rounded-lg transition flex items-center justify-center gap-2 hidden group-hover:flex">
+              <button @click="openEdit(book)" class="bg-white/90 rounded-full px-2 py-1 text-xs text-blue-600 hover:text-blue-800 shadow-sm">Edit</button>
+              <button v-if="book.status === 'failed'" @click="retry(book)" class="bg-white/90 rounded-full px-2 py-1 text-xs text-amber-600 hover:text-amber-800 shadow-sm">Retry</button>
+              <button @click="destroy(book)" class="bg-white/90 rounded-full px-2 py-1 text-xs text-red-600 hover:text-red-800 shadow-sm">Delete</button>
+            </div>
+
+            <p class="line-clamp-2 text-xs text-center mt-1 text-slate-600">{{ book.title }}</p>
+          </div>
+        </div>
+      </template>
 
       <!-- Pagination -->
       <div v-if="books.last_page > 1" class="flex gap-1.5 mt-4 justify-center flex-wrap">
@@ -115,6 +170,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 
 const props = defineProps({ books: { type: Object, required: true } })
 
+const viewMode = ref('list')
 const fileInput = ref(null)
 const dragging = ref(false)
 const uploading = ref([])
