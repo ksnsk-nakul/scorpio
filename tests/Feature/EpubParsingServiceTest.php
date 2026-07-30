@@ -117,3 +117,32 @@ it('extracts chapter images and rewrites their src to stored urls', function () 
     Storage::disk('public')->assertExists($relativePath);
     expect(Storage::disk('public')->get($relativePath))->toBe('fake jpg bytes');
 });
+
+it('extracts the cover image declared via meta name=cover', function () {
+    $fixture = EpubFixtureBuilder::build(
+        bookTitle: 'Covered Book',
+        author: 'Jane Doe',
+        chapters: [['title' => 'One', 'body' => '<p>Text.</p>']],
+        cover: ['ext' => 'jpg', 'bytes' => 'fake cover bytes'],
+    );
+    $book = bookFromFixture($fixture, $this->user->id);
+
+    (new EpubParsingService())->parse($book);
+
+    expect($book->cover_path)->toBe("books/{$book->id}/cover.jpg");
+    Storage::disk('public')->assertExists("books/{$book->id}/cover.jpg");
+    expect(Storage::disk('public')->get("books/{$book->id}/cover.jpg"))->toBe('fake cover bytes');
+});
+
+it('leaves cover_path null when no cover image exists in the manifest', function () {
+    $fixture = EpubFixtureBuilder::build(
+        bookTitle: 'No Cover Book',
+        author: 'Jane Doe',
+        chapters: [['title' => 'One', 'body' => '<p>Text.</p>']],
+    );
+    $book = bookFromFixture($fixture, $this->user->id);
+
+    (new EpubParsingService())->parse($book);
+
+    expect($book->cover_path)->toBeNull();
+});

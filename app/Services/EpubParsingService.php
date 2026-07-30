@@ -249,6 +249,47 @@ class EpubParsingService
 
     private function extractCover(ZipArchive $zip, SimpleXMLElement $opf, array $manifest, string $opfDir, Book $book): void
     {
-        // Implemented fully in Task 8.
+        $opf->registerXPathNamespace('opf', self::OPF_NS);
+
+        $coverId = null;
+        $metaCover = $opf->xpath('//opf:metadata/opf:meta[@name="cover"]');
+        if (! empty($metaCover)) {
+            $coverId = (string) $metaCover[0]['content'];
+        }
+
+        $coverItem = null;
+        if ($coverId && isset($manifest[$coverId])) {
+            $coverItem = $manifest[$coverId];
+        } else {
+            foreach ($manifest as $item) {
+                if (str_contains($item['properties'], 'cover-image')) {
+                    $coverItem = $item;
+                    break;
+                }
+            }
+        }
+
+        if (! $coverItem) {
+            foreach ($manifest as $item) {
+                if (str_starts_with($item['media_type'], 'image/')) {
+                    $coverItem = $item;
+                    break;
+                }
+            }
+        }
+
+        if (! $coverItem) {
+            return;
+        }
+
+        $coverPath = $opfDir . $coverItem['href'];
+        $bytes = $zip->getFromName($coverPath);
+        if ($bytes === false) {
+            return;
+        }
+
+        $ext = strtolower(pathinfo($coverPath, PATHINFO_EXTENSION)) ?: 'jpg';
+        Storage::disk('public')->put("books/{$book->id}/cover.{$ext}", $bytes);
+        $book->cover_path = "books/{$book->id}/cover.{$ext}";
     }
 }
