@@ -12,7 +12,7 @@ This builds on the universal file viewer component (`docs/superpowers/specs/2026
 
 **Explicitly out of scope** (each gets its own future spec):
 - RAG search over the library (embeddings, chunking, Laravel MCP server) — depends on library content existing first
-- Reading progress / "continue reading" tracking
+- **Reader accounts + reading progress + personal shelves** — browsing stays anonymous/public in this spec, but a future spec covers: sign-in required to actually read a book (browsing remains free), per-book reading progress with "continue reading" suggestions, and user-defined shelves/categories (e.g. "reading," "plan to read") with filtering — all three depend on a new reader-account system (distinct from the existing admin/editor/viewer CMS auth) that doesn't exist yet, so this needs its own spec once the core library has real content to attach accounts to
 - Purchases, pricing, paid access — all books are free for now
 - Multi-author books (one primary author per book for v1)
 
