@@ -31,7 +31,8 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import axios from 'axios'
 import { resolveRenderer } from './rendererMap'
 import ImageRenderer from './renderers/ImageRenderer.vue'
 import VideoRenderer from './renderers/VideoRenderer.vue'
@@ -49,6 +50,53 @@ const props = defineProps({ media: { type: Object, required: true } })
 const root = ref(null)
 const fullscreen = ref(false)
 const showControls = ref(false)
+
+// Local mutable copy of the media prop. The status-polling response is merged into
+// this so the renderer dispatch and ProcessingState/UnsupportedRenderer branches can
+// react to status changes without trying to mutate the (readonly) prop directly.
+const media = ref({ ...props.media })
+
+const POLL_INTERVAL_MS = 2000
+let pollTimer = null
+
+function isProcessing(status) {
+  return status === 'pending' || status === 'processing'
+}
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+}
+
+function startPolling() {
+  stopPolling()
+  if (!isProcessing(media.value.status)) return
+
+  pollTimer = setInterval(async () => {
+    try {
+      const { data } = await axios.get(`/admin/media/${media.value.id}/status`)
+      media.value = { ...media.value, ...data }
+      if (!isProcessing(data.status)) {
+        stopPolling()
+      }
+    } catch {
+      // ignore transient network errors — keep polling until it settles or the
+      // component is torn down
+    }
+  }, POLL_INTERVAL_MS)
+}
+
+// If the parent swaps which media is being viewed, resync the local copy and
+// restart polling as needed rather than getting stuck on stale local state.
+watch(
+  () => props.media,
+  (newMedia) => {
+    media.value = { ...newMedia }
+    startPolling()
+  }
+)
 
 async function toggleFullscreen() {
   if (fullscreen.value) {
@@ -81,13 +129,15 @@ function handleFullscreenChange() {
 
 onMounted(() => {
   document.addEventListener('fullscreenchange', handleFullscreenChange)
+  startPolling()
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  stopPolling()
 })
 
-const renderer = computed(() => resolveRenderer(props.media))
+const renderer = computed(() => resolveRenderer(media.value))
 
 const COMPONENT_MAP = {
   image: ImageRenderer,
