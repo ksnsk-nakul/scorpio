@@ -395,6 +395,9 @@ Route::get('/library/books/{slug}', [LibraryController::class, 'show'])
 Route::get('/library/books/{slug}/chapters/{sortOrder}', [LibraryController::class, 'chapter'])
     ->name('library.chapter')
     ->where(['slug' => '[a-z0-9\-]+', 'sortOrder' => '[0-9]+']);
+Route::get('/library/authors/{slug}', [LibraryController::class, 'author'])
+    ->name('library.author')
+    ->where('slug', '[a-z0-9\-]+');
 
 // Admin portfolio inner pages at root (must be last to avoid shadowing other routes)
 Route::get('/{slug}', [\App\Http\Controllers\PublicController::class, 'adminPage'])

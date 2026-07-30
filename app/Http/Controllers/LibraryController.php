@@ -64,4 +64,24 @@ class LibraryController extends Controller
             'hasNext' => $book->chapters()->where('sort_order', $sortOrder + 1)->exists(),
         ]);
     }
+
+    public function author(string $slug): Response
+    {
+        $author = Author::where('slug', $slug)->firstOrFail();
+
+        return Inertia::render('Public/Library/AuthorShow', [
+            'author' => ['name' => $author->name, 'bio' => $author->bio],
+            'books' => $author->books()
+                ->where('status', 'ready')
+                ->latest()
+                ->latest('id')
+                ->paginate(15)
+                ->withQueryString()
+                ->through(fn (Book $book) => [
+                    'title' => $book->title,
+                    'slug' => $book->slug,
+                    'cover_url' => $book->cover_url,
+                ]),
+        ]);
+    }
 }

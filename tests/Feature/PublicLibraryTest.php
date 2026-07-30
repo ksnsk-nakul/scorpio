@@ -82,3 +82,22 @@ it('404s for a nonexistent chapter sort_order', function () {
 
     $this->get("/library/books/{$book->slug}/chapters/99")->assertNotFound();
 });
+
+it('shows an author with only their ready books', function () {
+    $author = Author::factory()->create(['name' => 'Jane Doe']);
+    Book::factory()->create(['author_id' => $author->id, 'status' => 'ready', 'title' => 'Ready Book']);
+    Book::factory()->create(['author_id' => $author->id, 'status' => 'pending', 'title' => 'Pending Book']);
+
+    $response = $this->get("/library/authors/{$author->slug}");
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('Public/Library/AuthorShow')
+        ->where('author.name', 'Jane Doe')
+        ->has('books.data', 1)
+        ->where('books.data.0.title', 'Ready Book'));
+});
+
+it('404s for a nonexistent author slug', function () {
+    $this->get('/library/authors/does-not-exist')->assertNotFound();
+});
