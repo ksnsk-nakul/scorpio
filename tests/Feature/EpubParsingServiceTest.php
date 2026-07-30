@@ -161,6 +161,41 @@ it('extracts the cover image declared via meta name=cover', function () {
     expect(Storage::disk('public')->get("books/{$book->id}/cover.jpg"))->toBe('fake cover bytes');
 });
 
+it('removes previously extracted images and cover before re-parsing (retry)', function () {
+    $fixture = EpubFixtureBuilder::build(
+        bookTitle: 'Illustrated Tales',
+        author: 'Jane Doe',
+        chapters: [[
+            'title' => 'Chapter One',
+            'body' => '<p>Look:</p><img src="images/fig1.jpg" alt="Figure 1"/>',
+            'images' => ['images/fig1.jpg' => 'fake jpg bytes'],
+        ]],
+        cover: ['ext' => 'jpg', 'bytes' => 'fake cover bytes'],
+    );
+    $book = bookFromFixture($fixture, $this->user->id);
+
+    (new EpubParsingService())->parse($book);
+    $book->refresh();
+
+    $imagesBefore = Storage::disk('public')->files("books/{$book->id}/images");
+    $coverBefore = $book->cover_path;
+    expect($imagesBefore)->toHaveCount(1)
+        ->and($coverBefore)->toBe("books/{$book->id}/cover.jpg");
+
+    // Simulate a retry: re-parse the same book against the same source file.
+    (new EpubParsingService())->parse($book);
+    $book->refresh();
+
+    $imagesAfter = Storage::disk('public')->files("books/{$book->id}/images");
+    expect($imagesAfter)->toHaveCount(1)
+        ->and($imagesAfter)->not->toEqual($imagesBefore)
+        ->and($book->cover_path)->toBe("books/{$book->id}/cover.jpg");
+
+    Storage::disk('public')->assertMissing($imagesBefore[0]);
+    Storage::disk('public')->assertExists($imagesAfter[0]);
+    Storage::disk('public')->assertExists("books/{$book->id}/cover.jpg");
+});
+
 it('leaves cover_path null when no cover image exists in the manifest', function () {
     $fixture = EpubFixtureBuilder::build(
         bookTitle: 'No Cover Book',

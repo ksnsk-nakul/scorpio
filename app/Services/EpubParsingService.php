@@ -40,6 +40,12 @@ class EpubParsingService
         $manifest = $this->extractManifest($opf);
         $spineIds = $this->extractSpine($opf);
 
+        // Remove any files left over from a previous parse attempt (e.g. a
+        // retry) so images/covers don't accumulate across re-parses. The
+        // source EPUB itself lives under books/uploads/, not books/{id}/, so
+        // this is safe to do before we start writing the new extraction.
+        Storage::disk('public')->deleteDirectory("books/{$book->id}");
+
         try {
             DB::transaction(function () use ($book, $metadata, $manifest, $spineIds, $opfDir, $opf, $zip): void {
                 $book->chapters()->delete();
