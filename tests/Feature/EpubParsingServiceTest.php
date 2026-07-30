@@ -91,3 +91,29 @@ it('throws when the archive is not a valid zip', function () {
 
     (new EpubParsingService())->parse($book);
 })->throws(RuntimeException::class);
+
+it('extracts chapter images and rewrites their src to stored urls', function () {
+    $fixture = EpubFixtureBuilder::build(
+        bookTitle: 'Illustrated Tales',
+        author: 'Jane Doe',
+        chapters: [[
+            'title' => 'Chapter One',
+            'body' => '<p>Look:</p><img src="images/fig1.jpg" alt="Figure 1"/>',
+            'images' => ['images/fig1.jpg' => 'fake jpg bytes'],
+        ]],
+    );
+    $book = bookFromFixture($fixture, $this->user->id);
+
+    (new EpubParsingService())->parse($book);
+
+    $chapter = $book->chapters()->first();
+    expect($chapter->content)->not->toContain('src="images/fig1.jpg"');
+    expect($chapter->content)->toMatch('/src="[^"]*books\/' . $book->id . '\/images\/[^"]+"/');
+
+    preg_match('/src="([^"]+)"/', $chapter->content, $m);
+    $url = $m[1];
+    $storedPath = parse_url($url, PHP_URL_PATH);
+    $relativePath = preg_replace('#^.*?(books/)#', '$1', $storedPath);
+    Storage::disk('public')->assertExists($relativePath);
+    expect(Storage::disk('public')->get($relativePath))->toBe('fake jpg bytes');
+});

@@ -178,20 +178,73 @@ class EpubParsingService
         }
     }
 
-    // processChapterHtml() and extractCover() are added in Tasks 7 and 8.
     private function processChapterHtml(string $html, ZipArchive $zip, string $chapterPath, Book $book, int $sortOrder): array
     {
+        $doc = new DOMDocument();
+        libxml_use_internal_errors(true);
+        $doc->loadHTML('<?xml encoding="utf-8" ?>' . $html);
+        libxml_clear_errors();
+
         $title = null;
-        if (preg_match('/<title>(.*?)<\/title>/is', $html, $m)) {
-            $title = trim(strip_tags($m[1])) ?: null;
-        }
-        if (preg_match('/<body[^>]*>(.*)<\/body>/is', $html, $m)) {
-            $content = trim($m[1]);
-        } else {
-            $content = $html;
+        $titleNodes = $doc->getElementsByTagName('title');
+        if ($titleNodes->length > 0) {
+            $title = trim($titleNodes->item(0)->textContent) ?: null;
         }
 
+        $chapterDir = dirname($chapterPath);
+        $imageIndex = 0;
+
+        foreach (iterator_to_array($doc->getElementsByTagName('img')) as $img) {
+            $src = $img->getAttribute('src');
+            if (! $src) {
+                continue;
+            }
+
+            $resolvedPath = $this->resolvePath($chapterDir, $src);
+            $bytes = $zip->getFromName($resolvedPath);
+            if ($bytes === false) {
+                continue;
+            }
+
+            $ext = strtolower(pathinfo($resolvedPath, PATHINFO_EXTENSION)) ?: 'jpg';
+            $filename = 'img-' . (++$imageIndex) . '-' . uniqid() . '.' . $ext;
+            Storage::disk('public')->put("books/{$book->id}/images/{$filename}", $bytes);
+            $img->setAttribute('src', Storage::disk('public')->url("books/{$book->id}/images/{$filename}"));
+        }
+
+        $body = $doc->getElementsByTagName('body')->item(0);
+        $content = $body ? $this->innerHtml($body) : $html;
+
         return [$content, $title];
+    }
+
+    private function innerHtml(DOMNode $node): string
+    {
+        $html = '';
+        foreach ($node->childNodes as $child) {
+            $html .= $node->ownerDocument->saveHTML($child);
+        }
+
+        return $html;
+    }
+
+    private function resolvePath(string $baseDir, string $relative): string
+    {
+        $combined = ($baseDir === '.' || $baseDir === '') ? $relative : $baseDir . '/' . $relative;
+        $parts = [];
+
+        foreach (explode('/', $combined) as $segment) {
+            if ($segment === '.' || $segment === '') {
+                continue;
+            }
+            if ($segment === '..') {
+                array_pop($parts);
+                continue;
+            }
+            $parts[] = $segment;
+        }
+
+        return implode('/', $parts);
     }
 
     private function extractCover(ZipArchive $zip, SimpleXMLElement $opf, array $manifest, string $opfDir, Book $book): void
