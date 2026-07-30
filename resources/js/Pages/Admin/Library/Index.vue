@@ -28,48 +28,61 @@
         </div>
       </div>
 
-      <div v-if="books.length === 0 && uploading.length === 0"
+      <div v-if="books.data.length === 0 && uploading.length === 0"
         class="bg-white border border-slate-200 rounded-xl px-6 py-12 text-center text-sm text-slate-400">
         No books yet.
       </div>
 
       <div v-else class="bg-white border border-slate-200 rounded-xl overflow-hidden">
-        <table class="w-full text-sm">
-          <thead class="bg-slate-50 border-b border-slate-200">
-            <tr>
-              <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Cover</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Title</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Author</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Status</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Uploaded</th>
-              <th class="px-5 py-3"></th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            <tr v-for="book in books" :key="book.id" class="hover:bg-slate-50">
-              <td class="px-5 py-3">
-                <img v-if="book.cover_url" :src="book.cover_url" class="w-8 h-11 object-cover rounded" />
-                <div v-else class="w-8 h-11 bg-slate-100 rounded"></div>
-              </td>
-              <td class="px-5 py-3 font-medium text-slate-800">{{ book.title }}</td>
-              <td class="px-5 py-3 text-slate-500">{{ book.author ?? '—' }}</td>
-              <td class="px-5 py-3">
-                <span class="text-xs px-2 py-0.5 rounded-full font-medium" :class="statusBadge(book.status)">
-                  {{ book.status }}
-                </span>
-                <span v-if="book.status === 'failed' && book.status_reason" class="block text-xs text-red-400 mt-1">
-                  {{ book.status_reason }}
-                </span>
-              </td>
-              <td class="px-5 py-3 text-slate-400 text-xs">{{ book.created_at }}</td>
-              <td class="px-5 py-3 flex items-center gap-3">
-                <button @click="openEdit(book)" class="text-xs text-blue-500 hover:text-blue-700">Edit</button>
-                <button v-if="book.status === 'failed'" @click="retry(book)" class="text-xs text-amber-500 hover:text-amber-700">Retry</button>
-                <button @click="destroy(book)" class="text-xs text-red-500 hover:text-red-700">Delete</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Cover</th>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Title</th>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Author</th>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Status</th>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Uploaded</th>
+                <th class="px-5 py-3"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr v-for="book in books.data" :key="book.id" class="hover:bg-slate-50">
+                <td class="px-5 py-3">
+                  <img v-if="book.cover_url" :src="book.cover_url" class="w-8 h-11 object-cover rounded" />
+                  <div v-else class="w-8 h-11 bg-slate-100 rounded"></div>
+                </td>
+                <td class="px-5 py-3 font-medium text-slate-800 whitespace-nowrap">{{ book.title }}</td>
+                <td class="px-5 py-3 text-slate-500 whitespace-nowrap">{{ book.author ?? '—' }}</td>
+                <td class="px-5 py-3">
+                  <span class="text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap" :class="statusBadge(book.status)">
+                    {{ book.status }}
+                  </span>
+                  <span v-if="book.status === 'failed' && book.status_reason" class="block text-xs text-red-400 mt-1">
+                    {{ book.status_reason }}
+                  </span>
+                </td>
+                <td class="px-5 py-3 text-slate-400 text-xs whitespace-nowrap">{{ book.created_at }}</td>
+                <td class="px-5 py-3">
+                  <div class="flex items-center gap-3 whitespace-nowrap">
+                    <button @click="openEdit(book)" class="text-xs text-blue-500 hover:text-blue-700">Edit</button>
+                    <button v-if="book.status === 'failed'" @click="retry(book)" class="text-xs text-amber-500 hover:text-amber-700">Retry</button>
+                    <button @click="destroy(book)" class="text-xs text-red-500 hover:text-red-700">Delete</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div v-if="books.last_page > 1" class="flex gap-1.5 mt-4 justify-center flex-wrap">
+        <Link v-for="link in books.links" :key="link.label"
+          :href="link.url ?? '#'"
+          class="px-3 py-1.5 text-xs rounded-lg border transition"
+          :class="link.active ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 text-slate-500 hover:border-blue-300'"
+          v-html="link.label" />
       </div>
     </div>
 
@@ -97,10 +110,10 @@
 <script setup>
 import { ref, onBeforeUnmount, reactive } from 'vue'
 import axios from 'axios'
-import { router } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 
-const props = defineProps({ books: { type: Array, required: true } })
+const props = defineProps({ books: { type: Object, required: true } })
 
 const fileInput = ref(null)
 const dragging = ref(false)
