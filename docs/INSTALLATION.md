@@ -20,6 +20,9 @@ All methods require:
 | Node.js | 18+ |
 | npm | 9+ |
 
+- LibreOffice (`soffice` binary) — required for Doc/Docx/ODT preview conversion
+- `unrar` or `unar` — required for CBR comic archive preview extraction
+
 > **Docker users:** all prerequisites are bundled in the Docker image — skip to Method 2.
 
 ---
@@ -83,6 +86,9 @@ Visit `http://localhost:8000`. Log in with the Google or GitHub account matching
 ---
 
 ## Method 2 — Docker
+
+- LibreOffice (`soffice` binary) — required for Doc/Docx/ODT preview conversion
+- `unrar` or `unar` — required for CBR comic archive preview extraction
 
 ### Development (hot-reload)
 

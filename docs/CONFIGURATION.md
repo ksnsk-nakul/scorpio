@@ -189,6 +189,15 @@ MAIL_FROM_ADDRESS=you@gmail.com
 
 ---
 
+## File Viewer
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `SOFFICE_BINARY` | `soffice` | Path to the LibreOffice headless binary, used to convert Doc/Docx/ODT attachments to PDF for preview. |
+| `UNRAR_BINARY` | `unrar` | Path to the unrar CLI, used to extract CBR comic archives into page images for preview. |
+
+---
+
 ## Roles & First Login
 
 After `php artisan migrate --seed`:
