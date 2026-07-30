@@ -82,9 +82,9 @@ it('lists all books with author names for the admin index page', function () {
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('Admin/Library/Index')
-        ->has('books', 2)
-        ->where('books.0.title', 'Pending Book') // latest() first
-        ->where('books.1.author', 'Jane Doe'));
+        ->has('books.data', 2)
+        ->where('books.data.0.title', 'Pending Book') // latest() first
+        ->where('books.data.1.author', 'Jane Doe'));
 });
 
 it('updates title, author, and description', function () {
