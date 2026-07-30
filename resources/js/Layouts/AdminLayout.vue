@@ -67,6 +67,7 @@ const isViewer   = computed(() => userRoles.value.includes('viewer'))
 const allNav = [
   { label: 'Dashboard',     href: '/admin/dashboard',     roles: ['admin','editor','viewer'] },
   { label: 'Pages',         href: '/admin/pages',         roles: ['admin','editor','viewer'] },
+  { label: 'Library',       href: '/admin/library',      roles: ['admin','editor','viewer'] },
   { label: 'Service Cards', href: '/admin/service-cards', roles: ['admin','editor','viewer'] },
   { label: 'Products',      href: '/admin/products',      roles: ['admin','editor','viewer'] },
   { label: 'GitHub',        href: '/admin/github',        roles: ['admin','editor','viewer'] },
