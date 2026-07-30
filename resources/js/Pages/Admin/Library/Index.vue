@@ -117,7 +117,7 @@ const statusBadge = (status) => ({
 }[status] ?? 'bg-slate-100 text-slate-600')
 
 const uploadFile = async (file) => {
-  const tempId = `${file.name}-${Date.now()}`
+  const tempId = crypto.randomUUID()
   uploading.value.push({ tempId, filename: file.name, status: 'pending' })
 
   const fd = new FormData()
