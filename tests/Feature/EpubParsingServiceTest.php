@@ -55,6 +55,45 @@ it('extracts metadata and creates chapters in spine order', function () {
         ->and($chapters[1]->sort_order)->toBe(1);
 });
 
+it('falls back to Chapter N when every chapter title matches the book title', function () {
+    $fixture = EpubFixtureBuilder::build(
+        bookTitle: 'Sample Book',
+        author: 'Jane Doe',
+        chapters: [
+            ['title' => 'Sample Book', 'body' => '<p>First.</p>'],
+            ['title' => 'Sample Book', 'body' => '<p>Second.</p>'],
+            ['title' => 'Sample Book', 'body' => '<p>Third.</p>'],
+        ],
+    );
+    $book = bookFromFixture($fixture, $this->user->id);
+
+    (new EpubParsingService())->parse($book);
+
+    $chapters = $book->chapters()->get();
+    expect($chapters)->toHaveCount(3);
+    expect($chapters[0]->title)->toBe('Chapter 1');
+    expect($chapters[1]->title)->toBe('Chapter 2');
+    expect($chapters[2]->title)->toBe('Chapter 3');
+});
+
+it('keeps a genuinely distinct chapter title even when other chapters repeat the book title', function () {
+    $fixture = EpubFixtureBuilder::build(
+        bookTitle: 'Sample Book',
+        author: 'Jane Doe',
+        chapters: [
+            ['title' => 'Sample Book', 'body' => '<p>First.</p>'],
+            ['title' => 'Orbit Newsletter Signup', 'body' => '<p>Sign up here.</p>'],
+        ],
+    );
+    $book = bookFromFixture($fixture, $this->user->id);
+
+    (new EpubParsingService())->parse($book);
+
+    $chapters = $book->chapters()->get();
+    expect($chapters[0]->title)->toBe('Chapter 1');
+    expect($chapters[1]->title)->toBe('Orbit Newsletter Signup');
+});
+
 it('reuses an existing author by case-insensitive name match', function () {
     \App\Models\Author::create(['name' => 'Ted Chiang']);
 

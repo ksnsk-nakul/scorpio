@@ -202,6 +202,20 @@ class EpubParsingService
             $title = trim($titleNodes->item(0)->textContent) ?: null;
         }
 
+        // Many real-world EPUBs (confirmed against actual commercial light
+        // novel files) set every chapter's <title> tag to the book's own
+        // overall title rather than a distinct per-chapter label, with no
+        // other distinguishing text in the body. That's as useless for a
+        // table of contents as having no title at all, so treat it the same
+        // way and fall through to the "Chapter N" fallback below.
+        if ($title !== null && $book->title !== null && mb_strtolower($title) === mb_strtolower(trim($book->title))) {
+            $title = null;
+        }
+
+        if ($title === null) {
+            $title = 'Chapter ' . ($sortOrder + 1);
+        }
+
         $chapterDir = dirname($chapterPath);
         $imageIndex = 0;
 
