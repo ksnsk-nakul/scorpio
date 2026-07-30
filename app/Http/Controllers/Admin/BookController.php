@@ -19,7 +19,7 @@ class BookController extends Controller
     public function index(): Response
     {
         return Inertia::render('Admin/Library/Index', [
-            'books' => Book::with('author')->latest()->latest('id')->paginate(20)->withQueryString()->through(fn (Book $book) => [
+            'books' => Book::with('author')->latest()->latest('id')->paginate(15)->withQueryString()->through(fn (Book $book) => [
                 'id' => $book->id,
                 'title' => $book->title,
                 'slug' => $book->slug,
