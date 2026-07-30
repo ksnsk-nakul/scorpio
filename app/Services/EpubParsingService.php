@@ -7,6 +7,7 @@ use App\Models\Chapter;
 use DOMDocument;
 use DOMNode;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use SimpleXMLElement;
@@ -39,56 +40,60 @@ class EpubParsingService
         $manifest = $this->extractManifest($opf);
         $spineIds = $this->extractSpine($opf);
 
-        $book->chapters()->delete();
+        try {
+            DB::transaction(function () use ($book, $metadata, $manifest, $spineIds, $opfDir, $opf, $zip): void {
+                $book->chapters()->delete();
 
-        if (! empty($metadata['title'])) {
-            $book->title = $metadata['title'];
-            $book->slug = Book::uniqueSlug($metadata['title'], $book->id);
-        }
-        $book->description = $metadata['description'] ?? null;
-        $book->language = $metadata['language'] ?? null;
-        $book->publisher = $metadata['publisher'] ?? null;
-        $book->published_date = $this->parseDate($metadata['date'] ?? null);
-        $book->subject = $metadata['subject'] ?? null;
-        $book->author_id = Author::findOrCreateByName($metadata['creator'] ?? 'Unknown')->id;
+                if (! empty($metadata['title'])) {
+                    $book->title = $metadata['title'];
+                    $book->slug = Book::uniqueSlug($metadata['title'], $book->id);
+                }
+                $book->description = $metadata['description'] ?? null;
+                $book->language = $metadata['language'] ?? null;
+                $book->publisher = $metadata['publisher'] ?? null;
+                $book->published_date = $this->parseDate($metadata['date'] ?? null);
+                $book->subject = $metadata['subject'] ?? null;
+                $book->author_id = Author::findOrCreateByName($metadata['creator'] ?? 'Unknown')->id;
 
-        $sortOrder = 0;
-        foreach ($spineIds as $idref) {
-            if (! isset($manifest[$idref])) {
-                continue;
-            }
-            $item = $manifest[$idref];
-            if (! str_contains($item['media_type'], 'html')) {
-                continue;
-            }
+                $sortOrder = 0;
+                foreach ($spineIds as $idref) {
+                    if (! isset($manifest[$idref])) {
+                        continue;
+                    }
+                    $item = $manifest[$idref];
+                    if (! str_contains($item['media_type'], 'html')) {
+                        continue;
+                    }
 
-            $chapterPath = $opfDir . $item['href'];
-            $html = $zip->getFromName($chapterPath);
-            if ($html === false) {
-                continue;
-            }
+                    $chapterPath = $opfDir . $item['href'];
+                    $html = $zip->getFromName($chapterPath);
+                    if ($html === false) {
+                        continue;
+                    }
 
-            [$content, $title] = $this->processChapterHtml($html, $zip, $chapterPath, $book, $sortOrder);
+                    [$content, $title] = $this->processChapterHtml($html, $zip, $chapterPath, $book, $sortOrder);
 
-            Chapter::create([
-                'book_id' => $book->id,
-                'title' => $title,
-                'content' => $content,
-                'sort_order' => $sortOrder,
-            ]);
+                    Chapter::create([
+                        'book_id' => $book->id,
+                        'title' => $title,
+                        'content' => $content,
+                        'sort_order' => $sortOrder,
+                    ]);
 
-            $sortOrder++;
-        }
+                    $sortOrder++;
+                }
 
-        if ($sortOrder === 0) {
+                if ($sortOrder === 0) {
+                    throw new RuntimeException('No readable chapters found in the EPUB spine.');
+                }
+
+                $this->extractCover($zip, $opf, $manifest, $opfDir, $book);
+
+                $book->save();
+            });
+        } finally {
             $zip->close();
-            throw new RuntimeException('No readable chapters found in the EPUB spine.');
         }
-
-        $this->extractCover($zip, $opf, $manifest, $opfDir, $book);
-
-        $zip->close();
-        $book->save();
     }
 
     private function locateOpf(ZipArchive $zip): string
