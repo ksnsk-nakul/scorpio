@@ -90,6 +90,7 @@ Route::middleware(['auth', 'role:admin,editor,viewer'])
     ->name('admin.')
     ->group(function () {
         Route::get('library/books/{book}/status', [BookController::class, 'status'])->name('library.books.status');
+        Route::get('library', [BookController::class, 'index'])->name('library.index');
     });
 
 use App\Http\Controllers\Admin\WorkspaceController;

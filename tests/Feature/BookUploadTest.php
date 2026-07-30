@@ -71,3 +71,18 @@ it('rejects retrying a book that is not failed', function () {
         ->postJson("/admin/library/books/{$book->id}/retry")
         ->assertStatus(422);
 });
+
+it('lists all books with author names for the admin index page', function () {
+    $author = \App\Models\Author::factory()->create(['name' => 'Jane Doe']);
+    Book::factory()->create(['title' => 'A Book', 'author_id' => $author->id, 'status' => 'ready', 'uploaded_by' => $this->admin->id]);
+    Book::factory()->create(['title' => 'Pending Book', 'author_id' => null, 'status' => 'pending', 'uploaded_by' => $this->admin->id]);
+
+    $response = $this->actingAs($this->admin)->get('/admin/library');
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('Admin/Library/Index')
+        ->has('books', 2)
+        ->where('books.0.title', 'Pending Book') // latest() first
+        ->where('books.1.author', 'Jane Doe'));
+});

@@ -7,10 +7,29 @@ use App\Models\Book;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class BookController extends Controller
 {
     private const ALLOWED_EPUB_MIMES = ['application/epub+zip', 'application/zip', 'application/octet-stream'];
+
+    public function index(): Response
+    {
+        return Inertia::render('Admin/Library/Index', [
+            'books' => Book::with('author')->latest()->latest('id')->get()->map(fn (Book $book) => [
+                'id' => $book->id,
+                'title' => $book->title,
+                'slug' => $book->slug,
+                'author' => $book->author?->name,
+                'description' => $book->description,
+                'status' => $book->status,
+                'status_reason' => $book->status_reason,
+                'cover_url' => $book->cover_url,
+                'created_at' => $book->created_at->toDateTimeString(),
+            ]),
+        ]);
+    }
 
     public function store(Request $request): JsonResponse
     {
