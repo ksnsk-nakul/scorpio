@@ -76,6 +76,41 @@ it('falls back to Chapter N when every chapter title matches the book title', fu
     expect($chapters[2]->title)->toBe('Chapter 3');
 });
 
+it('falls back to Chapter N when a chapter title is a prefix of the book title (series name minus volume)', function () {
+    $fixture = EpubFixtureBuilder::build(
+        bookTitle: 'Some Series, Vol. 5',
+        author: 'Jane Doe',
+        chapters: [
+            ['title' => 'Some Series', 'body' => '<p>First.</p>'],
+            ['title' => 'Some Series', 'body' => '<p>Second.</p>'],
+        ],
+    );
+    $book = bookFromFixture($fixture, $this->user->id);
+
+    (new EpubParsingService())->parse($book);
+
+    $chapters = $book->chapters()->get();
+    expect($chapters)->toHaveCount(2);
+    expect($chapters[0]->title)->toBe('Chapter 1');
+    expect($chapters[1]->title)->toBe('Chapter 2');
+});
+
+it('falls back to Chapter N when a chapter title is suspiciously short', function () {
+    $fixture = EpubFixtureBuilder::build(
+        bookTitle: 'Sample Book',
+        author: 'Jane Doe',
+        chapters: [
+            ['title' => 'a', 'body' => '<p>First.</p>'],
+        ],
+    );
+    $book = bookFromFixture($fixture, $this->user->id);
+
+    (new EpubParsingService())->parse($book);
+
+    $chapters = $book->chapters()->get();
+    expect($chapters[0]->title)->toBe('Chapter 1');
+});
+
 it('keeps a genuinely distinct chapter title even when other chapters repeat the book title', function () {
     $fixture = EpubFixtureBuilder::build(
         bookTitle: 'Sample Book',

@@ -208,7 +208,30 @@ class EpubParsingService
         // other distinguishing text in the body. That's as useless for a
         // table of contents as having no title at all, so treat it the same
         // way and fall through to the "Chapter N" fallback below.
-        if ($title !== null && $book->title !== null && mb_strtolower($title) === mb_strtolower(trim($book->title))) {
+        //
+        // A closely related pattern (also confirmed against real data, e.g.
+        // "So I'm a Spider, So What?, Vol. 10"): the chapter <title> is just
+        // the series name with the ", Vol. N" suffix chopped off, so it's a
+        // prefix of the book title (or, in principle, vice versa). We use a
+        // prefix check rather than a bare "contains" check because contains
+        // would be too aggressive and could reject a real, distinct chapter
+        // title that merely shares a common word with the book title.
+        if ($title !== null && $book->title !== null) {
+            $chapterTitleLower = mb_strtolower($title);
+            $bookTitleLower = mb_strtolower(trim($book->title));
+
+            if ($chapterTitleLower === $bookTitleLower
+                || str_starts_with($bookTitleLower, $chapterTitleLower)
+                || str_starts_with($chapterTitleLower, $bookTitleLower)
+            ) {
+                $title = null;
+            }
+        }
+
+        // Also reject suspiciously short titles (e.g. a stray "a" from a
+        // malformed source <title> tag) — not distinct enough to be useful
+        // in a table of contents.
+        if ($title !== null && mb_strlen($title) < 4) {
             $title = null;
         }
 
