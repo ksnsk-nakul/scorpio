@@ -1,0 +1,93 @@
+<?php
+
+use App\Models\Book;
+use App\Models\User;
+use App\Services\EpubParsingService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
+use Tests\Support\EpubFixtureBuilder;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    Storage::fake('public');
+    $this->user = User::factory()->create();
+});
+
+function bookFromFixture(string $fixturePath, string $userId): Book
+{
+    $relativePath = 'books/uploads/' . basename($fixturePath);
+    Storage::disk('public')->put($relativePath, file_get_contents($fixturePath));
+    unlink($fixturePath);
+
+    return Book::create([
+        'title' => 'placeholder',
+        'source_epub_path' => $relativePath,
+        'uploaded_by' => $userId,
+    ]);
+}
+
+it('extracts metadata and creates chapters in spine order', function () {
+    $fixture = EpubFixtureBuilder::build(
+        bookTitle: 'The Dispossessed',
+        author: 'Ursula K. Le Guin',
+        chapters: [
+            ['title' => 'Chapter One', 'body' => '<p>It begins.</p>'],
+            ['title' => 'Chapter Two', 'body' => '<p>It continues.</p>'],
+        ],
+        description: 'A novel of anarchist utopia.',
+    );
+    $book = bookFromFixture($fixture, $this->user->id);
+
+    (new EpubParsingService())->parse($book);
+
+    expect($book->title)->toBe('The Dispossessed')
+        ->and($book->description)->toBe('A novel of anarchist utopia.')
+        ->and($book->language)->toBe('en')
+        ->and($book->author->name)->toBe('Ursula K. Le Guin');
+
+    $chapters = $book->chapters()->get();
+    expect($chapters)->toHaveCount(2);
+    expect($chapters[0]->title)->toBe('Chapter One')
+        ->and($chapters[0]->content)->toContain('It begins.')
+        ->and($chapters[0]->sort_order)->toBe(0);
+    expect($chapters[1]->title)->toBe('Chapter Two')
+        ->and($chapters[1]->sort_order)->toBe(1);
+});
+
+it('reuses an existing author by case-insensitive name match', function () {
+    \App\Models\Author::create(['name' => 'Ted Chiang']);
+
+    $fixture = EpubFixtureBuilder::build(
+        bookTitle: 'Exhalation',
+        author: 'ted chiang',
+        chapters: [['title' => 'Exhalation', 'body' => '<p>Text.</p>']],
+    );
+    $book = bookFromFixture($fixture, $this->user->id);
+
+    (new EpubParsingService())->parse($book);
+
+    expect(\App\Models\Author::count())->toBe(1);
+});
+
+it('throws when the spine has no readable chapters', function () {
+    $fixture = EpubFixtureBuilder::build(
+        bookTitle: 'Empty Book',
+        author: 'Nobody',
+        chapters: [],
+    );
+    $book = bookFromFixture($fixture, $this->user->id);
+
+    (new EpubParsingService())->parse($book);
+})->throws(RuntimeException::class);
+
+it('throws when the archive is not a valid zip', function () {
+    $book = Book::create([
+        'title' => 'placeholder',
+        'source_epub_path' => 'books/uploads/corrupt.epub',
+        'uploaded_by' => $this->user->id,
+    ]);
+    Storage::disk('public')->put('books/uploads/corrupt.epub', 'not a zip file');
+
+    (new EpubParsingService())->parse($book);
+})->throws(RuntimeException::class);
