@@ -84,6 +84,7 @@ Route::middleware(['auth', 'role:admin,editor'])
         Route::post('library/books', [BookController::class, 'store'])->name('library.books.store');
         Route::post('library/books/{book}/retry', [BookController::class, 'retry'])->name('library.books.retry');
         Route::patch('library/books/{book}', [BookController::class, 'update'])->name('library.books.update');
+        Route::delete('library/books/{book}', [BookController::class, 'destroy'])->name('library.books.destroy');
     });
 
 Route::middleware(['auth', 'role:admin,editor,viewer'])

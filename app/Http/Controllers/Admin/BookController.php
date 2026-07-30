@@ -7,6 +7,7 @@ use App\Models\Author;
 use App\Models\Book;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -108,5 +109,14 @@ class BookController extends Controller
         ParseEpubBookJob::dispatch($book);
 
         return response()->json(['id' => $book->id, 'status' => $book->status]);
+    }
+
+    public function destroy(Book $book): JsonResponse
+    {
+        Storage::disk('public')->deleteDirectory("books/{$book->id}");
+        Storage::disk('public')->delete($book->source_epub_path);
+        $book->delete();
+
+        return response()->json(['deleted' => true]);
     }
 }

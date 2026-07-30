@@ -114,3 +114,19 @@ it('reuses an existing author on update instead of creating a duplicate', functi
 
     expect(\App\Models\Author::count())->toBe(2); // the book's original factory author + this one
 });
+
+it('deletes a book, its chapters, and its stored files', function () {
+    $book = Book::factory()->create(['uploaded_by' => $this->admin->id]);
+    \App\Models\Chapter::factory()->create(['book_id' => $book->id]);
+    Storage::disk('public')->put("books/{$book->id}/cover.jpg", 'fake cover');
+    Storage::disk('public')->put($book->source_epub_path, 'fake epub');
+
+    $this->actingAs($this->admin)
+        ->deleteJson("/admin/library/books/{$book->id}")
+        ->assertOk();
+
+    expect(Book::find($book->id))->toBeNull()
+        ->and(\App\Models\Chapter::where('book_id', $book->id)->count())->toBe(0);
+    Storage::disk('public')->assertMissing("books/{$book->id}/cover.jpg");
+    Storage::disk('public')->assertMissing($book->source_epub_path);
+});
