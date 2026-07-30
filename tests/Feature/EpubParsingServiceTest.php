@@ -118,6 +118,33 @@ it('extracts chapter images and rewrites their src to stored urls', function () 
     expect(Storage::disk('public')->get($relativePath))->toBe('fake jpg bytes');
 });
 
+it('resolves ../ image paths from a chapter nested in a subdirectory', function () {
+    $fixture = EpubFixtureBuilder::build(
+        bookTitle: 'Nested Structure',
+        author: 'Jane Doe',
+        chapters: [[
+            'title' => 'Chapter One',
+            'body' => '<p>Look:</p><img src="../images/fig1.jpg" alt="Figure 1"/>',
+            'images' => ['../images/fig1.jpg' => 'nested fig bytes'],
+            'path' => 'text/chapter1.xhtml',
+        ]],
+    );
+    $book = bookFromFixture($fixture, $this->user->id);
+
+    (new EpubParsingService())->parse($book);
+
+    $chapter = $book->chapters()->first();
+    expect($chapter->content)->not->toContain('src="../images/fig1.jpg"');
+    expect($chapter->content)->toMatch('/src="[^"]*books\/' . $book->id . '\/images\/[^"]+"/');
+
+    preg_match('/src="([^"]+)"/', $chapter->content, $m);
+    $url = $m[1];
+    $storedPath = parse_url($url, PHP_URL_PATH);
+    $relativePath = preg_replace('#^.*?(books/)#', '$1', $storedPath);
+    Storage::disk('public')->assertExists($relativePath);
+    expect(Storage::disk('public')->get($relativePath))->toBe('nested fig bytes');
+});
+
 it('extracts the cover image declared via meta name=cover', function () {
     $fixture = EpubFixtureBuilder::build(
         bookTitle: 'Covered Book',

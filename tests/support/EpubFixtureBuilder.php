@@ -7,8 +7,12 @@ use ZipArchive;
 class EpubFixtureBuilder
 {
     /**
-     * @param array<int, array{title: string, body: string, images?: array<string, string>}> $chapters
-     *   Each chapter's 'images' maps a relative src (e.g. "images/fig1.jpg") to raw image bytes.
+     * @param array<int, array{title: string, body: string, images?: array<string, string>, path?: string}> $chapters
+     *   Each chapter's 'images' maps a relative src (e.g. "images/fig1.jpg" or "../images/fig1.jpg")
+     *   to raw image bytes. The image's own href within the manifest/zip is always resolved relative
+     *   to the chapter's directory, matching how the src attribute would be interpreted in a real EPUB.
+     *   'path' optionally places the chapter file at a nested path under OEBPS (e.g. "text/chapter1.xhtml")
+     *   instead of the default flat "chapterN.xhtml".
      * @param array{ext: string, bytes: string}|null $cover
      */
     public static function build(
@@ -38,20 +42,28 @@ XML);
 
         foreach ($chapters as $i => $chapter) {
             $n = $i + 1;
+            $chapterHref = $chapter['path'] ?? "chapter{$n}.xhtml";
             $chapterHtml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 . "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
                 . "<head><title>{$chapter['title']}</title></head>\n"
                 . "<body>{$chapter['body']}</body>\n"
                 . "</html>";
-            $zip->addFromString("OEBPS/chapter{$n}.xhtml", $chapterHtml);
-            $manifestItems[] = "<item id=\"chap{$n}\" href=\"chapter{$n}.xhtml\" media-type=\"application/xhtml+xml\"/>";
+            $zip->addFromString("OEBPS/{$chapterHref}", $chapterHtml);
+            $manifestItems[] = "<item id=\"chap{$n}\" href=\"{$chapterHref}\" media-type=\"application/xhtml+xml\"/>";
             $spineItems[] = "<itemref idref=\"chap{$n}\"/>";
 
+            $chapterDir = dirname($chapterHref);
+            $chapterDir = ($chapterDir === '.' || $chapterDir === '') ? '' : $chapterDir;
+
             foreach ($chapter['images'] ?? [] as $relativeSrc => $bytes) {
-                $zip->addFromString("OEBPS/{$relativeSrc}", $bytes);
-                $imgId = 'img_' . preg_replace('/[^a-zA-Z0-9]/', '_', $relativeSrc);
-                $ext = strtolower(pathinfo($relativeSrc, PATHINFO_EXTENSION));
-                $manifestItems[] = "<item id=\"{$imgId}\" href=\"{$relativeSrc}\" media-type=\"image/{$ext}\"/>";
+                // Resolve the src (which may contain "../") against the chapter's own
+                // directory, so image bytes end up at the path the parser will actually
+                // request — mirroring EpubParsingService::resolvePath().
+                $resolvedPath = self::resolveRelative($chapterDir, $relativeSrc);
+                $zip->addFromString("OEBPS/{$resolvedPath}", $bytes);
+                $imgId = 'img_' . preg_replace('/[^a-zA-Z0-9]/', '_', $resolvedPath);
+                $ext = strtolower(pathinfo($resolvedPath, PATHINFO_EXTENSION));
+                $manifestItems[] = "<item id=\"{$imgId}\" href=\"{$resolvedPath}\" media-type=\"image/{$ext}\"/>";
             }
         }
 
@@ -89,5 +101,29 @@ XML;
         $zip->close();
 
         return $path;
+    }
+
+    /**
+     * Collapses a relative path (which may contain "../") against a base directory,
+     * mirroring EpubParsingService::resolvePath() so fixtures place bytes exactly
+     * where the parser will look for them.
+     */
+    private static function resolveRelative(string $baseDir, string $relative): string
+    {
+        $combined = ($baseDir === '') ? $relative : $baseDir . '/' . $relative;
+        $parts = [];
+
+        foreach (explode('/', $combined) as $segment) {
+            if ($segment === '.' || $segment === '') {
+                continue;
+            }
+            if ($segment === '..') {
+                array_pop($parts);
+                continue;
+            }
+            $parts[] = $segment;
+        }
+
+        return implode('/', $parts);
     }
 }
