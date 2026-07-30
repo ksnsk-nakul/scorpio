@@ -83,6 +83,7 @@ Route::middleware(['auth', 'role:admin,editor'])
     ->group(function () {
         Route::post('library/books', [BookController::class, 'store'])->name('library.books.store');
         Route::post('library/books/{book}/retry', [BookController::class, 'retry'])->name('library.books.retry');
+        Route::patch('library/books/{book}', [BookController::class, 'update'])->name('library.books.update');
     });
 
 Route::middleware(['auth', 'role:admin,editor,viewer'])

@@ -3,6 +3,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\ParseEpubBookJob;
+use App\Models\Author;
 use App\Models\Book;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -71,6 +72,32 @@ class BookController extends Controller
             'status' => $book->status,
             'status_reason' => $book->status_reason,
         ]);
+    }
+
+    public function update(Request $request, Book $book): JsonResponse
+    {
+        $data = $request->validate([
+            'title' => 'sometimes|string|max:255',
+            'author_name' => 'sometimes|string|max:255',
+            'description' => 'sometimes|nullable|string',
+        ]);
+
+        if (isset($data['title'])) {
+            $book->title = $data['title'];
+            $book->slug = Book::uniqueSlug($data['title'], $book->id);
+        }
+
+        if (isset($data['author_name'])) {
+            $book->author_id = Author::findOrCreateByName($data['author_name'])->id;
+        }
+
+        if (array_key_exists('description', $data)) {
+            $book->description = $data['description'];
+        }
+
+        $book->save();
+
+        return response()->json(['id' => $book->id, 'title' => $book->title, 'slug' => $book->slug]);
     }
 
     public function retry(Book $book): JsonResponse

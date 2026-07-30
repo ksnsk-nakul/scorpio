@@ -86,3 +86,31 @@ it('lists all books with author names for the admin index page', function () {
         ->where('books.0.title', 'Pending Book') // latest() first
         ->where('books.1.author', 'Jane Doe'));
 });
+
+it('updates title, author, and description', function () {
+    $book = Book::factory()->create(['title' => 'Old Title', 'uploaded_by' => $this->admin->id]);
+
+    $response = $this->actingAs($this->admin)->patchJson("/admin/library/books/{$book->id}", [
+        'title' => 'New Title',
+        'author_name' => 'New Author',
+        'description' => 'Updated description.',
+    ]);
+
+    $response->assertOk();
+    $book->refresh();
+    expect($book->title)->toBe('New Title')
+        ->and($book->slug)->toBe('new-title')
+        ->and($book->author->name)->toBe('New Author')
+        ->and($book->description)->toBe('Updated description.');
+});
+
+it('reuses an existing author on update instead of creating a duplicate', function () {
+    \App\Models\Author::factory()->create(['name' => 'Existing Author']);
+    $book = Book::factory()->create(['uploaded_by' => $this->admin->id]);
+
+    $this->actingAs($this->admin)->patchJson("/admin/library/books/{$book->id}", [
+        'author_name' => 'existing author',
+    ]);
+
+    expect(\App\Models\Author::count())->toBe(2); // the book's original factory author + this one
+});
