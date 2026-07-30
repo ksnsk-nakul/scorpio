@@ -75,6 +75,23 @@ Route::middleware(['auth', 'role:admin,editor,viewer'])
         Route::get('media/{id}/status', [MediaController::class, 'status'])->name('media.status');
     });
 
+use App\Http\Controllers\Admin\BookController;
+
+Route::middleware(['auth', 'role:admin,editor'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::post('library/books', [BookController::class, 'store'])->name('library.books.store');
+        Route::post('library/books/{book}/retry', [BookController::class, 'retry'])->name('library.books.retry');
+    });
+
+Route::middleware(['auth', 'role:admin,editor,viewer'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('library/books/{book}/status', [BookController::class, 'status'])->name('library.books.status');
+    });
+
 use App\Http\Controllers\Admin\WorkspaceController;
 use App\Http\Controllers\Admin\ProjectController;
 

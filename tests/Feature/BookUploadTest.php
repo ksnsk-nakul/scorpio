@@ -1,0 +1,73 @@
+<?php
+
+use App\Models\Book;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
+
+uses(RefreshDatabase::class);
+beforeEach(fn () => $this->seed());
+
+beforeEach(function () {
+    Storage::fake('public');
+    Queue::fake();
+    $this->admin = User::factory()->create();
+    $this->admin->assignRole('admin');
+});
+
+it('creates a pending book and dispatches a parse job on upload', function () {
+    $file = UploadedFile::fake()->create('my-book.epub', 500, 'application/epub+zip');
+
+    $response = $this->actingAs($this->admin)->postJson('/admin/library/books', ['file' => $file]);
+
+    $response->assertOk()->assertJsonPath('status', 'pending')->assertJsonPath('title', 'my-book');
+    expect(Book::count())->toBe(1);
+    Queue::assertPushed(\App\Jobs\ParseEpubBookJob::class);
+});
+
+it('accepts an epub uploaded with a generic zip mime type', function () {
+    $file = UploadedFile::fake()->create('real-world.epub', 500, 'application/zip');
+
+    $this->actingAs($this->admin)
+        ->postJson('/admin/library/books', ['file' => $file])
+        ->assertOk();
+});
+
+it('rejects a non-epub file', function () {
+    $file = UploadedFile::fake()->create('not-a-book.txt', 10, 'text/plain');
+
+    $this->actingAs($this->admin)
+        ->postJson('/admin/library/books', ['file' => $file])
+        ->assertStatus(422);
+});
+
+it('returns the current status for a book', function () {
+    $book = Book::factory()->create(['status' => 'processing', 'uploaded_by' => $this->admin->id]);
+
+    $this->actingAs($this->admin)
+        ->getJson("/admin/library/books/{$book->id}/status")
+        ->assertOk()
+        ->assertJsonPath('status', 'processing');
+});
+
+it('re-dispatches parsing for a failed book on retry', function () {
+    $book = Book::factory()->create(['status' => 'failed', 'status_reason' => 'boom', 'uploaded_by' => $this->admin->id]);
+
+    $this->actingAs($this->admin)
+        ->postJson("/admin/library/books/{$book->id}/retry")
+        ->assertOk()
+        ->assertJsonPath('status', 'pending');
+
+    Queue::assertPushed(\App\Jobs\ParseEpubBookJob::class);
+    expect($book->fresh()->status_reason)->toBeNull();
+});
+
+it('rejects retrying a book that is not failed', function () {
+    $book = Book::factory()->create(['status' => 'ready', 'uploaded_by' => $this->admin->id]);
+
+    $this->actingAs($this->admin)
+        ->postJson("/admin/library/books/{$book->id}/retry")
+        ->assertStatus(422);
+});
