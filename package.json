@@ -21,6 +21,7 @@
         "@heroicons/vue": "^2.2.0",
         "@inertiajs/vue3": "^3.4.0",
         "@vitejs/plugin-vue": "^6.0.7",
+        "animejs": "^4.5.0",
         "axios": "^1.18.1",
         "epubjs": "^0.3.93",
         "marked": "^18.0.7",
