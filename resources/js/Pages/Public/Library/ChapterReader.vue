@@ -3,7 +3,7 @@
     <title>{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }} · {{ book.title }}</title>
   </Head>
 
-  <div class="min-h-screen font-sans" :class="themeClass" tabindex="0"
+  <div ref="rootEl" class="min-h-screen font-sans outline-none" :class="themeClass" tabindex="0"
     @keydown.left="mode === 'h-page' && goToPage(-1)" @keydown.right="mode === 'h-page' && goToPage(1)"
     @keydown.up="mode === 'v-page' && goToPage(-1)" @keydown.down="mode === 'v-page' && goToPage(1)"
     @touchstart="onTouchStart" @touchend="onTouchEnd">
@@ -74,6 +74,7 @@ const mountedAt = Date.now()
 const MIN_AUTOSCROLL_DWELL_MS = 3000
 
 const drawerOpen = ref(false)
+const rootEl = ref(null)
 
 const pagedViewportEl = ref(null)
 const pagedEl = ref(null)
@@ -185,6 +186,7 @@ onMounted(() => {
 
   measurePages()
   window.addEventListener('resize', measurePages)
+  rootEl.value?.focus()
 })
 
 onUnmounted(() => {
