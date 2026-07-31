@@ -9,6 +9,7 @@
       <div class="prose prose-slate max-w-none space-y-8 text-slate-700 leading-relaxed">
         <slot />
       </div>
+      <!-- Optional cross-link row below the content, e.g. Terms <-> Privacy links (see Privacy.vue/Terms.vue) -->
       <slot name="footer" />
     </main>
   </div>
