@@ -31,10 +31,15 @@ class IndexBookChunksJob implements ShouldQueue
     {
         BookChunk::where('book_id', $this->book->id)->delete();
 
+        $attempted = 0;
+        $succeeded = 0;
+
         foreach ($this->book->chapters as $chapter) {
             $textChunks = $chunker->chunk($chapter->content ?? '');
 
             foreach ($textChunks as $index => $text) {
+                $attempted++;
+
                 try {
                     $embedInput = mb_substr($text, 0, self::MAX_EMBED_INPUT_CHARS);
                     $embedding = $gemini->embed($embedInput);
@@ -44,6 +49,8 @@ class IndexBookChunksJob implements ShouldQueue
                         'insert into book_chunks (book_id, chapter_id, chunk_index, content, embedding) values (?, ?, ?, ?, ?::vector)',
                         [$this->book->id, $chapter->id, $index, $text, $vectorLiteral]
                     );
+
+                    $succeeded++;
                 } catch (Throwable $e) {
                     // Isolate per-chunk failures (rate limits, oversized input, transient
                     // network errors) so one bad chunk never aborts the rest of the book —
@@ -57,6 +64,14 @@ class IndexBookChunksJob implements ShouldQueue
                     ]);
                 }
             }
+        }
+
+        // A book with real content where every single chunk failed (credentials expired,
+        // rag connection unreachable, systemic outage) must not look identical to a
+        // successful run — throw so the queue records/retries a real failure instead of
+        // silently leaving the book un-indexed with no signal anywhere.
+        if ($attempted > 0 && $succeeded === 0) {
+            throw new \RuntimeException("IndexBookChunksJob: all {$attempted} chunk(s) failed for book {$this->book->id}; nothing was indexed.");
         }
     }
 }

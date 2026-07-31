@@ -34,6 +34,10 @@ it('marks the book ready after successful parsing', function () {
         'status' => 'pending',
     ]);
 
+    // Prevent the IndexBookChunksJob dispatched at the end of handle() from actually
+    // running — without this it makes a real outbound Gemini API call.
+    Queue::fake();
+
     (new ParseEpubBookJob($book))->handle(new EpubParsingService());
 
     expect($book->fresh()->status)->toBe('ready');
