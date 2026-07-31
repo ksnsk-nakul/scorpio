@@ -22,6 +22,8 @@ class ParseEpubBookJob implements ShouldQueue
         $parser->parse($this->book);
         $this->book->status = 'ready';
         $this->book->save();
+
+        IndexBookChunksJob::dispatch($this->book);
     }
 
     public function failed(Throwable $e): void
