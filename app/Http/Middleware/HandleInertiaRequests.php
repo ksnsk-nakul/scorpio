@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Announcement;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
@@ -81,6 +82,10 @@ class HandleInertiaRequests extends Middleware
                 'email'    => filled(env('DEMO_EMAIL')) ? env('DEMO_EMAIL') : env('ADMIN_EMAIL', 'admin@example.com'),
                 'password' => filled(env('DEMO_PASSWORD')) ? env('DEMO_PASSWORD') : env('ADMIN_PASSWORD', 'password'),
             ] : null,
+            'layoutTemplates' => [
+                'admin'  => 'stripe',
+                'public' => Setting::get('layout_template_public', 'minimalist'),
+            ],
         ];
     }
 }
