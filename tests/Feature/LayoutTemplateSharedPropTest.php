@@ -1,13 +1,15 @@
 <?php
 
 use App\Models\Setting;
+use Database\Seeders\RoleSeeder;
+use Database\Seeders\SettingSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    (new \Database\Seeders\RoleSeeder)->run();
-    (new \Database\Seeders\SettingSeeder)->run();
+    (new RoleSeeder)->run();
+    (new SettingSeeder)->run();
 });
 
 it('shares the active public layout template with every Inertia response', function () {
