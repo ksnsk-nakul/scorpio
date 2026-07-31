@@ -1,10 +1,12 @@
 <template>
+  <!-- Intentionally not using <Teleport to="body"> — it breaks wrapper.find/wrapper.text
+       under this project's @vue/test-utils v2.4.11 setup (see ReaderSettingsDrawer.test.js). -->
   <div v-if="open" class="fixed inset-0 z-50">
     <div class="absolute inset-0 bg-black/30" @click="$emit('close')"></div>
     <div class="absolute top-0 right-0 h-full w-72 max-w-[85vw] shadow-xl overflow-y-auto" :class="themeClass">
       <div class="flex items-center justify-between px-5 py-4 border-b border-current/10">
         <h2 class="font-semibold text-sm">Reading Settings</h2>
-        <button data-testid="drawer-close" @click="$emit('close')" class="opacity-70 hover:opacity-100 text-lg leading-none">✕</button>
+        <button data-testid="drawer-close" @click="$emit('close')" aria-label="Close reading settings" class="opacity-70 hover:opacity-100 text-lg leading-none">✕</button>
       </div>
 
       <div class="px-5 py-4 space-y-6 text-sm">
