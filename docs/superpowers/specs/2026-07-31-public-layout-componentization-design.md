@@ -1,48 +1,109 @@
-# Public Layout & Nav Componentization — Design Spec
+# Template-Driven Public & Admin Layout System — Design Spec
 
 ## Purpose
 
-The public site currently has no shared layout: `Home.vue`, `Portfolio.vue`, `OrgPage.vue`, `ProjectDetail.vue`, and the e-library's `Index.vue`/`BookDetail.vue`/`AuthorShow.vue` each hard-code their own nav and (where present) footer markup independently. This adds a `Library` link to the public site's navigation and, since that touches nearly every public page's header, extracts the genuinely shared pieces into reusable, responsive components so future pages don't repeat this duplication — while explicitly leaving alone the pages/sections that are too tightly coupled to their own unique behavior to safely generalize.
+Replace the public site's duplicated, hand-rolled nav/footer markup and the single fixed admin dashboard look with a **settings-driven template system**: a small number of fully-built, selectable visual templates per audience, switchable from the admin panel without a code deploy. This supersedes the earlier, smaller "just extract a shared nav" plan — through this design conversation the scope deliberately grew into a real template system, confirmed page by page below.
 
-This is a pure frontend feature. No backend, route, or controller changes.
+This is a pure frontend + lightweight-settings feature. No new database tables — see "Architecture" below.
 
-## Audit findings
+## Roles → Templates
 
-- `Home.vue`, `Library/Index.vue`, `Library/BookDetail.vue`, `Library/AuthorShow.vue`, and `ProjectDetail.vue` all hard-code near-identical "brand + optional CTA" nav bars and (for Home.vue) a near-identical minimal footer.
-- `Portfolio.vue`'s nav is fundamentally different: it's an anchor-scroller with scroll-spy active-section tracking and a bespoke fade/float animation system tied to specific section IDs (`#home`, `#about`, `#skills`, `#projects`, `#experience`, `#contact`). It is not a "site nav" in the same sense as the others.
-- `OrgPage.vue` has a `white_label` flag that hides the platform's footer/branding entirely when true — an existing paid feature, not incidental duplication.
-- `Home.vue` and `Portfolio.vue` both implement a near-identical dynamic block-renderer (`hero`/`text`/`text_image`/`service_cards`/`project_grid`/`contact_form`), but Portfolio's versions are wired into its scroll-reveal/anchor system (IDs, `reveal` classes, staggered `transition-delay`). **This duplication is flagged but intentionally NOT addressed in this pass** — unifying it risks breaking Portfolio's animation behavior for a refactor beyond this feature's scope.
-- `ChapterReader.vue` gets its own dedicated reading toolbar (from the separate reading-modes spec) and is excluded from this componentization — see "New-tab entry point" below.
+| Role/context | Template(s) | Selectable? |
+|---|---|---|
+| Admin, Owner, Editor (internal, permission-scoped) | **Stripe-like** (one template) | No — single option today, architecture stays extensible for a second later. |
+| User (public visitor), Author (portfolio project author + e-library author bio) | **Minimalist** or **Anime.js** | Yes — admin picks one from a settings screen. |
+| E-library chapter reader | *(unchanged, existing layout)* | Not part of this system at all — excluded entirely, has its own dedicated settings drawer from the separate reading-modes spec. |
 
-## Components to create
+## Scope: full page re-skin, not chrome-only
 
-1. **`resources/js/Components/Public/AuthNavCta.vue`** — the auth-aware button cluster: a "Dashboard →" button if the current user is an admin, "Login"/"Sign up" buttons if logged out, nothing if logged in as a non-admin. Extracted so both the new shared nav and Portfolio.vue's own custom nav use the same logic instead of duplicating the admin/guest conditionals.
-2. **`resources/js/Components/Public/PublicNav.vue`** — responsive top nav: site brand/logo (links to `/`), a `Library` link, and `<AuthNavCta />`. Collapses to a mobile-friendly compact layout at small viewport widths (matching the existing `md:` breakpoint conventions already used elsewhere in these pages).
-3. **`resources/js/Components/Public/PublicFooter.vue`** — the fuller branded footer (logo, site name, © year, Terms/Privacy/Refund links, Support/Donate link), based on Portfolio.vue's existing richer footer markup.
-4. **`resources/js/Layouts/PublicLayout.vue`** — thin wrapper: `<PublicNav />` + a default `<slot />` for page content + `<PublicFooter />`. Any new public page going forward wraps itself in this instead of hand-rolling nav+footer.
+This was explicitly clarified during design: the Minimalist and Anime.js templates each own the **entire visual identity** of every in-scope public page — hero sections, content layout, section structure, and (for Anime.js) motion — not just a shared Nav/Footer wrapped around unchanged page bodies. Concretely, each of the following pages gets a real implementation under **both** templates, both driven by the same underlying Inertia props/data:
 
-## Per-page changes
+- `Home.vue`
+- `Portfolio.vue` (including its scroll-spy anchor nav and animated hero — this becomes template-owned rather than bespoke-and-untouchable)
+- `OrgPage.vue` (respecting the existing `white_label` flag — see "Preserved behavior" below)
+- `ProjectDetail.vue`
+- `Library/Index.vue`
+- `Library/BookDetail.vue`
+- `Library/AuthorShow.vue`
 
-| Page | Change |
-|---|---|
-| `Home.vue` | Wrapped in `PublicLayout`; existing inline nav/footer markup removed. |
-| `Library/Index.vue`, `Library/BookDetail.vue`, `Library/AuthorShow.vue` | Wrapped in `PublicLayout`; existing per-page duplicated nav markup removed. |
-| `ProjectDetail.vue` | Wrapped in `PublicLayout` for nav+footer. Its dark hero section and "Back to Portfolio" footer link remain as page content inside the layout's slot — the layout's nav appears above them, it does not replace them. |
-| `OrgPage.vue` | Uses `PublicNav` + `PublicFooter` only when `organization.white_label` is falsy. When `white_label` is true, keeps today's minimal brand-only nav and hidden footer, completely unchanged. |
-| `Portfolio.vue` | Keeps its own custom nav/animation system as-is. Adds one plain `Library` link into that existing nav bar, and swaps its inline auth-button markup for `<AuthNavCta />` and its footer markup for `<PublicFooter />` (dedup only, no visible/behavioral change since the content already matches). |
-| `ChapterReader.vue` | Not touched by this spec at all — no `PublicLayout`, no `PublicNav`. See "New-tab entry point" below. |
+**Explicitly excluded from per-template re-skinning** (stay as one shared, simple implementation regardless of which public template is active): `Privacy.vue`, `Terms.vue`, `Refund.vue` (legal boilerplate — no value in duplicating), `ProfileStub.vue` (a placeholder state, not a designed page), and `ChapterReader.vue` (its own spec, its own toolbar/drawer).
 
-## New-tab entry point (ChapterReader)
+**Preserved behavior regardless of template:** `OrgPage.vue`'s `white_label` flag continues to suppress platform branding/footer entirely when true — both templates must implement this the same way, it's an existing paid feature, not incidental styling.
 
-`BookDetail.vue`'s chapter/table-of-contents links change from Inertia `<Link>` to plain `<a target="_blank" rel="noopener">`, so opening a chapter launches `ChapterReader.vue` in a fresh browser tab — the same pattern as Google Drive opening a document preview in a new tab while the file list stays where it was. This is the only place a new tab opens: once inside the reader, Previous/Next links, page-flip navigation, and autoscroll auto-advance (from the separate reading-modes spec) all continue to navigate within that same tab via normal Inertia navigation — unchanged from that spec.
+## Architecture
+
+**No new `Template` database table.** The app already has a generic key/value `Setting` model (`app/Models/Setting.php`, `Setting::get()`/`Setting::set()`, grouped by a `group` column). Templates are a small hardcoded registry of component sets; which one is *active* is just two Setting rows:
+
+- `layout_template.admin` — fixed value `stripe` (no picker needed yet, since it's the only option; still a registry lookup so a second admin template is a drop-in later, not a redesign)
+- `layout_template.public` — `minimalist` | `animejs`, changeable from a new "Public Site Template" section in the existing Admin Settings screen (`resources/js/Pages/Admin/Settings/Index.vue`, `app/Http/Controllers/Admin/SettingController.php`)
+
+`SettingController::update()` only updates *existing* setting rows (it doesn't create missing ones), so a migration/seeder must insert these two rows with their defaults, and the settings `groups` array in `SettingController::index()` needs a new `appearance` group.
+
+A small `useActiveTemplate()` composable resolves the registry entry for the current context, reading the relevant setting via an Inertia shared prop (extend `HandleInertiaRequests` middleware to share `layoutTemplates: { admin, public }` on every request).
+
+```
+Registry shape (illustrative):
+{
+  stripe:     { Layout: AdminLayout },              // admin/owner/editor
+  minimalist: { Home, Portfolio, OrgPage, ProjectDetail, LibraryIndex, BookDetail, AuthorShow },
+  animejs:    { Home, Portfolio, OrgPage, ProjectDetail, LibraryIndex, BookDetail, AuthorShow },
+}
+```
+
+Each public page's Inertia component becomes a thin resolver: it fetches the active public template from the registry and renders that template's implementation of itself, passing through the same props the controller already provides. Controllers are untouched — this is purely a component-resolution layer.
+
+## Shared (template-agnostic) components
+
+A few pieces are genuinely generic utility, not visual identity, and are **not** duplicated per template — built once, styled via CSS custom properties each template defines:
+
+- `BackLink.vue` — the "← X" pattern
+- `Pagination.vue` — page-number controls (used by Library/Index, AuthorShow)
+- `EmptyState.vue` — "nothing here yet" pattern
+- `LegalPage.vue` — shared structure for Privacy/Terms/Refund
+
+Excluded from extraction (per earlier audit decision, still holds): a unified `SectionCard.vue` and `ContactForm.vue` merge — different content shapes / different submission behavior between Home's static and Portfolio's live form made these a leaky abstraction not worth forcing.
+
+## Template sources
+
+**Stripe-like admin** (`stripe`): built primarily from **TailAdmin Vue** (already downloaded — confirmed via its `package.json`/README to be Vue 3 + Tailwind CSS 4, matching this app's exact stack) as the structural base — sidebar, routing conventions, component patterns. Visual polish toward an actual Stripe-like clean minimal look draws on the AI-generated `stitch_vaigrantha` dark-theme export screens (`author_dashboard_desktop_dark`, `upload_publish_desktop_dark`, `pricing_desktop_dark`, `library_desktop_dark`), since those were generated specifically against this app's own brand/content rather than generic placeholder content. `flowbite-vue` (downloaded — confirmed to be the Flowbite Vue **component library**, not a full dashboard template) and `themesberg/flowbite-admin-dashboard` (the real dashboard-with-pages repo, not yet downloaded) are secondary references for specific component patterns (data tables, modals) where useful. This becomes the new `AdminLayout.vue`, replacing the current one.
+
+**Minimalist** (`minimalist`): structural base is `vuejs-tailwindcss-portfolio` (already downloaded, confirmed Vue 3 Composition API + Tailwind CSS 3, ~300+ GitHub stars, multipage, dark mode) — restyled to this app's real content and branding, cross-referencing the Stitch orange-theme screens (`platform_homepage_orange_theme`, `library_discovery_orange_theme`, `reader_view_orange_theme`, `author_dashboard_orange_theme`) for visual details specific to this app.
+
+**Anime.js** (`animejs`): the **same** structural base and page-mapping work as Minimalist — not a separately maintained codebase — with anime.js-driven entrance/scroll motion layered on top. This was a deliberate choice during design: nearly everything discoverable under "anime.js portfolio template" online is actually *anime-aesthetic* (Japanese cartoon style), a naming collision, not a real anime.js-library template — so building on Minimalist's already-correct structure and adding motion is both more accurate to what "Anime.js template" actually means here and cheaper to maintain than two divergent codebases.
+
+**Not built in this pass:** `Bento-Grid-Portfolio` (downloaded, confirmed Vue + Tailwind) is kept as a candidate **future third public template** — the registry design supports adding it later without rework, but only two public templates (Minimalist, Anime.js) were confirmed in scope for this plan.
+
+## Loaders
+
+Three distinct loading patterns, used consistently across both templates and the admin template:
+
+1. **Skeleton screens** for component-level async content (e.g. the book grid on `Library/Index.vue`/`AuthorShow.vue` while paginating) — a pulsing placeholder shaped like the real content, avoiding layout shift.
+2. **Top progress bar** for full Inertia page navigations (NProgress-style thin bar).
+3. **Spinners** for icons, images, and button-press/form-submission states (in-place, small).
+
+## Mobile navigation
+
+A real, currently-existing gap: no page in the app has a working mobile nav today (`Portfolio.vue` hides its nav links under `md:flex` with no fallback). Both `minimalist` and `animejs` templates' Nav implementations must include an actual hamburger-menu / slide-down mobile nav — not optional polish, a genuine missing capability being fixed here.
+
+## Auth-aware nav element
+
+`AuthNavCta` — a small reusable piece (not a full template-owned component, since its *logic* is identical everywhere): renders a "Dashboard →" button for admins, "Login"/"Sign up" for guests, nothing for logged-in non-admins. Both templates' Nav implementations use it rather than re-deriving the same `isAdmin`/auth conditional independently (currently computed redundantly via `usePage().props.auth.roles` in nearly every public page).
+
+## Out of scope / deferred
+
+- **Animation polish beyond each template's own motion** (i.e. the broader anime.js integration pass covering the reading-modes drawer, page-flip transitions, etc.) — tracked separately, starts once this and the reading-modes feature are both functionally complete.
+- A picker for the **admin** template group (`layout_template.admin`) — architecture supports it, not built until there's a second admin template to choose between.
+- The `Bento-Grid-Portfolio` third public template.
+- Any change to `ChapterReader.vue`, which keeps its current layout entirely, governed only by the separate reading-modes spec.
 
 ## Testing approach
 
-No backend changes, so no Pest tests. Manual browser verification:
+No backend logic changes beyond the two new Setting rows and the shared-prop addition, so minimal Pest coverage (verify the settings update endpoint persists `layout_template.public` correctly; verify the shared prop is present on an Inertia response). The bulk of verification is manual browser testing:
 
-- `Library` link appears and works from Home.vue, Portfolio.vue, non-white-labeled OrgPage.vue, ProjectDetail.vue, and all three Library browsing pages.
-- White-labeled org pages show no shared nav, no `Library` link, no shared footer — behavior identical to before this change.
-- Portfolio.vue's anchor nav, scroll-spy active-section highlighting, and animations all still work exactly as before, with the new `Library` link simply present alongside the anchor links.
-- `PublicNav` and `PublicFooter` render correctly and responsively at mobile and desktop widths.
-- Clicking a chapter from `BookDetail.vue` opens `ChapterReader.vue` in a new tab; the original `BookDetail.vue` tab remains where it was.
-- Within the newly opened reader tab, Previous/Next and (once implemented) page-flip/autoscroll auto-advance all navigate within that same tab, not opening further new tabs.
+- Switching `layout_template.public` between `minimalist`/`animejs` in Admin Settings visibly changes Home/Portfolio/OrgPage/ProjectDetail/Library pages without a deploy.
+- Every in-scope page renders correctly, responsively, under both public templates.
+- `OrgPage.vue`'s `white_label` behavior is identical under both templates.
+- Mobile hamburger nav works in both public templates.
+- Admin/Owner/Editor all see the new Stripe-like admin template; permission-gated nav items still respect role.
+- Skeleton/progress-bar/spinner loaders appear in their respective contexts.
+- Legal pages, `ProfileStub.vue`, and `ChapterReader.vue` are visually unaffected by the public template switch.
