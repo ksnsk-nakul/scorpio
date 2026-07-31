@@ -1,3 +1,5 @@
+import AnimejsPortfolio from '@/Pages/Public/Templates/Animejs/Portfolio.vue'
+
 // Registry of public-template page implementations. Each template's page
 // components are added by the plan that builds that template — see
 // docs/superpowers/specs/2026-07-31-public-layout-componentization-design.md.
@@ -13,7 +15,7 @@ const PUBLIC_TEMPLATES = {
   },
   animejs: {
     Home: null,
-    Portfolio: null,
+    Portfolio: AnimejsPortfolio,
     OrgPage: null,
     ProjectDetail: null,
     LibraryIndex: null,
