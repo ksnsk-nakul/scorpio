@@ -1,0 +1,31 @@
+// Registry of public-template page implementations. Each template's page
+// components are added by the plan that builds that template — see
+// docs/superpowers/specs/2026-07-31-public-layout-componentization-design.md.
+const PUBLIC_TEMPLATES = {
+  minimalist: {
+    Home: null,
+    Portfolio: null,
+    OrgPage: null,
+    ProjectDetail: null,
+    LibraryIndex: null,
+    BookDetail: null,
+    AuthorShow: null,
+  },
+  animejs: {
+    Home: null,
+    Portfolio: null,
+    OrgPage: null,
+    ProjectDetail: null,
+    LibraryIndex: null,
+    BookDetail: null,
+    AuthorShow: null,
+  },
+}
+
+export function resolvePublicPage(templateKey, pageName) {
+  const template = PUBLIC_TEMPLATES[templateKey]
+  if (!template) {
+    throw new Error(`resolvePublicPage: unknown template "${templateKey}"`)
+  }
+  return template[pageName] ?? null
+}
