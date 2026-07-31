@@ -1,4 +1,7 @@
 <template>
+  <component v-if="animejsComponent" :is="animejsComponent" :author="author" :books="books" />
+
+  <template v-else>
   <Head>
     <title>{{ author.name }}</title>
   </Head>
@@ -40,13 +43,23 @@
       </div>
     </main>
   </div>
+  </template>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { Head, Link } from '@inertiajs/vue3'
+import { useActiveTemplate } from '@/composables/useActiveTemplate'
+import { resolvePublicPage } from '@/templateRegistry'
 
-defineProps({
+const props = defineProps({
   author: { type: Object, required: true },
   books: { type: Object, required: true },
 })
+
+// ── Template resolution ──────────────────────────────────────────────────────
+const { publicTemplate } = useActiveTemplate()
+const animejsComponent = computed(() =>
+  publicTemplate.value === 'animejs' ? resolvePublicPage('animejs', 'AuthorShow') : null
+)
 </script>
