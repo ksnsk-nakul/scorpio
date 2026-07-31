@@ -63,7 +63,9 @@ const checkAutoscrollBoundary = () => {
   if (props.hasNext) {
     navigating = true
     sessionStorage.setItem(AUTOSCROLL_RESUME_KEY, '1')
-    router.visit(`/library/books/${props.book.slug}/chapters/${props.chapter.sort_order + 1}`)
+    router.visit(`/library/books/${props.book.slug}/chapters/${props.chapter.sort_order + 1}`, {
+      onFinish: () => { navigating = false },
+    })
   } else {
     pause()
   }
