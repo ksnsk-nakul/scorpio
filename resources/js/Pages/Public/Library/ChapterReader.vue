@@ -30,7 +30,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { Head, Link } from '@inertiajs/vue3'
 import { useReaderTheme } from '@/composables/useReaderTheme'
 import { useReaderMode } from '@/composables/useReaderMode'
@@ -45,8 +45,37 @@ defineProps({
 
 const { themeClass, fontStyle, setTheme, increaseFontSize, decreaseFontSize } = useReaderTheme()
 const { mode } = useReaderMode()
+const { pxPerFrame, isPlaying, play, pause } = useReaderMode()
 
 const drawerOpen = ref(false)
+
+let rafId = null
+const autoscrollTick = () => {
+  if (isPlaying.value) {
+    window.scrollBy(0, pxPerFrame.value)
+  }
+  rafId = requestAnimationFrame(autoscrollTick)
+}
+
+const pauseOnInteraction = () => {
+  if (isPlaying.value) pause()
+}
+
+onMounted(() => {
+  rafId = requestAnimationFrame(autoscrollTick)
+  window.addEventListener('wheel', pauseOnInteraction, { passive: true })
+  window.addEventListener('touchstart', pauseOnInteraction, { passive: true })
+  window.addEventListener('mousedown', pauseOnInteraction)
+  window.addEventListener('keydown', pauseOnInteraction)
+})
+
+onUnmounted(() => {
+  cancelAnimationFrame(rafId)
+  window.removeEventListener('wheel', pauseOnInteraction)
+  window.removeEventListener('touchstart', pauseOnInteraction)
+  window.removeEventListener('mousedown', pauseOnInteraction)
+  window.removeEventListener('keydown', pauseOnInteraction)
+})
 </script>
 
 <style scoped>
