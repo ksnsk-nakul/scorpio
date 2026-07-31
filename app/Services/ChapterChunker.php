@@ -51,7 +51,15 @@ class ChapterChunker
         libxml_clear_errors();
 
         $xpath = new DOMXPath($dom);
-        $blocks = $xpath->query('//p | //h1 | //h2 | //h3 | //h4 | //h5 | //h6 | //li | //blockquote');
+        // Only leaf block nodes: EPUB-exported HTML commonly nests block tags
+        // (e.g. <blockquote><p>...</p></blockquote>, <li><p>...</p></li>). Matching
+        // both the outer and inner tag would duplicate the same text into two
+        // "paragraphs" — the [not(descendant::...)] predicates keep only the
+        // innermost match in any such nesting.
+        $blockTags = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'blockquote'];
+        $descendantCheck = implode(' or ', array_map(fn ($tag) => "descendant::{$tag}", $blockTags));
+        $query = implode(' | ', array_map(fn ($tag) => "//{$tag}[not({$descendantCheck})]", $blockTags));
+        $blocks = $xpath->query($query);
 
         $paragraphs = [];
         foreach ($blocks as $block) {

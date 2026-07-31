@@ -46,3 +46,11 @@ it('returns an empty array for empty content', function () {
     expect((new ChapterChunker())->chunk(''))->toBe([]);
     expect((new ChapterChunker())->chunk('<p></p>'))->toBe([]);
 });
+
+it('does not duplicate text when block tags are nested', function () {
+    $blockquote = (new ChapterChunker())->chunk('<blockquote><p>Quoted text here.</p></blockquote>');
+    expect(substr_count($blockquote[0], 'Quoted text here.'))->toBe(1);
+
+    $listItem = (new ChapterChunker())->chunk('<li><p>List item text.</p></li>');
+    expect(substr_count($listItem[0], 'List item text.'))->toBe(1);
+});
