@@ -1,4 +1,12 @@
 <template>
+  <component
+    v-if="animejsComponent"
+    :is="animejsComponent"
+    :organization="organization" :owner="owner" :members="members"
+    :achievements="achievements" :settings="settings"
+  />
+
+  <template v-else>
   <Head><title>{{ organization.name }} · {{ settings.site_name }}</title></Head>
   <div class="min-h-screen bg-white font-sans">
     <nav class="border-b border-slate-100 px-6 py-4 flex items-center justify-between">
@@ -8,8 +16,6 @@
     </nav>
 
     <main class="max-w-4xl mx-auto px-6 py-16">
-
-      <!-- Org header -->
       <div class="mb-12">
         <h1 class="text-4xl font-bold text-slate-900 mb-2">{{ organization.name }}</h1>
         <p v-if="organization.description" class="text-lg text-slate-500">{{ organization.description }}</p>
@@ -19,7 +25,6 @@
         </p>
       </div>
 
-      <!-- Members -->
       <section class="mb-12">
         <h2 class="text-xl font-bold text-slate-800 mb-6">Team Members</h2>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -32,7 +37,6 @@
         <p v-if="!members.length" class="text-slate-400 text-sm">No members listed.</p>
       </section>
 
-      <!-- Achievements -->
       <section v-if="achievements.length">
         <h2 class="text-xl font-bold text-slate-800 mb-6">Achievements</h2>
         <div class="space-y-3">
@@ -50,16 +54,19 @@
         </div>
       </section>
 
-      <!-- Footer (hidden if white-label) -->
       <footer v-if="!organization.white_label" class="mt-16 pt-8 border-t border-slate-100 text-center text-xs text-slate-400">
         Powered by <a href="/" class="hover:text-orange-500">{{ settings.site_name }}</a>
       </footer>
     </main>
   </div>
+  </template>
 </template>
 
 <script setup>
 import { Head } from '@inertiajs/vue3'
+import { computed } from 'vue'
+import { useActiveTemplate } from '@/composables/useActiveTemplate'
+import { resolvePublicPage } from '@/templateRegistry'
 
 defineProps({
   organization: Object,
@@ -68,4 +75,10 @@ defineProps({
   achievements: Array,
   settings:     Object,
 })
+
+// ── Template resolution ──────────────────────────────────────────────────────
+const { publicTemplate } = useActiveTemplate()
+const animejsComponent = computed(() =>
+  publicTemplate.value === 'animejs' ? resolvePublicPage('animejs', 'OrgPage') : null
+)
 </script>
