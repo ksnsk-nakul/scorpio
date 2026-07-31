@@ -3,7 +3,10 @@
     <title>{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }} · {{ book.title }}</title>
   </Head>
 
-  <div class="min-h-screen font-sans" :class="themeClass">
+  <div class="min-h-screen font-sans" :class="themeClass" tabindex="0"
+    @keydown.left="mode === 'h-page' && goToPage(-1)" @keydown.right="mode === 'h-page' && goToPage(1)"
+    @keydown.up="mode === 'v-page' && goToPage(-1)" @keydown.down="mode === 'v-page' && goToPage(1)"
+    @touchstart="onTouchStart" @touchend="onTouchEnd">
     <nav class="sticky top-0 z-40 backdrop-blur-xl border-b border-current/10" :class="themeClass">
       <div class="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between text-sm">
         <a :href="`/library/books/${book.slug}`" class="opacity-70 hover:opacity-100 transition-opacity truncate max-w-[10rem]">
@@ -13,7 +16,7 @@
       </div>
     </nav>
 
-    <main class="max-w-3xl mx-auto px-6 py-10">
+    <main v-if="mode === 'scroll' || mode === 'autoscroll'" class="max-w-3xl mx-auto px-6 py-10">
       <h1 class="text-xl font-bold mb-6">{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }}</h1>
       <div class="markdown-body" :style="fontStyle" v-html="chapter.content"></div>
 
@@ -25,12 +28,31 @@
       </div>
     </main>
 
+    <main v-else-if="mode === 'h-page'" ref="pagedViewportEl" class="overflow-hidden max-w-3xl mx-auto relative" :style="{ height: 'calc(100vh - 3.5rem)' }">
+      <button class="absolute left-0 top-0 h-full w-1/3 z-10" aria-label="Previous page" @click="goToPage(-1)"></button>
+      <button class="absolute right-0 top-0 h-full w-1/3 z-10" aria-label="Next page" @click="goToPage(1)"></button>
+      <div ref="pagedEl" class="markdown-body px-6 py-10 h-full"
+        :style="{ ...fontStyle, columnWidth: pageWidth + 'px', columnGap: 0, columnFill: 'auto', transform: `translateX(-${currentPage * pageWidth}px)`, transition: 'transform 0.25s ease' }">
+        <h1 class="text-xl font-bold mb-6">{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }}</h1>
+        <div v-html="chapter.content"></div>
+      </div>
+    </main>
+
+    <main v-else-if="mode === 'v-page'" ref="pagedViewportEl" class="overflow-hidden max-w-3xl mx-auto relative" :style="{ height: 'calc(100vh - 3.5rem)' }">
+      <button class="absolute top-0 left-0 w-full h-1/3 z-10" aria-label="Previous page" @click="goToPage(-1)"></button>
+      <button class="absolute bottom-0 left-0 w-full h-1/3 z-10" aria-label="Next page" @click="goToPage(1)"></button>
+      <div ref="pagedEl" class="markdown-body px-6 py-10" :style="{ ...fontStyle, transform: `translateY(-${currentPage * pageHeight}px)`, transition: 'transform 0.25s ease' }">
+        <h1 class="text-xl font-bold mb-6">{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }}</h1>
+        <div v-html="chapter.content"></div>
+      </div>
+    </main>
+
     <ReaderSettingsDrawer :open="drawerOpen" @close="drawerOpen = false" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import { useReaderTheme } from '@/composables/useReaderTheme'
 import { useReaderMode } from '@/composables/useReaderMode'
@@ -52,6 +74,13 @@ const mountedAt = Date.now()
 const MIN_AUTOSCROLL_DWELL_MS = 3000
 
 const drawerOpen = ref(false)
+
+const pagedViewportEl = ref(null)
+const pagedEl = ref(null)
+const currentPage = ref(0)
+const pageWidth = ref(0)
+const pageHeight = ref(0)
+const totalPages = ref(1)
 
 let rafId = null
 let navigating = false
@@ -83,6 +112,65 @@ const pauseOnInteraction = () => {
   if (isPlaying.value) pause()
 }
 
+const measurePages = async () => {
+  if (mode.value !== 'h-page' && mode.value !== 'v-page') return
+  await nextTick()
+  if (!pagedViewportEl.value || !pagedEl.value) return
+  pageWidth.value = pagedViewportEl.value.clientWidth
+  pageHeight.value = pagedViewportEl.value.clientHeight
+  const size = mode.value === 'h-page' ? pagedEl.value.scrollWidth : pagedEl.value.scrollHeight
+  const pageSize = mode.value === 'h-page' ? pageWidth.value : pageHeight.value
+  totalPages.value = Math.max(1, Math.ceil(size / pageSize))
+  currentPage.value = 0
+}
+
+const goToPage = (delta) => {
+  if (navigating) return
+  if (mode.value !== 'h-page' && mode.value !== 'v-page') return
+  const next = currentPage.value + delta
+  if (next < 0) {
+    if (props.hasPrev) {
+      navigating = true
+      router.visit(`/library/books/${props.book.slug}/chapters/${props.chapter.sort_order - 1}`, {
+        onFinish: () => { navigating = false },
+      })
+    }
+    return
+  }
+  if (next >= totalPages.value) {
+    if (props.hasNext) {
+      navigating = true
+      router.visit(`/library/books/${props.book.slug}/chapters/${props.chapter.sort_order + 1}`, {
+        onFinish: () => { navigating = false },
+      })
+    }
+    return
+  }
+  currentPage.value = next
+}
+
+watch(mode, measurePages)
+watch(() => fontStyle.value.fontSize, measurePages)
+
+let touchStartX = 0
+let touchStartY = 0
+
+const onTouchStart = (e) => {
+  touchStartX = e.changedTouches[0].clientX
+  touchStartY = e.changedTouches[0].clientY
+}
+
+const onTouchEnd = (e) => {
+  const dx = e.changedTouches[0].clientX - touchStartX
+  const dy = e.changedTouches[0].clientY - touchStartY
+  const SWIPE_THRESHOLD = 50
+  if (mode.value === 'h-page' && Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
+    goToPage(dx < 0 ? 1 : -1)
+  } else if (mode.value === 'v-page' && Math.abs(dy) > SWIPE_THRESHOLD && Math.abs(dy) > Math.abs(dx)) {
+    goToPage(dy < 0 ? 1 : -1)
+  }
+}
+
 onMounted(() => {
   rafId = requestAnimationFrame(autoscrollTick)
   window.addEventListener('wheel', pauseOnInteraction, { passive: true })
@@ -94,6 +182,9 @@ onMounted(() => {
     sessionStorage.removeItem(AUTOSCROLL_RESUME_KEY)
     if (mode.value === 'autoscroll') play()
   }
+
+  measurePages()
+  window.addEventListener('resize', measurePages)
 })
 
 onUnmounted(() => {
@@ -102,6 +193,7 @@ onUnmounted(() => {
   window.removeEventListener('touchstart', pauseOnInteraction)
   window.removeEventListener('mousedown', pauseOnInteraction)
   window.removeEventListener('keydown', pauseOnInteraction)
+  window.removeEventListener('resize', measurePages)
 })
 </script>
 
