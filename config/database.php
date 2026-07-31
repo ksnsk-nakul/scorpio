@@ -99,6 +99,20 @@ return [
             'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 
+        'rag' => [
+            'driver' => 'pgsql',
+            'host' => env('DB_RAG_HOST', '127.0.0.1'),
+            'port' => env('DB_RAG_PORT', '5432'),
+            'database' => env('DB_RAG_DATABASE', 'postgres'),
+            'username' => env('DB_RAG_USERNAME', 'postgres'),
+            'password' => env('DB_RAG_PASSWORD', ''),
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => env('DB_SSLMODE', 'require'),
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),
