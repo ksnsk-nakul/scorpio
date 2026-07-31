@@ -21,11 +21,21 @@ class GeminiClient
         return $key;
     }
 
+    /** Shared pending request: header auth (not query string, to keep the key out of logs/URLs),
+     *  a bounded timeout, and a retry with backoff on transient rate-limit/server errors. */
+    private function http(): \Illuminate\Http\Client\PendingRequest
+    {
+        return Http::withHeaders(['x-goog-api-key' => $this->apiKey()])
+            ->timeout(30)
+            ->retry(3, 2000, fn ($exception) => $exception instanceof \Illuminate\Http\Client\RequestException
+                && in_array($exception->response->status(), [429, 500, 502, 503, 504], true), throw: false);
+    }
+
     /** @return float[] */
     public function embed(string $text): array
     {
-        $response = Http::post(
-            self::BASE_URL . '/' . self::EMBEDDING_MODEL . ':embedContent?key=' . $this->apiKey(),
+        $response = $this->http()->post(
+            self::BASE_URL . '/' . self::EMBEDDING_MODEL . ':embedContent',
             [
                 'content' => ['parts' => [['text' => $text]]],
                 'outputDimensionality' => self::EMBEDDING_DIMENSIONS,
@@ -46,8 +56,8 @@ class GeminiClient
 
     public function generate(string $prompt): string
     {
-        $response = Http::post(
-            self::BASE_URL . '/' . self::GENERATION_MODEL . ':generateContent?key=' . $this->apiKey(),
+        $response = $this->http()->post(
+            self::BASE_URL . '/' . self::GENERATION_MODEL . ':generateContent',
             [
                 'contents' => [['parts' => [['text' => $prompt]]]],
             ]

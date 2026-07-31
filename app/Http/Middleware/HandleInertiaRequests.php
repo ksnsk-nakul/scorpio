@@ -84,7 +84,7 @@ class HandleInertiaRequests extends Middleware
             ] : null,
             'layoutTemplates' => [
                 'admin'  => 'stripe',
-                'public' => Setting::get('layout_template_public', 'minimalist'),
+                'public' => fn () => Cache::remember('settings.layout_template_public', 60, fn () => Setting::get('layout_template_public', 'minimalist')),
             ],
         ];
     }
