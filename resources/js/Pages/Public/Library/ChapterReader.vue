@@ -162,8 +162,8 @@ const goToPage = (delta) => {
   currentPage.value = next
 }
 
-watch(mode, measurePages)
-watch(() => fontStyle.value.fontSize, measurePages)
+watch(mode, measurePages, { flush: 'post' })
+watch(() => fontStyle.value.fontSize, measurePages, { flush: 'post' })
 
 let touchStartX = 0
 let touchStartY = 0
