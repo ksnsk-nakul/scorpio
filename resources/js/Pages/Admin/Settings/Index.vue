@@ -32,6 +32,15 @@
             <p class="text-xs text-slate-400 mb-2">This image appears in link previews when sharing your site on social media (Twitter/X, LinkedIn, iMessage, etc.).</p>
             <ImagePicker v-model="form[key]" context="branding" />
           </template>
+          <template v-else-if="isSelectKey(String(key))">
+            <label class="block text-sm text-slate-600 mb-1">{{ formatKey(String(key)) }}</label>
+            <select v-model="form[key]"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+              <option v-for="opt in selectOptions(String(key))" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </template>
           <template v-else>
             <label class="block text-sm text-slate-600 mb-1">{{ formatKey(String(key)) }}</label>
             <input v-model="form[key]"
@@ -69,6 +78,14 @@ const save = () => form.patch('/admin/settings')
 const formatKey = k => k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 const boolKeys  = ['show_donate_banner']
 const imageKeys = ['og_image']
+const selectKeys = {
+  layout_template_public: [
+    { value: 'minimalist', label: 'Minimalist' },
+    { value: 'animejs', label: 'Anime.js' },
+  ],
+}
 const isBoolKey  = k => boolKeys.includes(k)
 const isImageKey = k => imageKeys.includes(k)
+const isSelectKey = k => Object.prototype.hasOwnProperty.call(selectKeys, k)
+const selectOptions = k => selectKeys[k] ?? []
 </script>
