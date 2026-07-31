@@ -44,8 +44,7 @@ defineProps({
 })
 
 const { themeClass, fontStyle, setTheme, increaseFontSize, decreaseFontSize } = useReaderTheme()
-const { mode } = useReaderMode()
-const { pxPerFrame, isPlaying, play, pause } = useReaderMode()
+const { mode, pxPerFrame, isPlaying, play, pause } = useReaderMode()
 
 const drawerOpen = ref(false)
 
