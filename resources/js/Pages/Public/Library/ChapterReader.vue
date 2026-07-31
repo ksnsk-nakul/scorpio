@@ -48,14 +48,20 @@ const AUTOSCROLL_RESUME_KEY = 'library-autoscroll-resume'
 const { themeClass, fontStyle, setTheme, increaseFontSize, decreaseFontSize } = useReaderTheme()
 const { mode, pxPerFrame, isPlaying, play, pause } = useReaderMode()
 
+const mountedAt = Date.now()
+const MIN_AUTOSCROLL_DWELL_MS = 3000
+
 const drawerOpen = ref(false)
 
 let rafId = null
+let navigating = false
 const checkAutoscrollBoundary = () => {
-  if (mode.value !== 'autoscroll' || !isPlaying.value) return
+  if (mode.value !== 'autoscroll' || !isPlaying.value || navigating) return
+  if (Date.now() - mountedAt < MIN_AUTOSCROLL_DWELL_MS) return
   const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4
   if (!atBottom) return
   if (props.hasNext) {
+    navigating = true
     sessionStorage.setItem(AUTOSCROLL_RESUME_KEY, '1')
     router.visit(`/library/books/${props.book.slug}/chapters/${props.chapter.sort_order + 1}`)
   } else {
@@ -84,7 +90,7 @@ onMounted(() => {
 
   if (sessionStorage.getItem(AUTOSCROLL_RESUME_KEY)) {
     sessionStorage.removeItem(AUTOSCROLL_RESUME_KEY)
-    play()
+    if (mode.value === 'autoscroll') play()
   }
 })
 
