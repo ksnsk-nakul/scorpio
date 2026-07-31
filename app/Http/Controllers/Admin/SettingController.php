@@ -16,7 +16,7 @@ class SettingController extends Controller
 
         return Inertia::render('Admin/Settings/Index', [
             'settings' => $settings,
-            'groups'   => ['general', 'seo', 'social', 'mail'],
+            'groups'   => ['general', 'seo', 'social', 'mail', 'appearance'],
         ]);
     }
 

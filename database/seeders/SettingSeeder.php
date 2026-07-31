@@ -20,6 +20,9 @@ class SettingSeeder extends Seeder
 
             ['key' => 'show_donate_banner', 'value' => '0', 'group' => 'general'],
 
+            // Appearance
+            ['key' => 'layout_template_public', 'value' => 'minimalist', 'group' => 'appearance'],
+
             // Social
             ['key' => 'social_github',   'value' => 'https://github.com/ksnsk-nakul',                          'group' => 'social'],
             ['key' => 'social_linkedin', 'value' => 'https://linkedin.com/in/nakul-sri-kuber-384233193',        'group' => 'social'],
