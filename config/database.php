@@ -109,7 +109,11 @@ return [
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
-            'search_path' => 'public',
+            // Tests override this to 'rag_test' (see phpunit.xml) so the test suite
+            // never touches the real, persistent production RAG data on this shared
+            // Supabase instance — book_chunks/chat_threads/chat_messages are mirrored
+            // in both schemas.
+            'search_path' => env('DB_RAG_SEARCH_PATH', 'public'),
             'sslmode' => env('DB_SSLMODE', 'require'),
         ],
 
