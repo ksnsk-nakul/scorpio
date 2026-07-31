@@ -9,9 +9,14 @@ return new class extends Migration
     {
         DB::connection('rag')->statement('CREATE EXTENSION IF NOT EXISTS vector');
 
+        // IF NOT EXISTS is intentional here (unlike the app's ordinary same-connection
+        // migrations): the test suite's RefreshDatabase resets the default SQLite
+        // connection fresh on every run, which re-executes every migration file
+        // including this one — but this table lives on the persistent, external `rag`
+        // Postgres (Supabase) connection, which is never dropped between test runs.
         // 768 = Gemini gemini-embedding-001 with outputDimensionality: 768 (see GeminiClient).
         DB::connection('rag')->statement(<<<'SQL'
-            CREATE TABLE book_chunks (
+            CREATE TABLE IF NOT EXISTS book_chunks (
                 id BIGSERIAL PRIMARY KEY,
                 book_id BIGINT NOT NULL,
                 chapter_id BIGINT NOT NULL,
@@ -22,7 +27,7 @@ return new class extends Migration
             )
         SQL);
 
-        DB::connection('rag')->statement('CREATE INDEX book_chunks_book_id_index ON book_chunks (book_id)');
+        DB::connection('rag')->statement('CREATE INDEX IF NOT EXISTS book_chunks_book_id_index ON book_chunks (book_id)');
     }
 
     public function down(): void
