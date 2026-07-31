@@ -1,13 +1,15 @@
 <template>
-  <component v-if="animejsComponent" :is="animejsComponent" :book="book" />
-
-  <template v-else>
   <Head>
     <title>{{ book.title }}</title>
     <meta name="description" :content="book.description ?? book.title" />
   </Head>
 
   <div class="min-h-screen bg-white font-sans">
+    <!-- ── Nav ───────────────────────────────────────────────────────────
+         Not AnimeJsNav — it would render fine (its settings/sections props
+         default), but with a generic "Portfolio" site name since
+         LibraryController::show() doesn't pass real `settings`. Keeping
+         the original's minimal "← Library | {title}" bar avoids that. -->
     <nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-100">
       <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <a href="/library" class="text-sm text-slate-500 hover:text-orange-500 transition-colors">← Library</a>
@@ -16,10 +18,10 @@
     </nav>
 
     <main class="pt-20 pb-16 max-w-4xl mx-auto px-6">
-      <div class="flex flex-col sm:flex-row gap-8 mb-10">
+      <div class="reveal flex flex-col sm:flex-row gap-8 mb-10">
         <div class="w-40 flex-shrink-0 mx-auto sm:mx-0">
           <div class="aspect-[2/3] rounded-lg overflow-hidden bg-slate-100 shadow-sm">
-            <img v-if="book.cover_url" :src="book.cover_url" class="w-full h-full object-cover" />
+            <img v-if="book.cover_url" :src="book.cover_url" :alt="book.title" class="w-full h-full object-cover" />
           </div>
         </div>
         <div class="flex-1">
@@ -38,7 +40,7 @@
 
       <h2 class="text-lg font-semibold text-slate-800 mb-3">Chapters</h2>
       <ol class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden">
-        <li v-for="chapter in book.chapters" :key="chapter.sort_order">
+        <li v-for="chapter in book.chapters" :key="chapter.sort_order" class="reveal-chapter">
           <Link
             :href="`/library/books/${book.slug}/chapters/${chapter.sort_order}`"
             class="flex items-center justify-between px-4 py-3 text-sm hover:bg-slate-50 transition-colors"
@@ -52,20 +54,16 @@
       </ol>
     </main>
   </div>
-  </template>
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { Head, Link } from '@inertiajs/vue3'
-import { useActiveTemplate } from '@/composables/useActiveTemplate'
-import { resolvePublicPage } from '@/templateRegistry'
+import { useAnimeReveal } from '@/composables/useAnimeReveal'
 
-const props = defineProps({ book: { type: Object, required: true } })
+defineProps({ book: { type: Object, required: true } })
 
-// ── Template resolution ──────────────────────────────────────────────────────
-const { publicTemplate } = useActiveTemplate()
-const animejsComponent = computed(() =>
-  publicTemplate.value === 'animejs' ? resolvePublicPage('animejs', 'BookDetail') : null
-)
+// Cover/metadata block reveals as a single unit; chapter list rows reveal
+// staggered, same treatment LibraryIndex.vue gives its book grid.
+useAnimeReveal('.reveal')
+useAnimeReveal('.reveal-chapter')
 </script>
