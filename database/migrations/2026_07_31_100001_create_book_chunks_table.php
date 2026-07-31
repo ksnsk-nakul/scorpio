@@ -9,8 +9,9 @@ return new class extends Migration
     {
         DB::connection('rag')->statement('CREATE EXTENSION IF NOT EXISTS vector');
 
+        // 768 = Gemini gemini-embedding-001 with outputDimensionality: 768 (see GeminiClient).
         DB::connection('rag')->statement(<<<'SQL'
-            CREATE TABLE IF NOT EXISTS book_chunks (
+            CREATE TABLE book_chunks (
                 id BIGSERIAL PRIMARY KEY,
                 book_id BIGINT NOT NULL,
                 chapter_id BIGINT NOT NULL,
@@ -21,7 +22,7 @@ return new class extends Migration
             )
         SQL);
 
-        DB::connection('rag')->statement('CREATE INDEX IF NOT EXISTS book_chunks_book_id_index ON book_chunks (book_id)');
+        DB::connection('rag')->statement('CREATE INDEX book_chunks_book_id_index ON book_chunks (book_id)');
     }
 
     public function down(): void

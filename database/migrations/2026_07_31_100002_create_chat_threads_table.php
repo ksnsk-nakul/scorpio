@@ -8,10 +8,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::connection('rag')->hasTable('chat_threads')) {
-            return;
-        }
-
         Schema::connection('rag')->create('chat_threads', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
