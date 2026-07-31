@@ -3,7 +3,7 @@
     <title>{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }} · {{ book.title }}</title>
   </Head>
 
-  <div ref="rootEl" class="min-h-screen font-sans outline-none" :class="themeClass" tabindex="0"
+  <div ref="rootEl" class="min-h-screen font-sans outline-none" :class="themeClass" tabindex="-1"
     @keydown.left="mode === 'h-page' && goToPage(-1)" @keydown.right="mode === 'h-page' && goToPage(1)"
     @keydown.up="mode === 'v-page' && goToPage(-1)" @keydown.down="mode === 'v-page' && goToPage(1)"
     @touchstart="onTouchStart" @touchend="onTouchEnd">
@@ -113,16 +113,28 @@ const pauseOnInteraction = () => {
   if (isPlaying.value) pause()
 }
 
-const measurePages = async () => {
-  if (mode.value !== 'h-page' && mode.value !== 'v-page') return
-  await nextTick()
+const recomputeTotalPages = () => {
   if (!pagedViewportEl.value || !pagedEl.value) return
   pageWidth.value = pagedViewportEl.value.clientWidth
   pageHeight.value = pagedViewportEl.value.clientHeight
   const size = mode.value === 'h-page' ? pagedEl.value.scrollWidth : pagedEl.value.scrollHeight
   const pageSize = mode.value === 'h-page' ? pageWidth.value : pageHeight.value
   totalPages.value = Math.max(1, Math.ceil(size / pageSize))
+  currentPage.value = Math.min(currentPage.value, totalPages.value - 1)
+
+  pagedEl.value.querySelectorAll('img').forEach((img) => {
+    if (!img.complete) {
+      img.addEventListener('load', recomputeTotalPages, { once: true })
+      img.addEventListener('error', recomputeTotalPages, { once: true })
+    }
+  })
+}
+
+const measurePages = async () => {
   currentPage.value = 0
+  if (mode.value !== 'h-page' && mode.value !== 'v-page') return
+  await nextTick()
+  recomputeTotalPages()
 }
 
 const goToPage = (delta) => {
