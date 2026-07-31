@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 
 class RetrievalService
 {
+    // Resolved via app() rather than constructor injection so callers (and tests) can
+    // keep using `new RetrievalService()` directly without wiring a container binding.
     /** @return array<int, array{book_id:int, chapter_id:int, content:string, book_title:string, chapter_title:?string}> */
     public function search(string $question, int $limit = 6): array
     {
@@ -25,10 +27,21 @@ class RetrievalService
             [$vectorLiteral, (int) $limit]
         );
 
+        if (empty($rows)) {
+            return [];
+        }
+
+        // Batch-load books/chapters instead of one find() per row: this is called on
+        // every chat message (Task 6), and top-k chunks frequently share a book/chapter.
+        $bookIds = collect($rows)->pluck('book_id')->unique()->all();
+        $chapterIds = collect($rows)->pluck('chapter_id')->unique()->all();
+        $books = Book::whereIn('id', $bookIds)->get()->keyBy('id');
+        $chapters = Chapter::whereIn('id', $chapterIds)->get()->keyBy('id');
+
         $results = [];
         foreach ($rows as $row) {
-            $book = Book::find($row->book_id);
-            $chapter = Chapter::find($row->chapter_id);
+            $book = $books->get($row->book_id);
+            $chapter = $chapters->get($row->chapter_id);
 
             $results[] = [
                 'book_id' => (int) $row->book_id,

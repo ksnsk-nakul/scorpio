@@ -24,8 +24,8 @@ it('returns the closest chunks by cosine distance', function () {
     $far = array_fill(0, 768, -0.9);
 
     try {
-        insertTestChunk(1, 1, 0, 'closely related content', $close);
-        insertTestChunk(1, 2, 0, 'unrelated content', $far);
+        insertTestChunk(999901, 1, 0, 'closely related content', $close);
+        insertTestChunk(999901, 2, 0, 'unrelated content', $far);
 
         Http::fake([
             'generativelanguage.googleapis.com/*embedContent*' => Http::response([
@@ -38,14 +38,14 @@ it('returns the closest chunks by cosine distance', function () {
         expect($results)->toHaveCount(2);
         expect($results[0]['content'])->toBe('closely related content');
     } finally {
-        DB::connection('rag')->table('book_chunks')->where('book_id', 1)->delete();
+        DB::connection('rag')->table('book_chunks')->where('book_id', 999901)->delete();
     }
 });
 
 it('respects the limit parameter', function () {
     try {
         for ($i = 0; $i < 10; $i++) {
-            insertTestChunk(2, $i, 0, "chunk $i", array_fill(0, 768, $i * 0.01));
+            insertTestChunk(999902, $i, 0, "chunk $i", array_fill(0, 768, $i * 0.01));
         }
 
         Http::fake([
@@ -58,6 +58,16 @@ it('respects the limit parameter', function () {
 
         expect($results)->toHaveCount(3);
     } finally {
-        DB::connection('rag')->table('book_chunks')->where('book_id', 2)->delete();
+        DB::connection('rag')->table('book_chunks')->where('book_id', 999902)->delete();
     }
+});
+
+it('returns an empty array when book_chunks has no rows', function () {
+    Http::fake([
+        'generativelanguage.googleapis.com/*embedContent*' => Http::response([
+            'embedding' => ['values' => array_fill(0, 768, 0.1)],
+        ], 200),
+    ]);
+
+    expect((new RetrievalService())->search('a question'))->toBe([]);
 });
