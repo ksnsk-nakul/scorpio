@@ -4,19 +4,12 @@
   </Head>
 
   <div class="min-h-screen font-sans" :class="themeClass">
-    <nav class="sticky top-0 z-50 backdrop-blur-xl border-b border-current/10" :class="themeClass">
+    <nav class="sticky top-0 z-40 backdrop-blur-xl border-b border-current/10" :class="themeClass">
       <div class="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between text-sm">
         <a :href="`/library/books/${book.slug}`" class="opacity-70 hover:opacity-100 transition-opacity truncate max-w-[10rem]">
           ← {{ book.title }}
         </a>
-        <div class="flex items-center gap-3">
-          <button @click="setTheme('white')" class="opacity-70 hover:opacity-100">White</button>
-          <button @click="setTheme('sepia')" class="opacity-70 hover:opacity-100">Sepia</button>
-          <button @click="setTheme('sepia-dark')" class="opacity-70 hover:opacity-100">Dark Sepia</button>
-          <button @click="setTheme('black')" class="opacity-70 hover:opacity-100">Black</button>
-          <button @click="decreaseFontSize" class="opacity-70 hover:opacity-100">A−</button>
-          <button @click="increaseFontSize" class="opacity-70 hover:opacity-100">A+</button>
-        </div>
+        <button @click="drawerOpen = true" class="opacity-70 hover:opacity-100 text-lg leading-none" aria-label="Reading settings">⚙</button>
       </div>
     </nav>
 
@@ -31,12 +24,17 @@
         <span v-else></span>
       </div>
     </main>
+
+    <ReaderSettingsDrawer :open="drawerOpen" @close="drawerOpen = false" />
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { Head, Link } from '@inertiajs/vue3'
 import { useReaderTheme } from '@/composables/useReaderTheme'
+import { useReaderMode } from '@/composables/useReaderMode'
+import ReaderSettingsDrawer from '@/Components/ReaderSettingsDrawer.vue'
 
 defineProps({
   book: { type: Object, required: true },
@@ -46,6 +44,9 @@ defineProps({
 })
 
 const { themeClass, fontStyle, setTheme, increaseFontSize, decreaseFontSize } = useReaderTheme()
+const { mode } = useReaderMode()
+
+const drawerOpen = ref(false)
 </script>
 
 <style scoped>
