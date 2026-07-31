@@ -7,8 +7,19 @@ import { onMounted, onUnmounted } from 'vue'
  * repeating scroll effect). Elements revealed in the same intersection
  * batch (e.g. a grid rendered at once) get a staggered delay so they don't
  * all animate in lockstep.
+ *
+ * `document.querySelectorAll(selector)` runs once, on mount. Elements added
+ * to the DOM afterwards (e.g. a page that initially renders zero matches and
+ * populates them from an async prop update) will not be observed.
+ *
+ * @param {string} [selector='.reveal'] CSS selector for the elements to reveal.
+ * @param {IntersectionObserverInit} [observerOptions={}] Overrides merged into
+ *   the default `{ threshold: 0.15 }` passed to `IntersectionObserver`.
+ * @param {object} [animateOptions={}] Overrides merged into the default
+ *   anime.js `animate()` config (`opacity`, `translateY`, `duration`, `ease`,
+ *   `delay`), letting callers customize the reveal per-instance.
  */
-export function useAnimeReveal(selector = '.reveal', options = {}) {
+export function useAnimeReveal(selector = '.reveal', observerOptions = {}, animateOptions = {}) {
   let observer
 
   onMounted(() => {
@@ -31,10 +42,11 @@ export function useAnimeReveal(selector = '.reveal', options = {}) {
         duration: 700,
         ease: 'outQuad',
         delay: stagger(80),
+        ...animateOptions,
       })
 
       visible.forEach(entry => observer.unobserve(entry.target))
-    }, { threshold: 0.15, ...options })
+    }, { threshold: 0.15, ...observerOptions })
 
     els.forEach(el => observer.observe(el))
   })

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 const animateMock = vi.fn()
 const staggerMock = vi.fn((v) => v)
@@ -19,6 +19,9 @@ class MockIntersectionObserver {
   trigger(el) {
     this.callback([{ target: el, isIntersecting: true }])
   }
+  triggerAll(els) {
+    this.callback(els.map(el => ({ target: el, isIntersecting: true })))
+  }
 }
 
 describe('useAnimeReveal', () => {
@@ -31,6 +34,10 @@ describe('useAnimeReveal', () => {
       observerInstance = new MockIntersectionObserver(cb)
       return observerInstance
     })
+  })
+
+  afterEach(() => {
+    document.body.replaceChildren()
   })
 
   it('observes every element matching the selector on mount', async () => {
@@ -63,5 +70,24 @@ describe('useAnimeReveal', () => {
     expect(target).toBe(el)
     expect(config.opacity).toEqual([0, 1])
     expect(config.ease).toBeTruthy()
+  })
+
+  it('batches multiple same-tick intersections into a single animate() call', async () => {
+    const { mount } = await import('@vue/test-utils')
+    const { useAnimeReveal } = await import('@/composables/useAnimeReveal')
+    const TestComponent = {
+      template: '<div><p class="reveal">A</p><p class="reveal">B</p><p class="reveal">C</p></div>',
+      setup() {
+        useAnimeReveal('.reveal')
+      },
+    }
+    mount(TestComponent, { attachTo: document.body })
+    const els = [...observerInstance.observed]
+    observerInstance.triggerAll(els)
+    expect(animateMock).toHaveBeenCalledTimes(1)
+    const [target] = animateMock.mock.calls[0]
+    expect(Array.isArray(target)).toBe(true)
+    expect(target).toHaveLength(3)
+    expect(target).toEqual(expect.arrayContaining(els))
   })
 })
