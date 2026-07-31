@@ -1,3 +1,4 @@
+import AnimejsHome from '@/Pages/Public/Templates/Animejs/Home.vue'
 import AnimejsPortfolio from '@/Pages/Public/Templates/Animejs/Portfolio.vue'
 
 // Registry of public-template page implementations. Each template's page
@@ -14,7 +15,7 @@ const PUBLIC_TEMPLATES = {
     AuthorShow: null,
   },
   animejs: {
-    Home: null,
+    Home: AnimejsHome,
     Portfolio: AnimejsPortfolio,
     OrgPage: null,
     ProjectDetail: null,
