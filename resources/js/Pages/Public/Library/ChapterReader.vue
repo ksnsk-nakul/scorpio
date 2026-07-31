@@ -31,17 +31,19 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link, router } from '@inertiajs/vue3'
 import { useReaderTheme } from '@/composables/useReaderTheme'
 import { useReaderMode } from '@/composables/useReaderMode'
 import ReaderSettingsDrawer from '@/Components/ReaderSettingsDrawer.vue'
 
-defineProps({
+const props = defineProps({
   book: { type: Object, required: true },
   chapter: { type: Object, required: true },
   hasPrev: { type: Boolean, required: true },
   hasNext: { type: Boolean, required: true },
 })
+
+const AUTOSCROLL_RESUME_KEY = 'library-autoscroll-resume'
 
 const { themeClass, fontStyle, setTheme, increaseFontSize, decreaseFontSize } = useReaderTheme()
 const { mode, pxPerFrame, isPlaying, play, pause } = useReaderMode()
@@ -49,9 +51,22 @@ const { mode, pxPerFrame, isPlaying, play, pause } = useReaderMode()
 const drawerOpen = ref(false)
 
 let rafId = null
+const checkAutoscrollBoundary = () => {
+  if (mode.value !== 'autoscroll' || !isPlaying.value) return
+  const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4
+  if (!atBottom) return
+  if (props.hasNext) {
+    sessionStorage.setItem(AUTOSCROLL_RESUME_KEY, '1')
+    router.visit(`/library/books/${props.book.slug}/chapters/${props.chapter.sort_order + 1}`)
+  } else {
+    pause()
+  }
+}
+
 const autoscrollTick = () => {
   if (isPlaying.value) {
     window.scrollBy(0, pxPerFrame.value)
+    checkAutoscrollBoundary()
   }
   rafId = requestAnimationFrame(autoscrollTick)
 }
@@ -66,6 +81,11 @@ onMounted(() => {
   window.addEventListener('touchstart', pauseOnInteraction, { passive: true })
   window.addEventListener('mousedown', pauseOnInteraction)
   window.addEventListener('keydown', pauseOnInteraction)
+
+  if (sessionStorage.getItem(AUTOSCROLL_RESUME_KEY)) {
+    sessionStorage.removeItem(AUTOSCROLL_RESUME_KEY)
+    play()
+  }
 })
 
 onUnmounted(() => {
