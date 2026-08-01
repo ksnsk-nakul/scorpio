@@ -3,7 +3,7 @@ import { resolvePublicPage } from '@/templateRegistry'
 
 describe('templateRegistry', () => {
   it('returns null for a page not yet implemented by a template', () => {
-    expect(resolvePublicPage('minimalist', 'Home')).toBeNull()
+    expect(resolvePublicPage('minimalist', 'OrgPage')).toBeNull()
   })
 
   it('throws for an unknown template key', () => {
@@ -24,13 +24,14 @@ describe('templateRegistry', () => {
     expect(resolvePublicPage('animejs', 'Home')).toBe(resolvePublicPage('animejs', 'Home'))
   })
 
-  it('documents current baseline: minimalist has no registered pages yet, except Portfolio', () => {
-    // minimalist.Portfolio was registered by the minimalist-Portfolio task;
-    // every other minimalist.* page name still resolves to null. Once a
-    // later task registers another minimalist page, the corresponding
-    // assertion(s) here should flip to not.toBeNull() for that page.
+  it('documents current baseline: minimalist has Home + Portfolio registered, the rest are pending', () => {
+    // minimalist.Portfolio was registered by the minimalist-Portfolio task,
+    // minimalist.Home by the minimalist-Home task; every other minimalist.*
+    // page name still resolves to null. Once a later task registers another
+    // minimalist page, the corresponding assertion(s) here should flip to
+    // not.toBeNull() for that page.
     expect(resolvePublicPage('minimalist', 'Portfolio')).not.toBeNull()
-    expect(resolvePublicPage('minimalist', 'Home')).toBeNull()
+    expect(resolvePublicPage('minimalist', 'Home')).not.toBeNull()
     expect(resolvePublicPage('minimalist', 'OrgPage')).toBeNull()
   })
 })

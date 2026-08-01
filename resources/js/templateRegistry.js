@@ -1,3 +1,4 @@
+import MinimalistHome from '@/Pages/Public/Templates/Minimalist/Home.vue'
 import MinimalistPortfolio from '@/Pages/Public/Templates/Minimalist/Portfolio.vue'
 import AnimejsHome from '@/Pages/Public/Templates/Animejs/Home.vue'
 import AnimejsPortfolio from '@/Pages/Public/Templates/Animejs/Portfolio.vue'
@@ -12,7 +13,7 @@ import AnimejsAuthorShow from '@/Pages/Public/Templates/Animejs/AuthorShow.vue'
 // docs/superpowers/specs/2026-07-31-public-layout-componentization-design.md.
 const PUBLIC_TEMPLATES = {
   minimalist: {
-    Home: null,
+    Home: MinimalistHome,
     Portfolio: MinimalistPortfolio,
     OrgPage: null,
     ProjectDetail: null,
