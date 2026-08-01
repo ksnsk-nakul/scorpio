@@ -19,8 +19,13 @@ class ChatService
     public function ask(int $userId, ?int $threadId, string $question): array
     {
         $thread = $threadId
-            ? ChatThread::findOrFail($threadId)
+            ? ChatThread::where('user_id', $userId)->findOrFail($threadId)
             : ChatThread::create(['user_id' => $userId, 'title' => Str::limit($question, 80, '')]);
+
+        // Read history BEFORE persisting the current question, so buildPrompt()'s
+        // "CONVERSATION SO FAR" and its trailing "QUESTION:" line never both contain
+        // the same current-turn question.
+        $priorMessages = $thread->messages()->get();
 
         ChatMessage::create([
             'thread_id' => $thread->id,
@@ -31,7 +36,7 @@ class ChatService
         $retrieval = app(RetrievalService::class);
         $chunks = $retrieval->search($question);
 
-        $prompt = $this->buildPrompt($thread, $chunks, $question);
+        $prompt = $this->buildPrompt($priorMessages, $chunks, $question);
 
         $gemini = app(GeminiClient::class);
         $answer = $gemini->generate($prompt);
@@ -57,14 +62,14 @@ class ChatService
         return ['thread' => $thread->fresh('messages')];
     }
 
-    private function buildPrompt(ChatThread $thread, array $chunks, string $question): string
+    /** @param \Illuminate\Support\Collection<int, ChatMessage> $priorMessages */
+    private function buildPrompt($priorMessages, array $chunks, string $question): string
     {
         $excerpts = collect($chunks)
             ->map(fn ($c) => "From \"{$c['book_title']}\"" . ($c['chapter_title'] ? " ({$c['chapter_title']})" : '') . ":\n{$c['content']}")
             ->implode("\n\n---\n\n");
 
-        $history = $thread->messages()
-            ->get()
+        $history = $priorMessages
             ->map(fn (ChatMessage $m) => strtoupper($m->role) . ': ' . $m->content)
             ->implode("\n\n");
 
