@@ -95,6 +95,17 @@ Route::middleware(['auth', 'role:admin,editor,viewer'])
         Route::get('library', [BookController::class, 'index'])->name('library.index');
     });
 
+use App\Http\Controllers\Admin\LibraryChatController;
+
+Route::middleware(['auth', 'role:admin,editor,viewer'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('library/chat', [LibraryChatController::class, 'index'])->name('library.chat.index');
+        Route::get('library/chat/{thread}', [LibraryChatController::class, 'show'])->name('library.chat.show');
+        Route::post('library/chat', [LibraryChatController::class, 'store'])->name('library.chat.store');
+    });
+
 use App\Http\Controllers\Admin\WorkspaceController;
 use App\Http\Controllers\Admin\ProjectController;
 
