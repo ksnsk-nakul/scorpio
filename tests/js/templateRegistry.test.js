@@ -24,11 +24,13 @@ describe('templateRegistry', () => {
     expect(resolvePublicPage('animejs', 'Home')).toBe(resolvePublicPage('animejs', 'Home'))
   })
 
-  it('documents current baseline: minimalist has no registered pages yet', () => {
-    // No minimalist.* components are registered as of this task, so every
-    // page name must resolve to null under the 'minimalist' key. Once a
-    // later task registers minimalist pages, the corresponding assertion(s)
-    // here should flip to not.toBeNull() for that page.
-    expect(resolvePublicPage('minimalist', 'Portfolio')).toBeNull()
+  it('documents current baseline: minimalist has no registered pages yet, except Portfolio', () => {
+    // minimalist.Portfolio was registered by the minimalist-Portfolio task;
+    // every other minimalist.* page name still resolves to null. Once a
+    // later task registers another minimalist page, the corresponding
+    // assertion(s) here should flip to not.toBeNull() for that page.
+    expect(resolvePublicPage('minimalist', 'Portfolio')).not.toBeNull()
+    expect(resolvePublicPage('minimalist', 'Home')).toBeNull()
+    expect(resolvePublicPage('minimalist', 'OrgPage')).toBeNull()
   })
 })

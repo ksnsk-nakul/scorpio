@@ -13,11 +13,11 @@
   </Head>
 
   <div class="min-h-screen bg-white text-slate-900 font-sans">
-    <AnimeJsNav :settings="settings" :sections="sections" />
+    <MinimalistNav :settings="settings" :sections="sections" />
 
     <main class="pt-14">
 
-      <!-- Donate banner (page-owned; nav/footer donate gating handled by AnimeJsFooter) -->
+      <!-- Donate banner (page-owned; nav/footer donate gating handled by MinimalistFooter) -->
       <div v-if="settings.show_donate_banner"
         class="bg-gradient-to-r from-pink-50 to-rose-50 border-b border-pink-100 px-6 py-3 text-center">
         <p class="text-sm text-slate-700">
@@ -39,10 +39,10 @@
             </h1>
             <p class="text-lg text-slate-500 mb-3">{{ block.data.subheading }}</p>
 
-            <!-- Rotating text — anime.js fade/rise crossfade on phrase change -->
+            <!-- Rotating text — plain instant swap, no transition/animation -->
             <div v-if="block.data.rotating_text?.length"
               class="text-orange-500 font-semibold mb-8 h-7 overflow-hidden">
-              <span ref="rotatingTextEl" class="block">{{ displayedRotatingText }}</span>
+              <span class="block">{{ currentRotatingText }}</span>
             </div>
 
             <div class="flex gap-4">
@@ -73,14 +73,14 @@
         <!-- ── About ─────────────────────────────────────────────────── -->
         <section v-else-if="block.type === 'about'" id="about" class="py-24 px-6 max-w-6xl mx-auto">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
-            <div class="reveal">
+            <div>
               <span class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2 block">Who I am</span>
               <h2 class="text-3xl font-bold text-slate-900 mb-6">About</h2>
               <div class="space-y-4 text-slate-600 leading-relaxed">
                 <p v-for="(para, i) in aboutParagraphs((block.data.bio || dbAbout?.bio))" :key="i">{{ para }}</p>
               </div>
             </div>
-            <div class="reveal">
+            <div>
               <h3 class="text-orange-500 font-bold text-lg mb-5">Skills Overview</h3>
               <ul class="space-y-3">
                 <li v-for="item in ((block.data.overview?.length ? block.data.overview : dbAbout?.overview) ?? [])" :key="item"
@@ -96,12 +96,12 @@
         <!-- ── Skills grid ───────────────────────────────────────────── -->
         <section v-else-if="block.type === 'skills'" id="skills" class="py-24 px-6 bg-slate-50">
           <div class="max-w-6xl mx-auto">
-            <span class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2 block reveal">What I use</span>
-            <h2 class="text-3xl font-bold text-slate-900 mb-12 reveal">{{ block.data.heading ?? 'Skills' }}</h2>
+            <span class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2 block">What I use</span>
+            <h2 class="text-3xl font-bold text-slate-900 mb-12">{{ block.data.heading ?? 'Skills' }}</h2>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               <div v-for="skill in (block.data.skills?.length ? block.data.skills : (dbSkills ?? []))"
                 :key="skill.name"
-                class="reveal-item bg-white rounded-2xl p-5 flex flex-col items-center gap-2 shadow-sm cursor-default transition-transform duration-200 hover:-translate-y-1 hover:shadow-md">
+                class="bg-white rounded-2xl p-5 flex flex-col items-center gap-2 shadow-sm cursor-default">
                 <span class="text-3xl leading-none">{{ skill.icon }}</span>
                 <span class="text-xs font-semibold text-slate-600 text-center">{{ skill.name }}</span>
               </div>
@@ -111,13 +111,13 @@
 
         <!-- ── Experience timeline ───────────────────────────────────── -->
         <section v-else-if="block.type === 'experience'" id="experience" class="py-24 px-6 max-w-6xl mx-auto">
-          <span class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2 block reveal">My journey</span>
-          <h2 class="text-3xl font-bold text-slate-900 mb-12 reveal">{{ block.data.heading ?? 'Experience' }}</h2>
+          <span class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2 block">My journey</span>
+          <h2 class="text-3xl font-bold text-slate-900 mb-12">{{ block.data.heading ?? 'Experience' }}</h2>
           <div class="relative">
             <div class="absolute left-3 top-2 bottom-2 w-0.5 bg-orange-200 rounded-full"></div>
             <div class="space-y-10 pl-12">
               <div v-for="exp in (block.data.items?.length ? block.data.items : (dbExperience ?? []))"
-                :key="exp.title" class="relative reveal-item">
+                :key="exp.title" class="relative">
                 <div class="absolute -left-[2.7rem] top-1.5 w-3 h-3 rounded-full bg-orange-500 ring-4 ring-orange-100 shadow"></div>
                 <p class="text-orange-500 font-bold text-xs uppercase tracking-wider mb-1">{{ exp.period }}</p>
                 <h3 class="font-bold text-slate-900 text-lg leading-snug">{{ exp.title }}</h3>
@@ -129,12 +129,12 @@
         </section>
 
         <!-- ── Text ──────────────────────────────────────────────────── -->
-        <section v-else-if="block.type === 'text'" class="py-16 px-6 max-w-3xl mx-auto prose prose-slate reveal">
+        <section v-else-if="block.type === 'text'" class="py-16 px-6 max-w-3xl mx-auto prose prose-slate">
           <p class="whitespace-pre-line">{{ block.data.content }}</p>
         </section>
 
         <!-- ── Text + Image ──────────────────────────────────────────── -->
-        <section v-else-if="block.type === 'text_image'" class="py-16 px-6 max-w-5xl mx-auto flex flex-col md:flex-row gap-12 items-center reveal">
+        <section v-else-if="block.type === 'text_image'" class="py-16 px-6 max-w-5xl mx-auto flex flex-col md:flex-row gap-12 items-center">
           <div class="flex-1 prose prose-slate">
             <p class="whitespace-pre-line">{{ block.data.text }}</p>
           </div>
@@ -145,14 +145,14 @@
 
         <!-- ── Service Cards ─────────────────────────────────────────── -->
         <section v-else-if="block.type === 'service_cards'" class="py-24 px-6 max-w-6xl mx-auto">
-          <div v-if="block.data.heading" class="mb-12 reveal">
+          <div v-if="block.data.heading" class="mb-12">
             <h2 class="text-3xl font-bold text-slate-900">{{ block.data.heading }}</h2>
           </div>
           <div v-if="page.service_cards?.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div v-for="card in page.service_cards" :key="card.id"
-              class="reveal-item group rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              <div v-if="card.icon" class="text-3xl mb-4 group-hover:scale-110 transition-transform duration-300 inline-block">{{ card.icon }}</div>
-              <h3 class="font-bold text-slate-900 mb-2 group-hover:text-orange-500 transition-colors duration-200">{{ card.title }}</h3>
+              class="rounded-2xl border border-slate-100 p-6 shadow-sm">
+              <div v-if="card.icon" class="text-3xl mb-4">{{ card.icon }}</div>
+              <h3 class="font-bold text-slate-900 mb-2">{{ card.title }}</h3>
               <p class="text-sm text-slate-500 leading-relaxed">{{ card.description }}</p>
             </div>
           </div>
@@ -160,7 +160,7 @@
 
         <!-- ── Project Grid ──────────────────────────────────────────── -->
         <section v-else-if="block.type === 'project_grid'" id="projects" class="py-24 px-6 max-w-6xl mx-auto">
-          <div v-if="block.data.heading" class="mb-12 reveal">
+          <div v-if="block.data.heading" class="mb-12">
             <span class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2 block">What I've built</span>
             <h2 class="text-3xl font-bold text-slate-900">{{ block.data.heading }}</h2>
           </div>
@@ -169,8 +169,8 @@
           <div v-if="block.data.workspace_id && workspaces[block.data.workspace_id]?.projects?.length"
             class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div v-for="project in workspaces[block.data.workspace_id].projects" :key="project.id"
-              class="reveal-item group rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col">
-              <h3 class="font-bold text-slate-900 text-lg mb-2 group-hover:text-orange-500 transition-colors">{{ project.name }}</h3>
+              class="rounded-2xl border border-slate-100 p-6 shadow-sm flex flex-col">
+              <h3 class="font-bold text-slate-900 text-lg mb-2">{{ project.name }}</h3>
               <p class="text-sm text-slate-500 flex-1 mb-4 leading-relaxed">{{ project.description }}</p>
               <div v-if="project.tags?.length" class="flex flex-wrap gap-1.5 mb-4">
                 <span v-for="tag in project.tags" :key="tag"
@@ -190,10 +190,10 @@
           <!-- Static JSON fallback -->
           <div v-else-if="block.data.projects?.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div v-for="project in block.data.projects" :key="project.id ?? project.title"
-              class="reveal-item group rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
+              class="rounded-2xl border border-slate-100 p-6 shadow-sm flex flex-col"
               :class="project.demo_url ? 'cursor-pointer' : ''"
               @click="project.demo_url ? openUrl(project.demo_url) : null">
-              <h3 class="font-bold text-slate-900 text-lg mb-2 group-hover:text-orange-500 transition-colors">{{ project.title }}</h3>
+              <h3 class="font-bold text-slate-900 text-lg mb-2">{{ project.title }}</h3>
               <p class="text-sm text-slate-500 flex-1 mb-4 leading-relaxed">{{ project.description }}</p>
               <div v-if="project.tags?.length" class="flex flex-wrap gap-1.5 mb-4">
                 <span v-for="tag in project.tags" :key="tag"
@@ -213,7 +213,7 @@
         </section>
 
         <!-- ── Contact Form ──────────────────────────────────────────── -->
-        <section v-else-if="block.type === 'contact_form'" id="contact" class="py-24 px-6 max-w-5xl mx-auto reveal">
+        <section v-else-if="block.type === 'contact_form'" id="contact" class="py-24 px-6 max-w-5xl mx-auto">
           <span class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2 block">Let's talk</span>
           <h2 class="text-3xl font-bold text-slate-900 mb-10">{{ block.data.heading ?? 'Contact' }}</h2>
 
@@ -238,7 +238,7 @@
               </div>
 
               <!-- Donate card -->
-              <div class="mt-6 bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-6 hover:shadow-md transition-shadow duration-300">
+              <div class="mt-6 bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-6">
                 <p class="font-bold text-slate-800 mb-1">Support my work</p>
                 <p class="text-sm text-slate-500 mb-4">If you find my projects helpful, consider buying me a coffee.</p>
                 <a href="/donate"
@@ -279,17 +279,15 @@
       </template>
     </main>
 
-    <AnimeJsFooter :settings="settings" />
+    <MinimalistFooter :settings="settings" />
   </div>
 </template>
 
 <script setup>
 import { Head } from '@inertiajs/vue3'
-import { ref, onMounted, onUnmounted } from 'vue'
-import { animate } from 'animejs'
-import AnimeJsNav from '@/Components/Templates/Animejs/AnimeJsNav.vue'
-import AnimeJsFooter from '@/Components/Templates/Animejs/AnimeJsFooter.vue'
-import { useAnimeReveal } from '@/composables/useAnimeReveal'
+import { onMounted, onUnmounted } from 'vue'
+import MinimalistNav from '@/Components/Templates/Minimalist/MinimalistNav.vue'
+import MinimalistFooter from '@/Components/Templates/Minimalist/MinimalistFooter.vue'
 import { usePortfolioPageLogic } from '@/composables/usePortfolioPageLogic'
 
 const props = defineProps({
@@ -304,12 +302,12 @@ const props = defineProps({
 
 // `$page.props.flash` in the template is auto-available via Inertia's
 // globally-registered `$page` property — no explicit usePage() call needed.
-// Auth/admin awareness for the nav CTA lives inside AnimeJsNav itself.
+// Auth/admin awareness for the nav CTA lives inside MinimalistNav itself.
 
 const {
   sections,
-  rotatingIndex,
   rotatingTexts,
+  currentRotatingText,
   advanceRotatingText,
   aboutParagraphs,
   pageTitle,
@@ -320,45 +318,17 @@ const {
 } = usePortfolioPageLogic(props)
 
 // ── Rotating hero text ───────────────────────────────────────────────────────
-// Same setInterval-driven index-cycling as the composable, but the phrase
-// swap itself is an anime.js fade-out/fade-in crossfade instead of Vue's
-// <Transition name="slide-up">.
-const rotatingTextEl = ref(null)
-const displayedRotatingText = ref('')
+// Same setInterval-driven index-cycling as the composable — real
+// admin-configured content still cycles through every phrase — but the swap
+// here is an instant text change with zero transition (no Transition
+// component, no CSS transition, no animation library) per this template's
+// "minimalist" brief.
 let rotatingTimer = null
 
-const swapRotatingText = () => {
-  const el = rotatingTextEl.value
-  const advance = () => {
-    advanceRotatingText()
-    displayedRotatingText.value = rotatingTexts.value[rotatingIndex.value] ?? ''
-  }
-  if (!el) { advance(); return }
-  animate(el, {
-    opacity: [1, 0],
-    translateY: [0, -10],
-    duration: 220,
-    ease: 'inQuad',
-    onComplete: () => {
-      advance()
-      animate(el, { opacity: [0, 1], translateY: [10, 0], duration: 320, ease: 'outQuad' })
-    },
-  })
-}
-
 onMounted(() => {
-  displayedRotatingText.value = rotatingTexts.value[0] ?? ''
   if (rotatingTexts.value.length > 1) {
-    rotatingTimer = setInterval(swapRotatingText, 2500)
+    rotatingTimer = setInterval(advanceRotatingText, 2500)
   }
 })
 onUnmounted(() => clearInterval(rotatingTimer))
-
-// ── Scroll-reveal ─────────────────────────────────────────────────────────────
-// `.reveal` = section headings / single blocks. `.reveal-item` = grid/list
-// entries (skills, experience rows, service cards, project cards) — a
-// separate selector so simultaneous intersections within a grid get anime.js's
-// built-in stagger() treatment instead of firing one at a time.
-useAnimeReveal('.reveal')
-useAnimeReveal('.reveal-item')
 </script>
