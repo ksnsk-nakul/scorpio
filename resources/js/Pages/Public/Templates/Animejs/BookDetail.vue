@@ -5,17 +5,7 @@
   </Head>
 
   <div class="min-h-screen bg-white font-sans">
-    <!-- ── Nav ───────────────────────────────────────────────────────────
-         Not AnimeJsNav — it would render fine (its settings/sections props
-         default), but with a generic "Portfolio" site name since
-         LibraryController::show() doesn't pass real `settings`. Keeping
-         the original's minimal "← Library | {title}" bar avoids that. -->
-    <nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-100">
-      <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-        <a href="/library" class="text-sm text-slate-500 hover:text-orange-500 transition-colors">← Library</a>
-        <span class="text-sm font-semibold text-slate-800 truncate max-w-xs">{{ book.title }}</span>
-      </div>
-    </nav>
+    <LibraryNav back-href="/library" back-label="Library" :title="book.title" title-truncate />
 
     <main class="pt-20 pb-16 max-w-4xl mx-auto px-6">
       <div class="reveal flex flex-col sm:flex-row gap-8 mb-10">
@@ -58,6 +48,7 @@
 
 <script setup>
 import { Head, Link } from '@inertiajs/vue3'
+import LibraryNav from '@/Components/Shared/LibraryNav.vue'
 import { useAnimeReveal } from '@/composables/useAnimeReveal'
 
 defineProps({ book: { type: Object, required: true } })
