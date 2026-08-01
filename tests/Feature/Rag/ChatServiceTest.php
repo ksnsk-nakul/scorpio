@@ -76,6 +76,27 @@ it('continues an existing thread using its prior messages as context', function 
     }
 });
 
+it('refuses to let one user continue another user\'s thread', function () {
+    Http::fake([
+        'generativelanguage.googleapis.com/*embedContent*' => Http::response([
+            'embedding' => ['values' => array_fill(0, 768, 0.1)],
+        ], 200),
+        'generativelanguage.googleapis.com/*generateContent*' => Http::response([
+            'candidates' => [['content' => ['parts' => [['text' => 'An answer.']]]]],
+        ], 200),
+    ]);
+
+    $service = new ChatService();
+    $ownersThread = $service->ask(userId: 1, threadId: null, question: 'A private question?');
+
+    try {
+        $service->ask(userId: 2, threadId: $ownersThread['thread']->id, question: 'Snooping?');
+    } finally {
+        DB::connection('rag')->table('chat_messages')->where('thread_id', $ownersThread['thread']->id)->delete();
+        DB::connection('rag')->table('chat_threads')->where('id', $ownersThread['thread']->id)->delete();
+    }
+})->throws(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+
 it('deduplicates citations when multiple retrieved chunks share the same book and chapter', function () {
     $vector = '[' . implode(',', array_fill(0, 768, 0.1)) . ']';
 
