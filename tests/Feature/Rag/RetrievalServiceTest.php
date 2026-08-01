@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\RetrievalService;
+use App\Support\RagConnectionGuard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -9,6 +10,12 @@ use Illuminate\Support\Facades\Http;
 // attach titles to each result. Without a migrated schema there, Book::find()
 // throws "no such table: books" — same reason IndexBookChunksJobTest needs this.
 uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    if (! RagConnectionGuard::available()) {
+        $this->markTestSkipped('The `rag` Postgres connection is not configured/reachable.');
+    }
+});
 
 function insertTestChunk(int $bookId, int $chapterId, int $index, string $content, array $embedding): void
 {

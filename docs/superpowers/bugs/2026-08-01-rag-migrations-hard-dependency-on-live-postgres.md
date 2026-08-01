@@ -1,7 +1,7 @@
 # Bug: RAG migrations crash artisan migrate/test without a live Postgres+pgvector connection
 
 **Found:** 2026-08-01, during post-merge verification of `feature/e-library-backend` → `main`.
-**Status:** Open. Owner: the RAG chat session (per user, being handled there) — this file exists so it isn't lost.
+**Status:** Resolved 2026-08-01, in `feature/e-library-backend`.
 
 ## Problem
 
@@ -22,10 +22,19 @@ Reproduced on the primary repo checkout at `/Users/nakul/Herd/PortFolio` (main),
 - Any fresh clone, CI runner, or teammate's machine without Supabase/pgvector credentials cannot run `artisan migrate` or the test suite at all, post-merge to `main`.
 - This is broader than a RAG-feature-scoped failure — it takes down the whole app's migrate/test pipeline.
 
-## Suggested fix (not yet implemented)
-
-Guard the three migrations so they no-op or skip cleanly when the `rag` connection isn't configured/reachable (e.g. check `config('database.connections.rag.host')` is set and/or wrap the connection attempt, skipping with a clear message when unavailable) — so `artisan migrate` and the test suite succeed in environments that don't have RAG set up, while still working correctly wherever real credentials are present.
-
 ## Where this was found
 
 Post-merge verification step of `docs/superpowers/plans/2026-07-31-template-system-architecture-and-admin.md` / `-animejs-public-template.md` / `-minimalist-public-template.md`, immediately before pushing `main` to `origin`. See session progress file: `docs/superpowers/progress/2026-07-31-81875e98-template-system-and-animejs.md`.
+
+## Resolution
+
+Added `App\Support\RagConnectionGuard::available()` — a small helper that attempts `DB::connection('rag')->getPdo()` once per process (catching any `Throwable`, logging a warning, and caching the boolean result). All three migrations now call it first in both `up()` and `down()` and return early (no-op) when it's `false`, instead of letting the connection exception propagate.
+
+This alone fixed `artisan migrate`, but four existing RAG feature tests (`ChatServiceTest`, `LibraryChatControllerTest`, `RagSchemaTest`, `RetrievalServiceTest`, `IndexBookChunksJobTest`) still tried to read/write `rag`-connection tables directly and would fail with a raw `QueryException` once those tables were skipped. Added a `beforeEach` guard to each, calling `$this->markTestSkipped(...)` when `RagConnectionGuard::available()` is `false`, so they skip cleanly instead of failing.
+
+Added `tests/Unit/RagConnectionGuardTest.php` covering both the "unreachable" and "caches after first check" behavior directly (via `config()` override + `DB::purge('rag')` + a reflection-based cache reset, since the guard's cache is process-lifetime by design).
+
+**Verified:**
+- `DB_RAG_HOST=127.0.0.1 DB_RAG_PORT=1 DB_RAG_USERNAME=nobody DB_RAG_PASSWORD=nobody php artisan migrate --force` against a scratch SQLite file — full batch completes, including the three `rag` migrations (skipped in ~0.02ms each).
+- Same env vars with `php artisan test` — 136 tests, 114 passed, 21 skipped (the RAG-dependent ones), 1 failed. That 1 failure (`ExampleTest`) is pre-existing and unrelated to RAG — confirmed by running it in isolation with real Supabase credentials too, where it fails identically.
+- `php artisan test` with real Supabase credentials (no override) — 138 tests (136 + 2 new), 137 passed, same 1 pre-existing unrelated failure. No regression to the working case.

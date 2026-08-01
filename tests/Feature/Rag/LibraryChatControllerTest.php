@@ -2,11 +2,17 @@
 
 use App\Models\ChatThread;
 use App\Models\User;
+use App\Support\RagConnectionGuard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
+beforeEach(function () {
+    if (! RagConnectionGuard::available()) {
+        $this->markTestSkipped('The `rag` Postgres connection is not configured/reachable.');
+    }
+});
 beforeEach(fn () => $this->seed());
 
 // ChatThread/ChatMessage live on the real `rag` Postgres connection (rag_test schema),

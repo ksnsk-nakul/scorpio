@@ -2,11 +2,18 @@
 
 use App\Models\ChatThread;
 use App\Services\ChatService;
+use App\Support\RagConnectionGuard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    if (! RagConnectionGuard::available()) {
+        $this->markTestSkipped('The `rag` Postgres connection is not configured/reachable.');
+    }
+});
 
 it('creates a new thread, asks a question, and persists both messages with citations', function () {
     $vector = '[' . implode(',', array_fill(0, 768, 0.1)) . ']';

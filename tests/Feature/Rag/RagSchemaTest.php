@@ -1,7 +1,14 @@
 <?php
 
+use App\Support\RagConnectionGuard;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+
+beforeEach(function () {
+    if (! RagConnectionGuard::available()) {
+        $this->markTestSkipped('The `rag` Postgres connection is not configured/reachable.');
+    }
+});
 
 it('creates the book_chunks, chat_threads, and chat_messages tables on the rag connection', function () {
     expect(Schema::connection('rag')->hasTable('book_chunks'))->toBeTrue();

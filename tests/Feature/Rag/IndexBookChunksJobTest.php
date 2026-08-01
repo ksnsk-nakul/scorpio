@@ -4,10 +4,17 @@ use App\Jobs\IndexBookChunksJob;
 use App\Models\Book;
 use App\Models\BookChunk;
 use App\Models\Chapter;
+use App\Support\RagConnectionGuard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    if (! RagConnectionGuard::available()) {
+        $this->markTestSkipped('The `rag` Postgres connection is not configured/reachable.');
+    }
+});
 
 // RefreshDatabase only resets the app's default (sqlite) connection — it does not
 // touch the 'rag' Postgres connection, which is a real, persistent, shared schema

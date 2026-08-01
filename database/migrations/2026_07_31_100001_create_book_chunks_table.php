@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\RagConnectionGuard;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
@@ -7,6 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Environments without real DB_RAG_* credentials (a fresh clone, CI, a teammate's
+        // machine) must not have artisan migrate/test fail here — skip cleanly instead.
+        if (! RagConnectionGuard::available()) {
+            return;
+        }
+
         // The `rag` connection's search_path names the schema these tables should live
         // in ('public' in production, 'rag_test' in tests — see phpunit.xml). Postgres
         // won't create a table in a schema that doesn't exist yet, and "CREATE TABLE IF
@@ -42,6 +49,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (! RagConnectionGuard::available()) {
+            return;
+        }
+
         DB::connection('rag')->statement('DROP TABLE IF EXISTS book_chunks');
     }
 };
