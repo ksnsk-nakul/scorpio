@@ -185,9 +185,22 @@ const statusBadge = (status) => ({
   failed: 'bg-red-50 text-red-700',
 }[status] ?? 'bg-slate-100 text-slate-600')
 
+// Matches the server's 'max:102400' (KB) rule. A file over this line never reaches
+// Laravel at all — PHP's own post_max_size cuts the request off first and returns an
+// HTTP 200 with a raw PHP warning as the body, which looks like a silently "succeeded"
+// upload to axios. Rejecting oversized files before they're sent avoids that entirely.
+const MAX_UPLOAD_BYTES = 100 * 1024 * 1024
+
 const uploadFile = async (file) => {
   const tempId = crypto.randomUUID()
   uploading.value.push({ tempId, filename: file.name, status: 'pending' })
+
+  if (file.size > MAX_UPLOAD_BYTES) {
+    const entry = uploading.value.find((u) => u.tempId === tempId)
+    entry.status = 'failed'
+    entry.status_reason = 'File exceeds the 100MB upload limit.'
+    return
+  }
 
   const fd = new FormData()
   fd.append('file', file)
