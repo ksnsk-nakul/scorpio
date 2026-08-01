@@ -108,6 +108,7 @@ const allNav = [
   { label: 'Dashboard',     href: '/admin/dashboard',     roles: ['admin','editor','viewer'], icon: 'M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z' },
   { label: 'Pages',         href: '/admin/pages',         roles: ['admin','editor','viewer'], icon: 'M6 3h8l4 4v14H6V3zm8 0v4h4M9 11h6M9 14h6M9 17h4' },
   { label: 'Library',       href: '/admin/library',      roles: ['admin','editor','viewer'], icon: 'M12 6c-1.4-.8-3-1.2-4.8-1.2S3.8 5.2 2.5 6v13c1.3-.8 3-1.2 4.7-1.2s3.4.4 4.8 1.2m0-13c1.4-.8 3-1.2 4.8-1.2s3.4.4 4.7 1.2v13c-1.3-.8-3-1.2-4.7-1.2s-3.4.4-4.8 1.2m0-13v13' },
+  { label: 'Library Chat',  href: '/admin/library/chat', roles: ['admin','editor','viewer'], icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8-1.5 0-2.9-.33-4.14-.9L3 20l1.05-3.16C3.38 15.6 3 14.35 3 13c0-4.418 4.03-8 9-8s9 3.582 9 7z' },
   { label: 'Service Cards', href: '/admin/service-cards', roles: ['admin','editor','viewer'], icon: 'M3.5 6.5h17a1 1 0 011 1V17a1 1 0 01-1 1h-17a1 1 0 01-1-1V7.5a1 1 0 011-1zM2.5 10h19M6 14.5h3' },
   { label: 'Products',      href: '/admin/products',      roles: ['admin','editor','viewer'], icon: 'M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM4 7.5L12 12l8-4.5M12 12v9' },
   { label: 'GitHub',        href: '/admin/github',        roles: ['admin','editor','viewer'], icon: 'M9 8l-4 4 4 4M15 8l4 4-4 4M13.5 6.5l-3 11' },
@@ -125,7 +126,16 @@ const allNav = [
 
 const nav = computed(() => allNav.filter(item => item.roles.some(r => userRoles.value.includes(r))))
 
-const isActive = (href) => page.url.startsWith(href)
+// Some nav hrefs are prefixes of others now that Library Chat sits under Library
+// (e.g. /admin/library/chat starts with /admin/library). Pick the longest matching
+// href rather than just "does the URL start with this href", so only the most
+// specific nav item lights up.
+const isActive = (href) => {
+  const matches = nav.value.filter(item => page.url.startsWith(item.href))
+  if (matches.length === 0) return false
+  const longest = matches.reduce((a, b) => (b.href.length > a.href.length ? b : a))
+  return longest.href === href
+}
 
 const activeNavLabel = computed(() => nav.value.find(item => isActive(item.href))?.label)
 </script>

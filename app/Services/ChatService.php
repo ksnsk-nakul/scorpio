@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Book;
+use App\Models\Chapter;
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
 use Illuminate\Support\Str;
@@ -41,13 +43,21 @@ class ChatService
         $gemini = app(GeminiClient::class);
         $answer = $gemini->generate($prompt);
 
-        $citations = collect($chunks)
-            ->unique(fn ($c) => $c['book_id'] . ':' . $c['chapter_id'])
+        $uniqueChunks = collect($chunks)->unique(fn ($c) => $c['book_id'] . ':' . $c['chapter_id']);
+
+        // Batch-load slugs/sort_orders (not returned by RetrievalService::search()) so
+        // citation links can point at a real reader URL instead of a broken one.
+        $books = Book::whereIn('id', $uniqueChunks->pluck('book_id')->unique())->get()->keyBy('id');
+        $chapters = Chapter::whereIn('id', $uniqueChunks->pluck('chapter_id')->unique())->get()->keyBy('id');
+
+        $citations = $uniqueChunks
             ->map(fn ($c) => [
                 'book_id' => $c['book_id'],
                 'chapter_id' => $c['chapter_id'],
                 'book_title' => $c['book_title'],
                 'chapter_title' => $c['chapter_title'],
+                'book_slug' => $books->get($c['book_id'])?->slug,
+                'chapter_sort_order' => $chapters->get($c['chapter_id'])?->sort_order,
             ])
             ->values()
             ->all();
