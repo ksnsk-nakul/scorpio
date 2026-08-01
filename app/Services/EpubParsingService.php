@@ -260,6 +260,26 @@ class EpubParsingService
             $img->setAttribute('src', Storage::disk('public')->url("books/{$book->id}/images/{$filename}"));
         }
 
+        foreach (iterator_to_array($doc->getElementsByTagName('a')) as $a) {
+            $href = $a->getAttribute('href');
+
+            // Same-page fragments ("#note1") still work once rendered, and absolute
+            // http(s)/mailto links are real external links — leave both alone. Anything
+            // else is a relative path to another file inside the EPUB (e.g.
+            // "../Text/chapter004.xhtml" or "toc.xhtml#nav") — that file doesn't exist
+            // as a URL on the web, so the link would render dead. Downgrade it to plain
+            // text instead, keeping whatever the link said.
+            if ($href === '' || str_starts_with($href, '#') || preg_match('/^(https?:|mailto:)/i', $href)) {
+                continue;
+            }
+
+            $span = $doc->createElement('span');
+            foreach (iterator_to_array($a->childNodes) as $child) {
+                $span->appendChild($child);
+            }
+            $a->parentNode->replaceChild($span, $a);
+        }
+
         $body = $doc->getElementsByTagName('body')->item(0);
         $content = $body ? $this->innerHtml($body) : $html;
 

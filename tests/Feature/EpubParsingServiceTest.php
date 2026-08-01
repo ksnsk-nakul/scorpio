@@ -270,6 +270,47 @@ it('removes previously extracted images and cover before re-parsing (retry)', fu
     Storage::disk('public')->assertExists("books/{$book->id}/cover.jpg");
 });
 
+it('downgrades internal epub cross-reference links to plain text', function () {
+    $fixture = EpubFixtureBuilder::build(
+        bookTitle: 'Linked Tales',
+        author: 'Jane Doe',
+        chapters: [[
+            'title' => 'Chapter One',
+            'body' => '<p>See <a href="../Text/toc.xhtml#nav">the contents</a> and '
+                . '<a href="chapter002.xhtml">chapter two</a>.</p>',
+        ]],
+    );
+    $book = bookFromFixture($fixture, $this->user->id);
+
+    (new EpubParsingService())->parse($book);
+
+    $chapter = $book->chapters()->first();
+    expect($chapter->content)->not->toContain('<a ')
+        ->and($chapter->content)->toContain('<span>the contents</span>')
+        ->and($chapter->content)->toContain('<span>chapter two</span>');
+});
+
+it('keeps external links and same-page fragment links intact', function () {
+    $fixture = EpubFixtureBuilder::build(
+        bookTitle: 'Linked Tales',
+        author: 'Jane Doe',
+        chapters: [[
+            'title' => 'Chapter One',
+            'body' => '<p>See <a href="https://example.com">this site</a>, '
+                . 'email <a href="mailto:a@b.com">the author</a>, or jump to '
+                . '<a href="#footnote1">the footnote</a>.</p><p id="footnote1">Here.</p>',
+        ]],
+    );
+    $book = bookFromFixture($fixture, $this->user->id);
+
+    (new EpubParsingService())->parse($book);
+
+    $chapter = $book->chapters()->first();
+    expect($chapter->content)->toContain('href="https://example.com"')
+        ->and($chapter->content)->toContain('href="mailto:a@b.com"')
+        ->and($chapter->content)->toContain('href="#footnote1"');
+});
+
 it('leaves cover_path null when no cover image exists in the manifest', function () {
     $fixture = EpubFixtureBuilder::build(
         bookTitle: 'No Cover Book',
