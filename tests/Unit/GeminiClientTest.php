@@ -36,7 +36,7 @@ it('throws when the embed call fails', function () {
 
 it('generates text from a prompt', function () {
     Http::fake([
-        'generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent*' => Http::response([
+        'generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent*' => Http::response([
             'candidates' => [
                 ['content' => ['parts' => [['text' => 'The answer is 42.']]]],
             ],
@@ -48,7 +48,7 @@ it('generates text from a prompt', function () {
     expect($answer)->toBe('The answer is 42.');
 
     Http::assertSent(function ($request) {
-        return str_contains($request->url(), 'gemini-2.5-flash:generateContent')
+        return str_contains($request->url(), 'gemini-flash-latest:generateContent')
             && $request['contents'][0]['parts'][0]['text'] === 'What is the answer?';
     });
 });

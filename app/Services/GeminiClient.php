@@ -10,7 +10,11 @@ class GeminiClient
     private const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
     private const EMBEDDING_MODEL = 'gemini-embedding-001';
     private const EMBEDDING_DIMENSIONS = 768;
-    private const GENERATION_MODEL = 'gemini-2.5-flash';
+    // 'gemini-2.5-flash' returns "no longer available to new users" on this API key's
+    // project (confirmed via a live call during Task 9 verification), and the dated
+    // 2.0-flash models have a free-tier quota of 0 for this project. 'gemini-flash-latest'
+    // is Google's rolling alias to the current recommended flash model and works.
+    private const GENERATION_MODEL = 'gemini-flash-latest';
 
     private function apiKey(): string
     {
