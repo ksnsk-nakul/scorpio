@@ -1,7 +1,7 @@
 <template>
   <component
-    v-if="animejsComponent"
-    :is="animejsComponent"
+    v-if="activeTemplateComponent"
+    :is="activeTemplateComponent"
     :project="project" :media="media" :owner="owner" :settings="settings"
   />
 
@@ -116,9 +116,7 @@ const props = defineProps({
 
 // ── Template resolution ──────────────────────────────────────────────────────
 const { publicTemplate } = useActiveTemplate()
-const animejsComponent = computed(() =>
-  publicTemplate.value === 'animejs' ? resolvePublicPage('animejs', 'ProjectDetail') : null
-)
+const activeTemplateComponent = computed(() => resolvePublicPage(publicTemplate.value, 'ProjectDetail'))
 
 const lightboxIndex = ref(null)
 const currentItem   = computed(() => lightboxIndex.value !== null ? props.media[lightboxIndex.value] : null)

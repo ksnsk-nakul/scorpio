@@ -1,7 +1,7 @@
 <template>
   <component
-    v-if="animejsComponent"
-    :is="animejsComponent"
+    v-if="activeTemplateComponent"
+    :is="activeTemplateComponent"
     :pages="pages" :settings="settings"
   />
 
@@ -165,7 +165,5 @@ const isAdmin = computed(() =>
 
 // ── Template resolution ──────────────────────────────────────────────────────
 const { publicTemplate } = useActiveTemplate()
-const animejsComponent = computed(() =>
-  publicTemplate.value === 'animejs' ? resolvePublicPage('animejs', 'Home') : null
-)
+const activeTemplateComponent = computed(() => resolvePublicPage(publicTemplate.value, 'Home'))
 </script>

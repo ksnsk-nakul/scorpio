@@ -1,5 +1,5 @@
 <template>
-  <component v-if="animejsComponent" :is="animejsComponent" :author="author" :books="books" />
+  <component v-if="activeTemplateComponent" :is="activeTemplateComponent" :author="author" :books="books" />
 
   <template v-else>
   <Head>
@@ -59,7 +59,5 @@ const props = defineProps({
 
 // ── Template resolution ──────────────────────────────────────────────────────
 const { publicTemplate } = useActiveTemplate()
-const animejsComponent = computed(() =>
-  publicTemplate.value === 'animejs' ? resolvePublicPage('animejs', 'AuthorShow') : null
-)
+const activeTemplateComponent = computed(() => resolvePublicPage(publicTemplate.value, 'AuthorShow'))
 </script>

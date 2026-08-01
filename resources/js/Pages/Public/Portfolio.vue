@@ -1,7 +1,7 @@
 <template>
   <component
-    v-if="animejsComponent"
-    :is="animejsComponent"
+    v-if="activeTemplateComponent"
+    :is="activeTemplateComponent"
     :page="page" :owner="owner" :settings="settings" :workspaces="workspaces"
     :dbSkills="dbSkills" :dbAbout="dbAbout" :dbExperience="dbExperience"
   />
@@ -394,9 +394,7 @@ const isAdmin    = computed(() => pageProps.auth?.roles?.includes('admin') ?? fa
 
 // ── Template resolution ──────────────────────────────────────────────────────
 const { publicTemplate } = useActiveTemplate()
-const animejsComponent = computed(() =>
-  publicTemplate.value === 'animejs' ? resolvePublicPage('animejs', 'Portfolio') : null
-)
+const activeTemplateComponent = computed(() => resolvePublicPage(publicTemplate.value, 'Portfolio'))
 
 // ── Nav active section tracking ──────────────────────────────────────────────
 const scrolled        = ref(false)

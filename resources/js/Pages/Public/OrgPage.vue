@@ -1,7 +1,7 @@
 <template>
   <component
-    v-if="animejsComponent"
-    :is="animejsComponent"
+    v-if="activeTemplateComponent"
+    :is="activeTemplateComponent"
     :organization="organization" :owner="owner" :members="members"
     :achievements="achievements" :settings="settings"
   />
@@ -78,7 +78,5 @@ defineProps({
 
 // ── Template resolution ──────────────────────────────────────────────────────
 const { publicTemplate } = useActiveTemplate()
-const animejsComponent = computed(() =>
-  publicTemplate.value === 'animejs' ? resolvePublicPage('animejs', 'OrgPage') : null
-)
+const activeTemplateComponent = computed(() => resolvePublicPage(publicTemplate.value, 'OrgPage'))
 </script>
