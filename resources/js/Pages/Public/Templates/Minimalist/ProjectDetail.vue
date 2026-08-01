@@ -6,7 +6,7 @@
 
   <div class="min-h-screen bg-white font-sans">
     <!-- ── Nav ───────────────────────────────────────────────────────────
-         Not AnimeJsNav — this is a sub-page of a specific portfolio, not
+         Not MinimalistNav — this is a sub-page of a specific portfolio, not
          top-level site navigation, so it keeps the original's minimal
          "← Back to Portfolio | Owner Name" bar instead of the full site nav
          (Library link, auth CTA, mobile menu). -->
@@ -23,7 +23,7 @@
     <main class="pt-14">
       <!-- Hero -->
       <section class="bg-slate-950 text-white py-20 px-6">
-        <div class="max-w-4xl mx-auto reveal">
+        <div class="max-w-4xl mx-auto">
           <div class="flex flex-wrap gap-2 mb-5">
             <span v-for="tag in (project.tags ?? [])" :key="tag" class="text-xs px-3 py-1 rounded-full bg-white/10 text-slate-300 font-medium">{{ tag }}</span>
           </div>
@@ -44,14 +44,14 @@
         </div>
       </section>
 
-      <!-- Gallery -->
+      <!-- Gallery — renders fully visible immediately, no scroll-reveal. -->
       <section v-if="media.length" class="py-16 px-6 bg-slate-50">
         <div class="max-w-6xl mx-auto">
-          <h2 class="text-xl font-bold text-slate-800 mb-6 reveal">Gallery</h2>
+          <h2 class="text-xl font-bold text-slate-800 mb-6">Gallery</h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div v-for="(item, i) in media" :key="item.id"
               data-testid="gallery-item" :data-index="i"
-              class="reveal-item group relative aspect-video rounded-2xl overflow-hidden bg-slate-200 cursor-pointer shadow-sm hover:shadow-lg transition-shadow"
+              class="group relative aspect-video rounded-2xl overflow-hidden bg-slate-200 cursor-pointer shadow-sm hover:shadow-lg transition-shadow"
               @click="openLightbox(i)">
               <img v-if="item.is_image" :src="item.url" :alt="item.alt_text || item.filename" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
               <div v-else class="w-full h-full flex items-center justify-center bg-slate-900">
@@ -67,7 +67,7 @@
 
       <!-- Details / About the project -->
       <section v-if="project.details" class="py-16 px-6">
-        <div class="max-w-3xl mx-auto reveal">
+        <div class="max-w-3xl mx-auto">
           <h2 class="text-2xl font-bold text-slate-800 mb-6">About this project</h2>
           <div class="prose prose-slate max-w-none text-slate-600 leading-relaxed whitespace-pre-line">{{ project.details }}</div>
         </div>
@@ -79,45 +79,41 @@
       </div>
     </main>
 
-    <!-- Lightbox -->
+    <!-- Lightbox — plain v-if, no Transition, no slide animation. -->
     <Teleport to="body">
-      <Transition :css="false" @enter="onOverlayEnter" @leave="onOverlayLeave">
-        <div v-if="lightboxIndex !== null"
-          data-testid="lightbox"
-          class="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
-          @click.self="closeLightbox" @keydown.escape="closeLightbox">
-          <button @click="closeLightbox" data-testid="lightbox-close" aria-label="Close"
-            class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white text-xl flex items-center justify-center transition-colors">✕</button>
-          <button v-if="media.length > 1" @click="prevItem" data-testid="lightbox-prev" aria-label="Previous image"
-            class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-          </button>
-          <div ref="lightboxContentEl" data-testid="lightbox-content" :data-index="lightboxIndex" class="max-w-5xl max-h-[85vh] w-full px-16 flex items-center justify-center">
-            <img v-if="currentItem?.is_image" :src="currentItem.url" :alt="currentItem.alt_text" class="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl" />
-            <video v-else-if="currentItem?.is_video" :src="currentItem.url" controls class="max-w-full max-h-[85vh] rounded-xl shadow-2xl" />
-          </div>
-          <button v-if="media.length > 1" @click="nextItem" data-testid="lightbox-next" aria-label="Next image"
-            class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </button>
-          <div v-if="media.length > 1" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-            <button v-for="(_, i) in media" :key="i" @click="lightboxIndex = i"
-              data-testid="lightbox-dot" :data-active="i === lightboxIndex" :aria-label="`Go to image ${i + 1} of ${media.length}`"
-              class="w-2 h-2 rounded-full transition-colors"
-              :class="i === lightboxIndex ? 'bg-white' : 'bg-white/30'" />
-          </div>
+      <div v-if="lightboxIndex !== null"
+        data-testid="lightbox"
+        class="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+        @click.self="closeLightbox" @keydown.escape="closeLightbox">
+        <button @click="closeLightbox" data-testid="lightbox-close" aria-label="Close"
+          class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white text-xl flex items-center justify-center transition-colors">✕</button>
+        <button v-if="media.length > 1" @click="prevItem" data-testid="lightbox-prev" aria-label="Previous image"
+          class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <div data-testid="lightbox-content" :data-index="lightboxIndex" class="max-w-5xl max-h-[85vh] w-full px-16 flex items-center justify-center">
+          <img v-if="currentItem?.is_image" :src="currentItem.url" :alt="currentItem.alt_text" class="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl" />
+          <video v-else-if="currentItem?.is_video" :src="currentItem.url" controls class="max-w-full max-h-[85vh] rounded-xl shadow-2xl" />
         </div>
-      </Transition>
+        <button v-if="media.length > 1" @click="nextItem" data-testid="lightbox-next" aria-label="Next image"
+          class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <div v-if="media.length > 1" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+          <button v-for="(_, i) in media" :key="i" @click="lightboxIndex = i"
+            data-testid="lightbox-dot" :data-active="i === lightboxIndex" :aria-label="`Go to image ${i + 1} of ${media.length}`"
+            class="w-2 h-2 rounded-full transition-colors"
+            :class="i === lightboxIndex ? 'bg-white' : 'bg-white/30'" />
+        </div>
+      </div>
     </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Head } from '@inertiajs/vue3'
-import { animate } from 'animejs'
 import BackLink from '@/Components/Shared/BackLink.vue'
-import { useAnimeReveal } from '@/composables/useAnimeReveal'
 
 const props = defineProps({
   project:  { type: Object, required: true },
@@ -127,8 +123,6 @@ const props = defineProps({
 })
 
 // ── Lightbox state machine ────────────────────────────────────────────────
-// Identical to the minimalist template's index-tracking logic and keyboard
-// handlers — only the animation side-effects below are new.
 const lightboxIndex = ref(null)
 const currentItem   = computed(() => lightboxIndex.value !== null ? props.media[lightboxIndex.value] : null)
 
@@ -146,49 +140,4 @@ const onKey = (e) => {
 
 onMounted(()   => window.addEventListener('keydown', onKey))
 onUnmounted(() => window.removeEventListener('keydown', onKey))
-
-// ── Lightbox animation (anime.js) ─────────────────────────────────────────
-// Purely presentational — layered on top of the state machine above via a
-// <Transition> (open/close fade) and a lightboxIndex watcher (slide between
-// items), neither of which gate or delay the reactive state itself.
-const lightboxContentEl = ref(null)
-
-const onOverlayEnter = (el, done) => {
-  animate(el, { opacity: [0, 1], duration: 220, ease: 'outQuad', onComplete: done })
-}
-const onOverlayLeave = (el, done) => {
-  animate(el, { opacity: [1, 0], duration: 180, ease: 'inQuad', onComplete: done })
-}
-
-watch(lightboxIndex, (val, oldVal) => {
-  // Only animate item-to-item slides (lightbox already open); open/close is
-  // handled by the Transition hooks above.
-  if (val === null || oldVal === null || val === oldVal) return
-
-  const total = props.media.length
-  // With only 2 items there's no meaningful wrap-direction ambiguity to
-  // resolve — 0→1 is unambiguously forward and 1→0 is unambiguously
-  // backward — so skip the wrap-detection heuristic below, which
-  // misclassifies both transitions when total === 2.
-  const isForward = total <= 2
-    ? val > oldVal
-    : (oldVal === total - 1 && val === 0) || (val > oldVal && !(val === total - 1 && oldVal === 0))
-
-  nextTick(() => {
-    const el = lightboxContentEl.value
-    if (!el) return
-    animate(el, {
-      opacity: [0, 1],
-      translateX: isForward ? [24, 0] : [-24, 0],
-      duration: 260,
-      ease: 'outQuad',
-    })
-  })
-})
-
-// ── Scroll-reveal ─────────────────────────────────────────────────────────
-// `.reveal` = hero copy + about section. `.reveal-item` = gallery grid, so
-// simultaneous intersections there get anime.js's stagger() treatment.
-useAnimeReveal('.reveal')
-useAnimeReveal('.reveal-item')
 </script>
