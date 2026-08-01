@@ -3,6 +3,7 @@ import MinimalistPortfolio from '@/Pages/Public/Templates/Minimalist/Portfolio.v
 import MinimalistOrgPage from '@/Pages/Public/Templates/Minimalist/OrgPage.vue'
 import MinimalistProjectDetail from '@/Pages/Public/Templates/Minimalist/ProjectDetail.vue'
 import MinimalistLibraryIndex from '@/Pages/Public/Templates/Minimalist/LibraryIndex.vue'
+import MinimalistBookDetail from '@/Pages/Public/Templates/Minimalist/BookDetail.vue'
 import AnimejsHome from '@/Pages/Public/Templates/Animejs/Home.vue'
 import AnimejsPortfolio from '@/Pages/Public/Templates/Animejs/Portfolio.vue'
 import AnimejsOrgPage from '@/Pages/Public/Templates/Animejs/OrgPage.vue'
@@ -21,7 +22,7 @@ const PUBLIC_TEMPLATES = {
     OrgPage: MinimalistOrgPage,
     ProjectDetail: MinimalistProjectDetail,
     LibraryIndex: MinimalistLibraryIndex,
-    BookDetail: null,
+    BookDetail: MinimalistBookDetail,
     AuthorShow: null,
   },
   animejs: {
