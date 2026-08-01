@@ -37,14 +37,21 @@
                 {{ m.content }}
               </div>
               <div v-if="m.citations?.length" class="mt-1.5 flex flex-wrap gap-1.5">
-                <a
-                  v-for="(c, i) in m.citations"
-                  :key="i"
-                  :href="`/library/books/${c.book_slug}/chapters/${c.chapter_sort_order ?? 0}`"
-                  class="text-xs px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
-                >
-                  {{ c.book_title }}<template v-if="c.chapter_title"> — {{ c.chapter_title }}</template>
-                </a>
+                <template v-for="(c, i) in m.citations" :key="i">
+                  <a
+                    v-if="c.book_slug"
+                    :href="`/library/books/${c.book_slug}/chapters/${c.chapter_sort_order ?? 0}`"
+                    class="text-xs px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
+                  >
+                    {{ c.book_title }}<template v-if="c.chapter_title"> — {{ c.chapter_title }}</template>
+                  </a>
+                  <span
+                    v-else
+                    class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500"
+                  >
+                    {{ c.book_title }}<template v-if="c.chapter_title"> — {{ c.chapter_title }}</template>
+                  </span>
+                </template>
               </div>
             </div>
           </template>

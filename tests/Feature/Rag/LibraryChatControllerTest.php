@@ -62,6 +62,43 @@ it('lets an admin post a question and get a persisted answer', function () {
     }
 });
 
+it('persists citations with a book_slug and chapter_sort_order the UI can link to', function () {
+    $vector = '['.implode(',', array_fill(0, 768, 0.1)).']';
+
+    $book = \App\Models\Book::factory()->create(['status' => 'ready']);
+    $chapter = \App\Models\Chapter::factory()->create(['book_id' => $book->id, 'sort_order' => 3]);
+
+    DB::connection('rag')->statement(
+        'insert into book_chunks (book_id, chapter_id, chunk_index, content, embedding) values (?, ?, ?, ?, ?::vector)',
+        [$book->id, $chapter->id, 0, 'Some indexed content.', $vector]
+    );
+
+    Http::fake([
+        'generativelanguage.googleapis.com/*embedContent*' => Http::response([
+            'embedding' => ['values' => array_fill(0, 768, 0.1)],
+        ], 200),
+        'generativelanguage.googleapis.com/*generateContent*' => Http::response([
+            'candidates' => [['content' => ['parts' => [['text' => 'An answer with a citation.']]]]],
+        ], 200),
+    ]);
+
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    try {
+        $this->actingAs($admin)->post('/admin/library/chat', ['question' => 'Test question?']);
+
+        $thread = ChatThread::where('user_id', $admin->id)->first();
+        $assistantMessage = $thread->messages()->where('role', 'assistant')->first();
+
+        expect($assistantMessage->citations[0]['book_slug'])->toBe($book->slug);
+        expect($assistantMessage->citations[0]['chapter_sort_order'])->toBe(3);
+    } finally {
+        ChatThread::where('user_id', $admin->id)->get()->each(fn (ChatThread $t) => deleteRagThread($t->id));
+        DB::connection('rag')->table('book_chunks')->where('book_id', $book->id)->delete();
+    }
+});
+
 it('blocks non-admin/editor/viewer roles', function () {
     $user = User::factory()->create();
 
