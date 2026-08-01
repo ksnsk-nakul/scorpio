@@ -1,5 +1,6 @@
 import MinimalistHome from '@/Pages/Public/Templates/Minimalist/Home.vue'
 import MinimalistPortfolio from '@/Pages/Public/Templates/Minimalist/Portfolio.vue'
+import MinimalistOrgPage from '@/Pages/Public/Templates/Minimalist/OrgPage.vue'
 import AnimejsHome from '@/Pages/Public/Templates/Animejs/Home.vue'
 import AnimejsPortfolio from '@/Pages/Public/Templates/Animejs/Portfolio.vue'
 import AnimejsOrgPage from '@/Pages/Public/Templates/Animejs/OrgPage.vue'
@@ -15,7 +16,7 @@ const PUBLIC_TEMPLATES = {
   minimalist: {
     Home: MinimalistHome,
     Portfolio: MinimalistPortfolio,
-    OrgPage: null,
+    OrgPage: MinimalistOrgPage,
     ProjectDetail: null,
     LibraryIndex: null,
     BookDetail: null,
