@@ -96,3 +96,20 @@ it('never lets a user post to another users thread_id and read their history', f
         deleteRagThread($victimThread->id);
     }
 });
+
+it('403s when a user tries to view another users thread', function () {
+    $victim = User::factory()->create();
+    $victim->assignRole('admin');
+    $attacker = User::factory()->create();
+    $attacker->assignRole('admin');
+
+    $victimThread = ChatThread::create(['user_id' => $victim->id, 'title' => 'Private']);
+
+    try {
+        $this->actingAs($attacker)
+            ->get("/admin/library/chat/{$victimThread->id}")
+            ->assertForbidden();
+    } finally {
+        deleteRagThread($victimThread->id);
+    }
+});
