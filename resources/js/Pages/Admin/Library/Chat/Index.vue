@@ -24,7 +24,7 @@
       </aside>
 
       <section class="flex-1 flex flex-col">
-        <div class="flex-1 overflow-y-auto p-6 space-y-4">
+        <div ref="messagesEl" role="log" aria-live="polite" class="flex-1 overflow-y-auto p-6 space-y-4">
           <div v-if="!activeThread" class="text-sm text-slate-400 text-center py-20">
             Ask a question about your library to start a new thread.
           </div>
@@ -59,7 +59,9 @@
 
         <form @submit.prevent="submit" class="border-t border-slate-200 p-4">
           <div class="flex gap-3">
+            <label for="chat-question" class="sr-only">Ask about your library</label>
             <input
+              id="chat-question"
               v-model="form.question"
               type="text"
               placeholder="Ask about your library…"
@@ -83,6 +85,7 @@
 
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3'
+import { nextTick, ref, watch } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 
 const props = defineProps({
@@ -91,12 +94,21 @@ const props = defineProps({
 })
 
 const form = useForm({ question: '', thread_id: props.activeThread?.id ?? null })
+const messagesEl = ref(null)
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (messagesEl.value) messagesEl.value.scrollTop = messagesEl.value.scrollHeight
+  })
+}
+
+watch(() => props.activeThread?.messages?.length, scrollToBottom, { immediate: true })
 
 const submit = () => {
   form.thread_id = props.activeThread?.id ?? null
   form.post('/admin/library/chat', {
     preserveScroll: true,
-    onSuccess: () => { form.question = '' },
+    onSuccess: () => { form.question = ''; scrollToBottom() },
   })
 }
 </script>
