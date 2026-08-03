@@ -95,6 +95,23 @@ Route::middleware(['auth', 'role:admin,editor,viewer'])
         Route::get('library', [BookController::class, 'index'])->name('library.index');
     });
 
+use App\Http\Controllers\Admin\EdTechController;
+
+Route::middleware(['auth', 'role:admin,editor'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::post('edtech/courses/{course}/reimport', [EdTechController::class, 'reimport'])->name('edtech.reimport');
+    });
+
+Route::middleware(['auth', 'role:admin,editor,viewer'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('edtech', [EdTechController::class, 'index'])->name('edtech.index');
+        Route::get('edtech/enrollments', [EdTechController::class, 'enrollments'])->name('edtech.enrollments');
+    });
+
 use App\Http\Controllers\Admin\LibraryChatController;
 
 Route::middleware(['auth', 'role:admin,editor,viewer'])
