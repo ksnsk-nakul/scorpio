@@ -29,22 +29,35 @@
       </div>
     </main>
 
-    <main v-else-if="mode === 'h-page'" ref="pagedViewportEl" class="overflow-hidden max-w-3xl mx-auto relative px-6 py-10 pb-[env(safe-area-inset-bottom)]" :style="{ height: 'calc(100dvh - 3.5rem - env(safe-area-inset-bottom))' }">
-      <button class="absolute left-0 top-0 h-full w-1/3 z-10" aria-label="Previous page" @click="goToPage(-1)"></button>
-      <button class="absolute right-0 top-0 h-full w-1/3 z-10" aria-label="Next page" @click="goToPage(1)"></button>
-      <div ref="pagedEl" class="markdown-body h-full"
-        :style="{ ...fontStyle, '--page-height': pageHeight + 'px', columnWidth: pageWidth + 'px', columnGap: 0, columnFill: 'auto', transform: `translateX(-${currentPage * pageWidth}px)`, transition: 'transform 0.25s ease' }">
-        <h1 class="text-xl font-bold mb-6">{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }}</h1>
-        <div v-html="chapter.content"></div>
+    <!-- Three layers, deliberately: overflow-hidden clips at an element's
+         PADDING-box edge, not its content-box edge. If padding lived on
+         either the clipping element or the column/transform element, the
+         clip boundary would always be wider than where one page's content
+         actually ends, leaving the next page's leading edge visible in that
+         gap. So padding/centering lives on an outer layer that is neither
+         clipped nor transformed; the clipping layer and the column layer
+         both have zero padding, so the clip boundary exactly matches one
+         column's rendered width/height with no slack. -->
+    <main v-else-if="mode === 'h-page'" class="max-w-3xl mx-auto relative px-6 py-10 pb-[env(safe-area-inset-bottom)]" :style="{ height: 'calc(100dvh - 3.5rem - env(safe-area-inset-bottom))' }">
+      <div ref="pagedViewportEl" class="overflow-hidden relative h-full w-full">
+        <button class="absolute left-0 top-0 h-full w-1/3 z-10" aria-label="Previous page" @click="goToPage(-1)"></button>
+        <button class="absolute right-0 top-0 h-full w-1/3 z-10" aria-label="Next page" @click="goToPage(1)"></button>
+        <div ref="pagedEl" class="markdown-body h-full"
+          :style="{ ...fontStyle, '--page-height': pageHeight + 'px', columnWidth: pageWidth + 'px', columnGap: 0, columnFill: 'auto', transform: `translateX(-${currentPage * pageWidth}px)`, transition: 'transform 0.25s ease' }">
+          <h1 class="text-xl font-bold mb-6">{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }}</h1>
+          <div v-html="chapter.content"></div>
+        </div>
       </div>
     </main>
 
-    <main v-else-if="mode === 'v-page'" ref="pagedViewportEl" class="overflow-hidden max-w-3xl mx-auto relative px-6 py-10 pb-[env(safe-area-inset-bottom)]" :style="{ height: 'calc(100dvh - 3.5rem - env(safe-area-inset-bottom))' }">
-      <button class="absolute top-0 left-0 w-full h-1/3 z-10" aria-label="Previous page" @click="goToPage(-1)"></button>
-      <button class="absolute bottom-0 left-0 w-full h-1/3 z-10" aria-label="Next page" @click="goToPage(1)"></button>
-      <div ref="pagedEl" class="markdown-body" :style="{ ...fontStyle, '--page-height': pageHeight + 'px', transform: `translateY(-${currentPage * pageHeight}px)`, transition: 'transform 0.25s ease' }">
-        <h1 class="text-xl font-bold mb-6">{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }}</h1>
-        <div v-html="chapter.content"></div>
+    <main v-else-if="mode === 'v-page'" class="max-w-3xl mx-auto relative px-6 py-10 pb-[env(safe-area-inset-bottom)]" :style="{ height: 'calc(100dvh - 3.5rem - env(safe-area-inset-bottom))' }">
+      <div ref="pagedViewportEl" class="overflow-hidden relative h-full w-full">
+        <button class="absolute top-0 left-0 w-full h-1/3 z-10" aria-label="Previous page" @click="goToPage(-1)"></button>
+        <button class="absolute bottom-0 left-0 w-full h-1/3 z-10" aria-label="Next page" @click="goToPage(1)"></button>
+        <div ref="pagedEl" class="markdown-body" :style="{ ...fontStyle, '--page-height': pageHeight + 'px', transform: `translateY(-${currentPage * pageHeight}px)`, transition: 'transform 0.25s ease' }">
+          <h1 class="text-xl font-bold mb-6">{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }}</h1>
+          <div v-html="chapter.content"></div>
+        </div>
       </div>
     </main>
 
@@ -116,16 +129,13 @@ const pauseOnInteraction = () => {
 
 const recomputeTotalPages = () => {
   if (!pagedViewportEl.value || !pagedEl.value) return
-  // clientWidth/clientHeight include the viewport's own padding, but pagedEl
-  // (the column/page-transformed element) has none of its own — its actual
-  // rendered box is the viewport's *content* box. Using the padded outer
-  // measurement directly here would make columnWidth/translateX overshoot the
-  // real column pitch, leaving a sliver of the next page visible at the edge.
-  const viewportStyle = getComputedStyle(pagedViewportEl.value)
-  const padX = parseFloat(viewportStyle.paddingLeft) + parseFloat(viewportStyle.paddingRight)
-  const padY = parseFloat(viewportStyle.paddingTop) + parseFloat(viewportStyle.paddingBottom)
-  pageWidth.value = pagedViewportEl.value.clientWidth - padX
-  pageHeight.value = pagedViewportEl.value.clientHeight - padY
+  // pagedViewportEl (the overflow-hidden clipping layer) and pagedEl (the
+  // column/transform layer) are both deliberately padding-free — see the
+  // template comment above the h-page/v-page markup — so clientWidth/
+  // clientHeight here already equal exactly what pagedEl renders as one
+  // column/page, with no padding to account for.
+  pageWidth.value = pagedViewportEl.value.clientWidth
+  pageHeight.value = pagedViewportEl.value.clientHeight
   const size = mode.value === 'h-page' ? pagedEl.value.scrollWidth : pagedEl.value.scrollHeight
   const pageSize = mode.value === 'h-page' ? pageWidth.value : pageHeight.value
   totalPages.value = Math.max(1, Math.ceil(size / pageSize))
