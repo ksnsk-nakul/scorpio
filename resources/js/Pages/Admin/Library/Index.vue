@@ -5,7 +5,7 @@
         <h1 class="text-2xl font-bold text-slate-800">Library</h1>
 
         <div class="flex items-center gap-3">
-          <Link href="/admin/library/upload"
+          <Link v-if="canManage" href="/admin/library/upload"
             class="text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition-colors">
             Upload
           </Link>
@@ -45,7 +45,7 @@
       </div>
 
       <!-- Bulk selection bar -->
-      <div v-if="selectedIds.size > 0 || selectAllMatchingFilter" class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-4 py-2.5 mb-4 text-sm">
+      <div v-if="canManage && (selectedIds.size > 0 || selectAllMatchingFilter)" class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-4 py-2.5 mb-4 text-sm">
         <span class="text-blue-800">
           {{ selectAllMatchingFilter ? `All ${books.total} book(s) matching the current filter selected` : `${selectedIds.size} selected` }}
         </span>
@@ -59,7 +59,7 @@
         </div>
       </div>
 
-      <div class="flex justify-end mb-4">
+      <div v-if="canManage" class="flex justify-end mb-4">
         <button @click="deleteAll" class="text-xs text-red-500 hover:text-red-700 underline">
           Delete all books ({{ books.total }})
         </button>
@@ -77,7 +77,7 @@
             <table class="w-full text-sm">
               <thead class="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th class="px-5 py-3 w-8">
+                  <th v-if="canManage" class="px-5 py-3 w-8">
                     <input type="checkbox" :checked="allOnPageSelected" @change="toggleSelectPage" />
                   </th>
                   <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Cover</th>
@@ -90,7 +90,7 @@
               </thead>
               <tbody class="divide-y divide-slate-100">
                 <tr v-for="book in books.data" :key="book.id" class="hover:bg-slate-50">
-                  <td class="px-5 py-3">
+                  <td v-if="canManage" class="px-5 py-3">
                     <input type="checkbox" :checked="selectedIds.has(book.id)" @change="toggleSelect(book.id)" />
                   </td>
                   <td class="px-5 py-3">
@@ -109,7 +109,7 @@
                     </span>
                   </td>
                   <td class="px-5 py-3 text-slate-400 text-xs whitespace-nowrap">{{ book.created_at }}</td>
-                  <td class="px-5 py-3">
+                  <td v-if="canManage" class="px-5 py-3">
                     <div class="flex items-center gap-2 whitespace-nowrap">
                       <button @click="openEdit(book)" class="text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-800 px-2 py-1 rounded-md transition-colors">Edit</button>
                       <button v-if="book.status === 'failed' || book.is_stuck" @click="retry(book)" class="text-xs text-amber-600 hover:bg-amber-50 hover:text-amber-800 px-2 py-1 rounded-md transition-colors">Retry</button>
@@ -125,7 +125,7 @@
         <!-- Grid mode -->
         <div v-if="viewMode === 'grid'" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           <div v-for="book in books.data" :key="book.id" class="bg-white border border-slate-200 rounded-xl p-3 relative">
-            <input type="checkbox" :checked="selectedIds.has(book.id)" @change="toggleSelect(book.id)"
+            <input v-if="canManage" type="checkbox" :checked="selectedIds.has(book.id)" @change="toggleSelect(book.id)"
               class="absolute top-2 left-2 z-10 bg-white rounded" />
             <img v-if="book.cover_url" :src="book.cover_url" class="aspect-[2/3] object-cover w-full rounded-lg" />
             <div v-else class="aspect-[2/3] w-full bg-slate-100 rounded-lg"></div>
@@ -138,7 +138,7 @@
             <span v-if="book.status === 'failed' && book.status_reason" class="block text-xs text-red-400 mt-1">
               {{ book.status_reason }}
             </span>
-            <div class="flex items-center gap-2 mt-2">
+            <div v-if="canManage" class="flex items-center gap-2 mt-2">
               <button @click="openEdit(book)" class="text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-800 px-2 py-1 rounded-md transition-colors">Edit</button>
               <button v-if="book.status === 'failed' || book.is_stuck" @click="retry(book)" class="text-xs text-amber-600 hover:bg-amber-50 hover:text-amber-800 px-2 py-1 rounded-md transition-colors">Retry</button>
               <button v-if="book.is_stuck" @click="markFailed(book)" class="text-xs text-red-500 hover:bg-red-50 hover:text-red-700 px-2 py-1 rounded-md transition-colors">Fail</button>
@@ -149,12 +149,12 @@
         <!-- Icons mode -->
         <div v-if="viewMode === 'icons'" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
           <div v-for="book in books.data" :key="book.id" :title="book.title" class="relative group">
-            <input type="checkbox" :checked="selectedIds.has(book.id)" @change="toggleSelect(book.id)"
+            <input v-if="canManage" type="checkbox" :checked="selectedIds.has(book.id)" @change="toggleSelect(book.id)"
               class="absolute top-2 left-2 z-10 bg-white rounded" />
             <img v-if="book.cover_url" :src="book.cover_url" class="aspect-[2/3] object-cover w-full rounded-lg" />
             <div v-else class="aspect-[2/3] w-full bg-slate-100 rounded-lg"></div>
 
-            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 rounded-lg transition flex items-center justify-center gap-2 hidden group-hover:flex">
+            <div v-if="canManage" class="absolute inset-0 bg-black/0 group-hover:bg-black/40 rounded-lg transition flex items-center justify-center gap-2 hidden group-hover:flex">
               <button @click="openEdit(book)" class="bg-white/90 hover:bg-blue-600 rounded-full px-2 py-1 text-xs text-blue-600 hover:text-white shadow-sm transition-colors">Edit</button>
               <button v-if="book.status === 'failed' || book.is_stuck" @click="retry(book)" class="bg-white/90 hover:bg-amber-500 rounded-full px-2 py-1 text-xs text-amber-600 hover:text-white shadow-sm transition-colors">Retry</button>
             </div>
@@ -176,7 +176,7 @@
 
     <!-- Edit modal -->
     <Teleport to="body">
-      <div v-if="editing" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div v-if="canManage && editing" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
         <div class="bg-white rounded-xl p-6 w-96 shadow-xl">
           <h2 class="font-semibold mb-4 text-slate-800">Edit Book</h2>
           <label class="block text-xs text-slate-500 mb-1">Title</label>
@@ -198,7 +198,7 @@
 <script setup>
 import { ref, computed, reactive } from 'vue'
 import axios from 'axios'
-import { Link, router } from '@inertiajs/vue3'
+import { Link, router, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
@@ -210,6 +210,13 @@ const props = defineProps({
   books: { type: Object, required: true },
   filters: { type: Object, default: () => ({}) },
 })
+
+// ── Role gating ──────────────────────────────────────────────────────────────
+const page = usePage()
+const userRoles = computed(() => page.props.auth.roles ?? [])
+const isAdmin = computed(() => userRoles.value.includes('admin'))
+const isEditor = computed(() => userRoles.value.includes('editor'))
+const canManage = computed(() => isAdmin.value || isEditor.value)
 
 // ── Search / filter ──────────────────────────────────────────────────────────
 const searchInput = ref(props.filters.search ?? '')
