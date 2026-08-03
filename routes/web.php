@@ -414,6 +414,10 @@ use App\Http\Controllers\CourseController;
 
 Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
 
+Route::get('/courses/{slug}', [CourseController::class, 'show'])
+    ->name('courses.show')
+    ->where('slug', '[a-z0-9\-]+');
+
 // Admin portfolio inner pages at root (must be last to avoid shadowing other routes)
 Route::get('/{slug}', [\App\Http\Controllers\PublicController::class, 'adminPage'])
     ->name('admin.page')
