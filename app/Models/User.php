@@ -133,6 +133,11 @@ class User extends Authenticatable
         return $this->hasMany(WalletTransaction::class, 'recipient_user_id')->latest();
     }
 
+    public function enrollments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
     public function paymentMethods(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(PaymentMethod::class)->latest();
