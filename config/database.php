@@ -115,6 +115,15 @@ return [
             // in both schemas.
             'search_path' => env('DB_RAG_SEARCH_PATH', 'public'),
             'sslmode' => env('DB_SSLMODE', 'require'),
+            // Without an explicit connect timeout, an unreachable/paused Supabase host
+            // hangs until PHP's own max_execution_time kills the whole PHP-FPM worker
+            // mid-request (seen locally as repeated nginx 502s / "connection refused" —
+            // the worker crashes and has to respawn). RagConnectionGuard's own
+            // availability probe is itself a raw connection attempt, so this timeout
+            // has to be short enough to fail fast well before the request-level limit.
+            'options' => [
+                \PDO::ATTR_TIMEOUT => 3,
+            ],
         ],
 
         'sqlsrv' => [
