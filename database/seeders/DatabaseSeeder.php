@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             WorkspaceSeeder::class,
             ContentSeeder::class,
             ProjectMediaSeeder::class,
+            LibrarySeeder::class,
         ]);
     }
 }

@@ -23,7 +23,9 @@ it('creates a pending book and dispatches a parse job on upload', function () {
     $response = $this->actingAs($this->admin)->postJson('/admin/library/books', ['file' => $file]);
 
     $response->assertOk()->assertJsonPath('status', 'pending')->assertJsonPath('title', 'my-book');
-    expect(Book::count())->toBe(1);
+    // Scoped to this test's uploader, not a raw count, since $this->seed() also
+    // creates LibrarySeeder's sample book (attributed to the seeded admin user).
+    expect(Book::where('uploaded_by', $this->admin->id)->count())->toBe(1);
     Queue::assertPushed(\App\Jobs\ParseEpubBookJob::class);
 });
 
@@ -82,7 +84,10 @@ it('lists all books with author names for the admin index page', function () {
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('Admin/Library/Index')
-        ->has('books.data', 2)
+        // 3, not 2: the admin index lists every book regardless of uploader, and
+        // $this->seed() also creates LibrarySeeder's sample book (oldest, so it
+        // sorts last under latest()).
+        ->has('books.data', 3)
         ->where('books.data.0.title', 'Pending Book') // latest() first
         ->where('books.data.1.author', 'Jane Doe'));
 });
@@ -112,7 +117,9 @@ it('reuses an existing author on update instead of creating a duplicate', functi
         'author_name' => 'existing author',
     ]);
 
-    expect(\App\Models\Author::count())->toBe(2); // the book's original factory author + this one
+    // 3, not 2: the book's original factory author + this one + LibrarySeeder's
+    // "Scorpio" author created by the outer $this->seed() call.
+    expect(\App\Models\Author::count())->toBe(3);
 });
 
 it('deletes a book, its chapters, and its stored files', function () {

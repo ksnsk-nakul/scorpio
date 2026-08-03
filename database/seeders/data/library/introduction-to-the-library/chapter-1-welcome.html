@@ -1,0 +1,11 @@
+<h1>Welcome to the Library</h1>
+<p>This is a small, built-in sample book so the Library page always has something to show — on a fresh install, in CI, or on any machine that hasn't imported a real EPUB collection yet.</p>
+<p>The Library stores books as a simple hierarchy:</p>
+<ul>
+  <li>A <strong>Book</strong> belongs to an <strong>Author</strong> and has a title, description, and cover.</li>
+  <li>A Book has many <strong>Chapters</strong>, shown in reading order.</li>
+  <li>Each Chapter's content renders in the reader, with theme, font-size, and page-turning controls available from the settings drawer (the gear icon in the top-right corner of the reader).</li>
+</ul>
+<p>Real books are added either through the admin upload form (<code>/admin/library</code>, drag-and-drop a <code>.epub</code> file) or in bulk with:</p>
+<pre><code>php artisan library:seed-directory /path/to/your/epub/folder</code></pre>
+<p>Turn to the next chapter to see how the reading experience itself works.</p>
