@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
+use App\Models\Material;
 use App\Models\Topic;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -79,10 +80,15 @@ class CourseController extends Controller
         ]);
     }
 
-    public function downloadMaterial(string $slug, string $topicSlug, \App\Models\Material $material)
+    public function downloadMaterial(string $slug, string $topicSlug, Material $material)
     {
+        $course = Course::where('slug', $slug)->where('status', 'ready')->firstOrFail();
+
         abort_unless($material->isDownloadable(), 403);
-        abort_unless($material->topic->slug === $topicSlug, 404);
+        abort_unless(
+            $material->topic->slug === $topicSlug && $material->topic->module->course_id === $course->id,
+            404
+        );
 
         return response($material->content, 200, [
             'Content-Type' => 'text/plain',
