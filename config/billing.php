@@ -17,12 +17,12 @@ return [
     ],
 
     'features' => [
-        'free'       => ['github_sync' => false, 'analytics' => false, 'seo_control' => false, 'password_pages' => false, 'scheduled_publish' => false, 'contact_attachments' => false, 'white_label' => false, 'audit_logs' => false, 'api_access' => false, 'priority_support' => false],
-        'pro'        => ['github_sync' => true,  'analytics' => false, 'seo_control' => true,  'password_pages' => false, 'scheduled_publish' => false, 'contact_attachments' => false, 'white_label' => false, 'audit_logs' => false, 'api_access' => false, 'priority_support' => false],
-        'creator'    => ['github_sync' => true,  'analytics' => true,  'seo_control' => true,  'password_pages' => true,  'scheduled_publish' => true,  'contact_attachments' => true,  'white_label' => false, 'audit_logs' => false, 'api_access' => false, 'priority_support' => true],
-        'team'       => ['github_sync' => true,  'analytics' => false, 'seo_control' => true,  'password_pages' => false, 'scheduled_publish' => false, 'contact_attachments' => false, 'white_label' => false, 'audit_logs' => false, 'api_access' => false, 'priority_support' => false],
-        'business'   => ['github_sync' => true,  'analytics' => true,  'seo_control' => true,  'password_pages' => true,  'scheduled_publish' => true,  'contact_attachments' => true,  'white_label' => true,  'audit_logs' => false, 'api_access' => false, 'priority_support' => true],
-        'enterprise' => ['github_sync' => true,  'analytics' => true,  'seo_control' => true,  'password_pages' => true,  'scheduled_publish' => true,  'contact_attachments' => true,  'white_label' => true,  'audit_logs' => true,  'api_access' => true,  'priority_support' => true],
+        'free'       => ['github_sync' => false, 'analytics' => false, 'seo_control' => false, 'password_pages' => false, 'scheduled_publish' => false, 'contact_attachments' => false, 'white_label' => false, 'audit_logs' => false, 'api_access' => false, 'priority_support' => false, 'library_access' => false, 'rag_search' => false],
+        'pro'        => ['github_sync' => true,  'analytics' => false, 'seo_control' => true,  'password_pages' => false, 'scheduled_publish' => false, 'contact_attachments' => false, 'white_label' => false, 'audit_logs' => false, 'api_access' => false, 'priority_support' => false, 'library_access' => true,  'rag_search' => false],
+        'creator'    => ['github_sync' => true,  'analytics' => true,  'seo_control' => true,  'password_pages' => true,  'scheduled_publish' => true,  'contact_attachments' => true,  'white_label' => false, 'audit_logs' => false, 'api_access' => false, 'priority_support' => true,  'library_access' => true,  'rag_search' => true],
+        'team'       => ['github_sync' => true,  'analytics' => false, 'seo_control' => true,  'password_pages' => false, 'scheduled_publish' => false, 'contact_attachments' => false, 'white_label' => false, 'audit_logs' => false, 'api_access' => false, 'priority_support' => false, 'library_access' => true,  'rag_search' => false],
+        'business'   => ['github_sync' => true,  'analytics' => true,  'seo_control' => true,  'password_pages' => true,  'scheduled_publish' => true,  'contact_attachments' => true,  'white_label' => true,  'audit_logs' => false, 'api_access' => false, 'priority_support' => true,  'library_access' => true,  'rag_search' => true],
+        'enterprise' => ['github_sync' => true,  'analytics' => true,  'seo_control' => true,  'password_pages' => true,  'scheduled_publish' => true,  'contact_attachments' => true,  'white_label' => true,  'audit_logs' => true,  'api_access' => true,  'priority_support' => true,  'library_access' => true,  'rag_search' => true],
     ],
 
     'plans' => [
@@ -35,24 +35,24 @@ return [
             'name' => 'Pro', 'slug' => 'pro', 'type' => 'solo',
             'price' => 49900, 'currency' => 'INR', 'interval' => 'month',
             'badge' => 'Most Popular',
-            'features' => ['5 pages', '3 workspaces', '15 projects', '25 skills · 5 service cards', 'GitHub sync & webhooks', 'SEO control per page', 'Basic support'],
+            'features' => ['5 pages', '3 workspaces', '15 projects', '25 skills · 5 service cards', 'GitHub sync & webhooks', 'SEO control per page', 'E-Library access', 'Basic support'],
         ],
         'creator' => [
             'name' => 'Creator', 'slug' => 'creator', 'type' => 'solo',
             'price' => 99900, 'currency' => 'INR', 'interval' => 'month',
-            'features' => ['Everything in Pro', 'Unlimited everything', 'Analytics', 'Password-protected pages', 'Scheduled publishing', 'Contact form attachments', 'Priority support'],
+            'features' => ['Everything in Pro', 'Unlimited everything', 'Analytics', 'Password-protected pages', 'Scheduled publishing', 'Contact form attachments', 'E-Library access', 'AI-powered library search (RAG)', 'Priority support'],
         ],
         'team' => [
             'name' => 'Team', 'slug' => 'team', 'type' => 'org',
             'price' => 149900, 'currency' => 'INR', 'interval' => 'month',
             'member_limit' => 5,
-            'features' => ['Up to 5 members', 'Each member gets Pro features', 'Org public page', 'Member achievements', 'GitHub sync', 'SEO control'],
+            'features' => ['Up to 5 members', 'Each member gets Pro features', 'Org public page', 'Member achievements', 'GitHub sync', 'SEO control', 'E-Library access'],
         ],
         'business' => [
             'name' => 'Business', 'slug' => 'business', 'type' => 'org',
             'price' => 299900, 'currency' => 'INR', 'interval' => 'month',
             'member_limit' => 15,
-            'features' => ['Up to 15 members', 'Everything in Team', 'Analytics per member', 'Password-protected pages', 'Scheduled publishing', 'White-label (no platform branding)', 'Priority support'],
+            'features' => ['Up to 15 members', 'Everything in Team', 'Analytics per member', 'Password-protected pages', 'Scheduled publishing', 'White-label (no platform branding)', 'AI-powered library search (RAG)', 'Priority support'],
         ],
         'enterprise' => [
             'name' => 'Enterprise', 'slug' => 'enterprise', 'type' => 'org',
@@ -64,7 +64,7 @@ return [
             'extra_workspace_price' => 10000,
             'extra_page_price' => 5000,
             'included_members' => 20,
-            'features' => ['Unlimited members', 'Everything in Business', 'Audit logs', 'API access', 'Bulk member import', 'Advanced org analytics', 'White-label', 'Dedicated support'],
+            'features' => ['Unlimited members', 'Everything in Business', 'Audit logs', 'API access', 'Bulk member import', 'Advanced org analytics', 'White-label', 'AI-powered library search (RAG)', 'Dedicated support'],
         ],
     ],
 ];

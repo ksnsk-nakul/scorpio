@@ -48,7 +48,7 @@
       </div>
 
       <!-- Add UPI -->
-      <div v-if="methods.length < 5" class="bg-white border border-slate-200 rounded-2xl p-6">
+      <div v-if="methods.length < 5" class="bg-white border border-slate-200 rounded-2xl p-6 mb-6">
         <h2 class="text-base font-semibold text-slate-800 mb-1">Add UPI ID</h2>
         <p class="text-xs text-slate-400 mb-4">Your UPI ID is encrypted before storage — never visible in plain text.</p>
         <form @submit.prevent="submitUpi" class="space-y-3">
@@ -73,16 +73,36 @@
           </button>
         </form>
       </div>
+
+      <!-- Add Card -->
+      <div v-if="methods.length < 5" class="bg-white border border-slate-200 rounded-2xl p-6">
+        <h2 class="text-base font-semibold text-slate-800 mb-1">Add Card</h2>
+        <p class="text-xs text-slate-400 mb-4">
+          Card details are entered in Razorpay's secure checkout — never on this page or stored on our servers.
+          We verify with a ₹1 authorization that's never charged.
+        </p>
+        <div class="space-y-3">
+          <input v-model="cardLabel" type="text"
+            placeholder="Label (e.g. Personal Visa)"
+            maxlength="50"
+            class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          <p v-if="cardError" class="text-xs text-red-500">{{ cardError }}</p>
+          <button type="button" @click="addCard" :disabled="cardSaving || !cardLabel"
+            class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl disabled:opacity-50 transition">
+            {{ cardSaving ? 'Opening secure checkout…' : 'Add Card' }}
+          </button>
+        </div>
+      </div>
     </div>
   </AdminLayout>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useForm, Link, router, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 
-const props = defineProps({ methods: Array })
+const props = defineProps({ methods: Array, razorpayKey: String })
 
 const page = usePage()
 const pageErrors = computed(() => {
@@ -103,6 +123,67 @@ const setDefault = (id) => router.patch(`/admin/payment-methods/${id}/default`)
 const remove = (id) => {
   if (confirm('Remove this payment method?')) {
     router.delete(`/admin/payment-methods/${id}`)
+  }
+}
+
+// ── Add Card (hosted Razorpay Checkout — card data never touches this page) ──
+const cardLabel  = ref('')
+const cardSaving = ref(false)
+const cardError  = ref(null)
+
+onMounted(() => {
+  if (document.querySelector('script[src*="checkout.razorpay.com"]')) return
+  const s = document.createElement('script')
+  s.src = 'https://checkout.razorpay.com/v1/checkout.js'
+  document.head.appendChild(s)
+})
+
+const addCard = async () => {
+  cardError.value  = null
+  cardSaving.value = true
+
+  try {
+    const res = await fetch('/admin/payment-methods/card/order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+        'Accept':       'application/json',
+      },
+      body: JSON.stringify({ label: cardLabel.value }),
+    })
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.message ?? 'Could not start card verification.')
+    }
+
+    const data = await res.json()
+
+    const rzp = new window.Razorpay({
+      key:         data.key,
+      order_id:    data.order_id,
+      amount:      data.amount,
+      currency:    'INR',
+      name:        'Add Payment Card',
+      description: `Verifying card for "${cardLabel.value}" — this ₹1 authorization is never charged`,
+      customer_id: data.customer_id,
+      recurring:   true,
+      prefill:     { name: data.name, email: data.email },
+      theme:       { color: '#2563EB' },
+      handler: (response) => {
+        router.post('/admin/payment-methods/card/verify', response, {
+          onSuccess: () => { cardLabel.value = ''; cardSaving.value = false },
+          onError:   () => { cardSaving.value = false },
+        })
+      },
+      modal: { ondismiss: () => { cardSaving.value = false } },
+    })
+
+    rzp.open()
+  } catch (e) {
+    cardError.value  = e.message ?? 'Something went wrong. Please try again.'
+    cardSaving.value = false
   }
 }
 </script>

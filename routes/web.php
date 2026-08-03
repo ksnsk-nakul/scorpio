@@ -275,7 +275,8 @@ Route::middleware(['auth'])
         // Payment methods
         Route::get('payment-methods',                    [PaymentMethodController::class, 'index'])->name('payment-methods.index');
         Route::post('payment-methods/upi',               [PaymentMethodController::class, 'storeUpi'])->name('payment-methods.store-upi');
-        Route::post('payment-methods/card',              [PaymentMethodController::class, 'storeCard'])->name('payment-methods.store-card');
+        Route::post('payment-methods/card/order',        [PaymentMethodController::class, 'createCardOrder'])->name('payment-methods.card.order');
+        Route::post('payment-methods/card/verify',       [PaymentMethodController::class, 'verifyCard'])->name('payment-methods.card.verify');
         Route::patch('payment-methods/{method}/default', [PaymentMethodController::class, 'setDefault'])->name('payment-methods.default');
         Route::delete('payment-methods/{method}',        [PaymentMethodController::class, 'destroy'])->name('payment-methods.destroy');
     });
