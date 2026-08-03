@@ -144,7 +144,13 @@ const allNav = [
   { label: 'Announcements', href: '/admin/announcements', roles: ['admin'], icon: 'M3.5 10.5v4a1 1 0 001 1h2l5 3v-12l-5 3h-2a1 1 0 00-1 1zM15 9.5a3 3 0 010 6M17.3 6.5a6.5 6.5 0 010 12' },
 ]
 
-const nav = computed(() => allNav.filter(item => item.roles.some(r => userRoles.value.includes(r))))
+// Library Chat depends on the `rag` Postgres connection being reachable (missing
+// driver, unreachable host, bad creds, etc.) — hide the nav entry entirely rather
+// than sending people to a page that just tells them it's unavailable.
+const ragAvailable = computed(() => page.props.ragAvailable ?? true)
+const nav = computed(() => allNav
+  .filter(item => item.roles.some(r => userRoles.value.includes(r)))
+  .filter(item => item.href !== '/admin/library/chat' || ragAvailable.value))
 
 // Some nav hrefs are prefixes of others now that Library Chat sits under Library
 // (e.g. /admin/library/chat starts with /admin/library). Pick the longest matching
