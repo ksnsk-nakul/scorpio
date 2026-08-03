@@ -9,12 +9,6 @@
         </span>
       </div>
 
-      <!-- Flash -->
-      <div v-if="$page.props.flash?.success"
-        class="mb-5 bg-green-50 border border-green-200 text-green-800 text-sm rounded-xl px-4 py-3">
-        {{ $page.props.flash.success }}
-      </div>
-
       <!-- Tabs -->
       <div class="flex border-b border-slate-200 mb-8 gap-1">
         <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id"

@@ -56,6 +56,7 @@ it('returns the current status for a book', function () {
 
 it('re-dispatches parsing for a failed book on retry', function () {
     $book = Book::factory()->create(['status' => 'failed', 'status_reason' => 'boom', 'uploaded_by' => $this->admin->id]);
+    Storage::disk('public')->put($book->source_epub_path, 'fake epub bytes');
 
     $this->actingAs($this->admin)
         ->postJson("/admin/library/books/{$book->id}/retry")
@@ -66,11 +67,67 @@ it('re-dispatches parsing for a failed book on retry', function () {
     expect($book->fresh()->status_reason)->toBeNull();
 });
 
-it('rejects retrying a book that is not failed', function () {
+it('rejects retrying a book that is not failed or stuck', function () {
     $book = Book::factory()->create(['status' => 'ready', 'uploaded_by' => $this->admin->id]);
 
     $this->actingAs($this->admin)
         ->postJson("/admin/library/books/{$book->id}/retry")
+        ->assertStatus(422);
+});
+
+it('retries a stuck (long-pending) book', function () {
+    $book = Book::factory()->create(['status' => 'pending', 'uploaded_by' => $this->admin->id]);
+    $book->forceFill(['updated_at' => now()->subMinutes(15)])->save();
+    Storage::disk('public')->put($book->source_epub_path, 'fake epub bytes');
+
+    $this->actingAs($this->admin)
+        ->postJson("/admin/library/books/{$book->id}/retry")
+        ->assertOk()
+        ->assertJsonPath('status', 'pending');
+
+    Queue::assertPushed(\App\Jobs\ParseEpubBookJob::class);
+});
+
+it('rejects retrying a recently-created pending book (not actually stuck yet)', function () {
+    $book = Book::factory()->create(['status' => 'pending', 'uploaded_by' => $this->admin->id]);
+
+    $this->actingAs($this->admin)
+        ->postJson("/admin/library/books/{$book->id}/retry")
+        ->assertStatus(422);
+});
+
+it('marks a stuck book as failed instead of retrying when its source file is missing', function () {
+    $book = Book::factory()->create(['status' => 'processing', 'uploaded_by' => $this->admin->id]);
+    $book->forceFill(['updated_at' => now()->subMinutes(15)])->save();
+    // Deliberately no Storage::put — the source file doesn't exist.
+
+    $response = $this->actingAs($this->admin)
+        ->postJson("/admin/library/books/{$book->id}/retry")
+        ->assertOk()
+        ->assertJsonPath('status', 'failed');
+
+    expect($response->json('status_reason'))->toContain('missing');
+    expect($book->fresh()->status)->toBe('failed');
+    Queue::assertNotPushed(\App\Jobs\ParseEpubBookJob::class);
+});
+
+it('marks a stuck book as failed via the explicit action', function () {
+    $book = Book::factory()->create(['status' => 'processing', 'uploaded_by' => $this->admin->id]);
+    $book->forceFill(['updated_at' => now()->subMinutes(15)])->save();
+
+    $this->actingAs($this->admin)
+        ->postJson("/admin/library/books/{$book->id}/mark-failed")
+        ->assertOk()
+        ->assertJsonPath('status', 'failed');
+
+    expect($book->fresh()->status_reason)->not->toBeNull();
+});
+
+it('rejects marking a non-stuck book as failed', function () {
+    $book = Book::factory()->create(['status' => 'pending', 'uploaded_by' => $this->admin->id]);
+
+    $this->actingAs($this->admin)
+        ->postJson("/admin/library/books/{$book->id}/mark-failed")
         ->assertStatus(422);
 });
 

@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\HasIntegrationSettings;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Illuminate\Http\Request;
@@ -9,16 +10,22 @@ use Inertia\Inertia;
 
 class SettingController extends Controller
 {
+    use HasIntegrationSettings;
+
     public function index()
     {
         $settings = Setting::all()->groupBy('group')->map(
             fn ($g) => $g->keyBy('key')->map(fn ($s) => $s->value)
         );
 
-        return Inertia::render('Admin/Settings/Index', [
+        return Inertia::render('Admin/Settings/Index', array_merge([
             'settings' => $settings,
-            'groups'   => ['general', 'seo', 'social', 'mail', 'appearance'],
-        ]);
+            // "integrations" is a distinct tab from the plain "mail" group above —
+            // that one is simple from-name/reply-to display preferences, this one is
+            // real provider credentials (Razorpay/SMTP/Twilio), rendered via
+            // IntegrationsPanel.vue instead of the generic key-value form.
+            'groups'   => ['general', 'seo', 'social', 'mail', 'appearance', 'integrations'],
+        ], $this->integrationSettingsProps()));
     }
 
     public function update(Request $request)

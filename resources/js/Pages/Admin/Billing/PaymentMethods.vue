@@ -6,10 +6,6 @@
         <h1 class="text-2xl font-bold text-slate-800">Payment Methods</h1>
       </div>
 
-      <div v-if="$page.props.flash?.success" class="mb-4 bg-green-50 border border-green-200 text-green-800 text-sm rounded-xl px-4 py-3">
-        {{ $page.props.flash.success }}
-      </div>
-
       <!-- Saved methods -->
       <div class="bg-white border border-slate-200 rounded-2xl p-6 mb-6">
         <h2 class="text-base font-semibold text-slate-800 mb-4">Saved Methods ({{ methods.length }}/5)</h2>

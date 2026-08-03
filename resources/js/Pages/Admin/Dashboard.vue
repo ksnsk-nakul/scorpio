@@ -7,11 +7,11 @@
       </div>
 
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Pages"         :value="stats.pages" />
-        <StatCard label="Service Cards" :value="stats.serviceCards" />
-        <StatCard label="Open Tasks"    :value="stats.openTasks" color="amber" />
-        <StatCard label="Overdue"       :value="stats.overdueTasks" color="red" />
-        <StatCard v-if="stats.users !== null" label="Users" :value="stats.users" />
+        <StatCard label="Pages"         :value="stats.pages"        href="/admin/pages" />
+        <StatCard label="Service Cards" :value="stats.serviceCards" href="/admin/service-cards" />
+        <StatCard label="Open Tasks"    :value="stats.openTasks"    href="/admin/tasks?status=open" color="amber" />
+        <StatCard label="Overdue"       :value="stats.overdueTasks" href="/admin/tasks?overdue=1" color="red" />
+        <StatCard v-if="stats.users !== null" label="Users" :value="stats.users" href="/admin/users" />
         <StatCard v-if="stats.unreadMessages" label="New Messages" :value="stats.unreadMessages" color="orange" />
       </div>
 
@@ -49,7 +49,10 @@
 
       <!-- Recent Tasks -->
       <div class="bg-white rounded-xl border border-slate-200 p-5">
-        <h2 class="text-sm font-semibold text-slate-700 mb-4">Recent Tasks</h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-semibold text-slate-700">Recent Tasks</h2>
+          <Link href="/admin/tasks" class="text-xs text-blue-500 hover:text-blue-700">See all →</Link>
+        </div>
         <div v-if="recentTasks.length === 0" class="text-sm text-slate-400">No tasks yet.</div>
         <ul class="space-y-2">
           <li v-for="task in recentTasks" :key="task.id" class="flex items-center gap-3 text-sm">
@@ -66,7 +69,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { router, Link } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import StatCard from '@/Components/Admin/StatCard.vue'
 

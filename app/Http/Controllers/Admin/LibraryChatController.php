@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ChatThread;
 use App\Services\ChatService;
+use App\Support\RagConnectionGuard;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,6 +17,10 @@ class LibraryChatController extends Controller
 {
     public function index(Request $request): Response
     {
+        if (! RagConnectionGuard::available()) {
+            return $this->unavailablePage();
+        }
+
         $threads = ChatThread::where('user_id', $request->user()->id)
             ->orderByDesc('updated_at')
             ->get(['id', 'title', 'updated_at']);
@@ -28,6 +33,10 @@ class LibraryChatController extends Controller
 
     public function show(Request $request, ChatThread $thread): Response
     {
+        if (! RagConnectionGuard::available()) {
+            return $this->unavailablePage();
+        }
+
         abort_unless($thread->user_id === $request->user()->id, 403);
 
         $threads = ChatThread::where('user_id', $request->user()->id)
@@ -42,6 +51,10 @@ class LibraryChatController extends Controller
 
     public function store(Request $request, ChatService $chatService): RedirectResponse
     {
+        if (! RagConnectionGuard::available()) {
+            return back()->withErrors(['question' => 'Library chat isn\'t available right now — the search backend is unreachable. Please try again later.']);
+        }
+
         $data = $request->validate([
             'question' => ['required', 'string', 'max:2000', function ($attribute, $value, $fail) {
                 if (trim($value) === '') {
@@ -75,5 +88,17 @@ class LibraryChatController extends Controller
         }
 
         return redirect()->route('admin.library.chat.show', $result['thread']->id);
+    }
+
+    // Covers every cause of RAG unavailability uniformly — missing PHP driver,
+    // unreachable host, bad credentials — same guard the migrations already use,
+    // so this page degrades to a clean message instead of a raw 500 in any of them.
+    private function unavailablePage(): Response
+    {
+        return Inertia::render('Admin/Library/Chat/Index', [
+            'threads' => [],
+            'activeThread' => null,
+            'unavailable' => true,
+        ]);
     }
 }

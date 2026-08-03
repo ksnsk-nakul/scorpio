@@ -38,6 +38,12 @@ class TaskController extends Controller
         if ($request->filled('status'))   $query->where('status', $request->status);
         if ($request->filled('priority')) $query->where('priority', $request->priority);
         if ($request->filled('project'))  $query->where('project_id', $request->project);
+        // "Overdue" isn't a status value — it's a computed condition (matches the
+        // dashboard's own overdue count) — so it needs its own query flag rather
+        // than being passed through the status filter.
+        if ($request->boolean('overdue')) {
+            $query->whereNotIn('status', ['done', 'closed'])->whereDate('due_date', '<', now());
+        }
 
         $view = $request->input('view', 'list');
 
@@ -46,7 +52,7 @@ class TaskController extends Controller
                 ? $query->get()
                 : $query->paginate(20)->withQueryString(),
             'projects' => Project::whereIn('id', $ownedProjectIds)->orderBy('name')->get(['id','name']),
-            'filters'  => $request->only('status','priority','project'),
+            'filters'  => $request->only('status','priority','project','overdue'),
             'view'     => $view,
         ]);
     }

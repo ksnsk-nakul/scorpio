@@ -69,6 +69,7 @@ class HandleInertiaRequests extends Middleware
                 'status'             => fn () => $request->session()->get('status'),
                 'success'            => fn () => $request->session()->get('success'),
                 'error'              => fn () => $request->session()->get('error'),
+                'warning'            => fn () => $request->session()->get('warning'),
                 'profile_success'    => fn () => $request->session()->get('profile_success'),
                 'password_success'   => fn () => $request->session()->get('password_success'),
                 'webhook_project_id' => fn () => $request->session()->get('webhook_project_id'),

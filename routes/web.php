@@ -83,7 +83,9 @@ Route::middleware(['auth', 'role:admin,editor'])
     ->group(function () {
         Route::post('library/books', [BookController::class, 'store'])->name('library.books.store');
         Route::post('library/books/{book}/retry', [BookController::class, 'retry'])->name('library.books.retry');
+        Route::post('library/books/{book}/mark-failed', [BookController::class, 'markFailed'])->name('library.books.mark-failed');
         Route::patch('library/books/{book}', [BookController::class, 'update'])->name('library.books.update');
+        Route::delete('library/books/bulk', [BookController::class, 'bulkDestroy'])->name('library.books.bulk-destroy');
         Route::delete('library/books/{book}', [BookController::class, 'destroy'])->name('library.books.destroy');
     });
 
@@ -93,6 +95,7 @@ Route::middleware(['auth', 'role:admin,editor,viewer'])
     ->group(function () {
         Route::get('library/books/{book}/status', [BookController::class, 'status'])->name('library.books.status');
         Route::get('library', [BookController::class, 'index'])->name('library.index');
+        Route::get('library/upload', [BookController::class, 'uploadPage'])->name('library.upload');
     });
 
 use App\Http\Controllers\Admin\LibraryChatController;

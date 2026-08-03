@@ -24,6 +24,14 @@
       </aside>
 
       <section class="flex-1 flex flex-col">
+        <div v-if="unavailable" class="flex-1 flex items-center justify-center p-6">
+          <div class="text-center max-w-sm">
+            <p class="text-sm font-medium text-slate-700 mb-1">Library Chat isn't available right now</p>
+            <p class="text-sm text-slate-400">The AI search backend couldn't be reached. This is usually a temporary server-side issue — try again shortly, or let an admin know if it persists.</p>
+          </div>
+        </div>
+
+        <template v-else>
         <div ref="messagesEl" role="log" aria-live="polite" class="flex-1 overflow-y-auto p-6 space-y-4">
           <div v-if="!activeThread" class="text-sm text-slate-400 text-center py-20">
             Ask a question about your library to start a new thread.
@@ -78,6 +86,7 @@
           </div>
           <p v-if="form.errors.question" class="mt-2 text-sm text-red-600">{{ form.errors.question }}</p>
         </form>
+        </template>
       </section>
     </div>
   </AdminLayout>
@@ -91,6 +100,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 const props = defineProps({
   threads: { type: Array, default: () => [] },
   activeThread: { type: Object, default: null },
+  unavailable: { type: Boolean, default: false },
 })
 
 const form = useForm({ question: '', thread_id: props.activeThread?.id ?? null })

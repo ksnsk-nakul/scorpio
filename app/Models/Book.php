@@ -77,6 +77,16 @@ class Book extends Model
         return $this->status === 'failed';
     }
 
+    // A book stuck at pending/processing for a while almost always means the
+    // job that would move it forward was lost (e.g. no queue worker was running
+    // when it was dispatched) rather than genuinely still in flight — a fresh
+    // upload legitimately sits at "pending" for a few seconds/minutes, so this
+    // only trips once that window has clearly passed.
+    public function isStuck(): bool
+    {
+        return $this->isProcessing() && $this->updated_at->lt(now()->subMinutes(10));
+    }
+
     public function getCoverUrlAttribute(): ?string
     {
         return $this->cover_path ? Storage::disk('public')->url($this->cover_path) : null;
