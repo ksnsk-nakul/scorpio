@@ -119,6 +119,26 @@ it('marks the course as failed with a status_reason, without throwing, when impo
         ->and($course->status_reason)->toBe('disk read error');
 });
 
+it('skips redundant slide regeneration when re-importing unchanged notes with already-ready slides', function () {
+    $tmp = sys_get_temp_dir() . '/edtech-test-' . uniqid();
+    $courseDir = CourseFixtureBuilder::build(
+        $tmp, 'C001-HTML-101', 'Introduction to HTML', 'desc',
+        modules: [['title' => 'Fundamentals', 'topics' => [['title' => 'Intro', 'notes' => 'v1 notes']]]],
+    );
+
+    $service = new CourseImportService();
+    $course = $service->importCourse($courseDir, 'C001-HTML-101');
+
+    $topic = $course->modules->first()->topics->first();
+    expect($topic->material('slides')->status)->toBe('generating');
+
+    \App\Models\Material::where('topic_id', $topic->id)->where('type', 'slides')->update(['status' => 'ready']);
+
+    $service->importCourse($courseDir, 'C001-HTML-101');
+
+    Queue::assertPushed(\App\Jobs\GenerateTopicSlidesJob::class, 1);
+});
+
 it('re-importing the same course code updates it in place instead of duplicating', function () {
     $tmp = sys_get_temp_dir() . '/edtech-test-' . uniqid();
     $courseDir = CourseFixtureBuilder::build($tmp, 'C001-HTML-101', 'Introduction to HTML', 'v1 description', [], []);

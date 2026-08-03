@@ -8,6 +8,7 @@ use App\Models\Material;
 use App\Models\Module;
 use App\Models\PricingTier;
 use App\Models\Topic;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -32,7 +33,7 @@ class CourseImportService
 
         try {
             $this->importPricingTiers($course, $courseDir);
-            $this->importModules($course, $courseDir);
+            DB::transaction(fn () => $this->importModules($course, $courseDir));
 
             $course->status = 'ready';
             $course->imported_at = now();
@@ -50,13 +51,7 @@ class CourseImportService
 
     private function extractTitle(string $courseDir): ?string
     {
-        $path = "{$courseDir}/00-course-info/intro-and-summary.md";
-        if (! is_file($path)) {
-            return null;
-        }
-
-        $line = collect(file($path))->first(fn ($l) => str_starts_with(trim($l), '# '));
-        return $line ? trim(substr(trim($line), 2)) : null;
+        return $this->extractH1("{$courseDir}/00-course-info/intro-and-summary.md");
     }
 
     private function extractDescription(string $courseDir): ?string
@@ -118,6 +113,12 @@ class CourseImportService
         return (int) round(((float) $digits) * 100);
     }
 
+    // Accepted v1 limitation: re-imports only add/update Module/Topic/Material
+    // rows — they never remove rows whose source directory was renamed or
+    // deleted between imports (unlike importPricingTiers, which deletes-then-
+    // recreates all tiers every time). Full stale-row cleanup was judged out
+    // of scope for now since course directory structure is expected to be
+    // stable/append-only in practice.
     protected function importModules(Course $course, string $courseDir): void
     {
         $selfpacedDir = "{$courseDir}/selfpaced";
@@ -167,6 +168,10 @@ class CourseImportService
             'demo_solution' => [$this->firstDemoFile("{$topicDir}/demo/solution"), 'view_only'],
         ];
 
+        $previousNotes = Material::where('topic_id', $topic->id)->where('type', 'notes')->value('content');
+        $newNotesPath = $files['notes'][0];
+        $newNotes = is_file($newNotesPath) ? file_get_contents($newNotesPath) : null;
+
         foreach ($files as $type => [$path, $policy]) {
             if (! $path || ! is_file($path)) {
                 continue;
@@ -178,11 +183,17 @@ class CourseImportService
             );
         }
 
-        $slides = Material::updateOrCreate(
-            ['topic_id' => $topic->id, 'type' => 'slides'],
-            ['download_policy' => 'view_only', 'status' => 'generating']
-        );
-        GenerateTopicSlidesJob::dispatch($topic);
+        $existingSlides = Material::where('topic_id', $topic->id)->where('type', 'slides')->first();
+        $notesUnchanged = $newNotes !== null && $newNotes === $previousNotes;
+        $slidesAlreadyReady = $existingSlides && $existingSlides->status === 'ready';
+
+        if (! ($notesUnchanged && $slidesAlreadyReady)) {
+            Material::updateOrCreate(
+                ['topic_id' => $topic->id, 'type' => 'slides'],
+                ['download_policy' => 'view_only', 'status' => 'generating']
+            );
+            GenerateTopicSlidesJob::dispatch($topic);
+        }
 
         Material::updateOrCreate(
             ['topic_id' => $topic->id, 'type' => 'video'],
@@ -210,6 +221,10 @@ class CourseImportService
     private function slugFromDirName(string $dirName): string
     {
         // "module-01-html-fundamentals" -> "html-fundamentals"; "topic-03-tables" -> "tables"
-        return preg_replace('/^(module|topic)-\d+-/', '', $dirName);
+        $slug = preg_replace('/^(module|topic)-\d+-/', '', $dirName);
+
+        // A dir named e.g. "module-01-" (digits + trailing hyphen, nothing
+        // after) would otherwise strip down to an empty string.
+        return $slug !== '' ? $slug : $dirName;
     }
 }
