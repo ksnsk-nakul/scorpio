@@ -21,7 +21,7 @@
         <div v-for="tier in course.pricingTiers" :key="tier.id" class="border border-slate-100 rounded-xl p-4">
           <h3 class="text-sm font-semibold text-slate-800">{{ tier.name }}</h3>
           <p class="text-xs text-slate-500 mt-1">{{ tier.description }}</p>
-          <p class="text-lg font-bold text-slate-800 mt-2">₹{{ (tier.price_inr_paise / 100).toLocaleString() }}</p>
+          <p class="text-lg font-bold text-slate-800 mt-2">₹{{ (tier.price_inr_paise / 100).toLocaleString('en-IN') }}</p>
         </div>
       </section>
 

@@ -50,7 +50,7 @@ class Course extends Model
 
     public function pricingTiers(): HasMany
     {
-        return $this->hasMany(PricingTier::class);
+        return $this->hasMany(PricingTier::class)->orderBy('price_inr_paise');
     }
 
     public function enrollments(): HasMany
