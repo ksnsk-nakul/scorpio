@@ -131,7 +131,7 @@
                   <td class="px-5 py-3 text-slate-400 text-xs whitespace-nowrap">{{ book.created_at }}</td>
                   <td class="px-5 py-3">
                     <div class="flex items-center gap-2 whitespace-nowrap">
-                      <a v-if="book.status === 'ready'" :href="`/library/books/${book.slug}`" target="_blank" rel="noopener"
+                      <a v-if="book.status === 'ready'" :href="`/library/books/${book.slug}/chapters/0`" target="_blank" rel="noopener"
                         class="text-xs text-emerald-600 hover:bg-emerald-50 hover:text-emerald-800 px-2 py-1 rounded-md transition-colors">Read</a>
                       <template v-if="canManage">
                         <button @click="openEdit(book)" class="text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-800 px-2 py-1 rounded-md transition-colors">Edit</button>
@@ -168,7 +168,7 @@
               {{ book.status_reason }}
             </span>
             <div class="flex items-center gap-2 mt-2">
-              <a v-if="book.status === 'ready'" :href="`/library/books/${book.slug}`" target="_blank" rel="noopener"
+              <a v-if="book.status === 'ready'" :href="`/library/books/${book.slug}/chapters/0`" target="_blank" rel="noopener"
                 class="text-xs text-emerald-600 hover:bg-emerald-50 hover:text-emerald-800 px-2 py-1 rounded-md transition-colors">Read</a>
               <template v-if="canManage">
                 <button @click="openEdit(book)" class="text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-800 px-2 py-1 rounded-md transition-colors">Edit</button>
@@ -188,7 +188,7 @@
             <div v-else class="aspect-[2/3] w-full bg-slate-100 rounded-lg"></div>
 
             <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 rounded-lg transition flex items-center justify-center gap-2 hidden group-hover:flex">
-              <a v-if="book.status === 'ready'" :href="`/library/books/${book.slug}`" target="_blank" rel="noopener"
+              <a v-if="book.status === 'ready'" :href="`/library/books/${book.slug}/chapters/0`" target="_blank" rel="noopener"
                 class="bg-white/90 hover:bg-emerald-600 rounded-full px-2 py-1 text-xs text-emerald-600 hover:text-white shadow-sm transition-colors">Read</a>
               <template v-if="canManage">
                 <button @click="openEdit(book)" class="bg-white/90 hover:bg-blue-600 rounded-full px-2 py-1 text-xs text-blue-600 hover:text-white shadow-sm transition-colors">Edit</button>
@@ -289,7 +289,7 @@
                     <td class="px-5 py-3 text-slate-400 text-xs whitespace-nowrap">{{ timeAgo(book.last_read_at) }}</td>
                     <td class="px-5 py-3">
                       <div class="flex items-center gap-2 whitespace-nowrap">
-                        <a :href="`/library/books/${book.slug}`" target="_blank" rel="noopener"
+                        <a :href="readHref(book)" target="_blank" rel="noopener"
                           class="text-xs text-emerald-600 hover:bg-emerald-50 hover:text-emerald-800 px-2 py-1 rounded-md transition-colors">Read</a>
                         <button @click="unfollowBook(book)" class="text-xs text-red-500 hover:bg-red-50 hover:text-red-700 px-2 py-1 rounded-md transition-colors">Unfollow</button>
                       </div>
@@ -318,7 +318,7 @@
               <p class="text-slate-500 text-xs mt-1">{{ book.chapters_read }} / {{ book.chapters_total }} chapters</p>
               <p class="text-slate-400 text-xs">{{ timeAgo(book.last_read_at) }}</p>
               <div class="flex items-center gap-2 mt-2">
-                <a :href="`/library/books/${book.slug}`" target="_blank" rel="noopener"
+                <a :href="readHref(book)" target="_blank" rel="noopener"
                   class="text-xs text-emerald-600 hover:bg-emerald-50 hover:text-emerald-800 px-2 py-1 rounded-md transition-colors">Read</a>
                 <button @click="unfollowBook(book)" class="text-xs text-red-500 hover:bg-red-50 hover:text-red-700 px-2 py-1 rounded-md transition-colors">Unfollow</button>
               </div>
@@ -332,7 +332,7 @@
               <div v-else class="aspect-[2/3] w-full bg-slate-100 rounded-lg"></div>
 
               <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 rounded-lg transition flex items-center justify-center gap-2 hidden group-hover:flex">
-                <a :href="`/library/books/${book.slug}`" target="_blank" rel="noopener"
+                <a :href="readHref(book)" target="_blank" rel="noopener"
                   class="bg-white/90 hover:bg-emerald-600 rounded-full px-2 py-1 text-xs text-emerald-600 hover:text-white shadow-sm transition-colors">Read</a>
                 <button @click="unfollowBook(book)" class="bg-white/90 hover:bg-red-600 rounded-full px-2 py-1 text-xs text-red-600 hover:text-white shadow-sm transition-colors">×</button>
               </div>
@@ -657,6 +657,13 @@ const timeAgo = (dateString) => {
   const months = Math.floor(days / 30)
   if (months < 12) return `${months}mo ago`
   return `${Math.floor(months / 12)}y ago`
+}
+
+// "My Library" tab rows carry `chapters_read` (last_chapter.sort_order + 1, or 0),
+// so the Read link can resume at the last-read chapter instead of always chapter 1.
+const readHref = (book) => {
+  const sortOrder = book.chapters_read > 0 ? Math.max(0, book.chapters_read - 1) : 0
+  return `/library/books/${book.slug}/chapters/${sortOrder}`
 }
 
 const unfollowBook = async (book) => {

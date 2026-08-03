@@ -11,8 +11,12 @@ use Inertia\Response;
 
 class LibraryController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request): Response|\Illuminate\Http\RedirectResponse
     {
+        if (auth()->check()) {
+            return redirect()->route('admin.library.my');
+        }
+
         $query = Book::with(['author', 'series'])->where('status', 'ready');
 
         if ($request->filled('search')) {
@@ -45,8 +49,17 @@ class LibraryController extends Controller
     {
         $book = Book::where('slug', $slug)
             ->where('status', 'ready')
-            ->with(['author', 'series', 'chapters' => fn ($q) => $q->orderBy('sort_order')])
+            ->with(['author', 'series'])
             ->firstOrFail();
+
+        $myEntry = auth()->check()
+            ? LibraryEntry::where('user_id', auth()->id())->where('book_id', $book->id)->with('lastChapter')->first()
+            : null;
+
+        $chapters = $book->chapters()
+            ->orderBy('sort_order')
+            ->paginate(30, ['id', 'title', 'sort_order'], 'chapter_page')
+            ->withQueryString();
 
         return Inertia::render('Public/Library/BookDetail', [
             'book' => [
@@ -58,7 +71,11 @@ class LibraryController extends Controller
                 'publisher' => $book->publisher,
                 'published_date' => $book->published_date?->toDateString(),
                 'author' => $book->author ? ['name' => $book->author->name, 'slug' => $book->author->slug] : null,
-                'chapters' => $book->chapters->map(fn ($c) => ['title' => $c->title, 'sort_order' => $c->sort_order])->values(),
+                'chapters' => $chapters->through(fn ($c) => ['title' => $c->title, 'sort_order' => $c->sort_order]),
+                'my_progress' => $myEntry ? [
+                    'status' => $myEntry->status,
+                    'last_chapter_sort_order' => $myEntry->lastChapter?->sort_order,
+                ] : null,
                 'series' => $book->series ? [
                     'name' => $book->series->name,
                     'slug' => $book->series->slug,

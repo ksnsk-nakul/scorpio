@@ -17,6 +17,15 @@
     <main class="pt-20 pb-16 max-w-6xl mx-auto px-6">
       <h1 class="text-3xl font-bold text-slate-800 mb-8">Library</h1>
 
+      <div class="flex items-center gap-2 mb-6">
+        <input v-model="searchInput" @input="onSearchInput" type="text"
+          placeholder="Search title, author, or series…"
+          class="flex-1 max-w-sm border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+        <button v-if="searchInput" @click="clearSearch" class="text-xs text-slate-500 hover:text-orange-500 underline">
+          Clear
+        </button>
+      </div>
+
       <div v-if="books.data.length === 0" class="text-sm text-slate-400 py-12 text-center">
         No books available yet.
       </div>
@@ -54,14 +63,38 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { Head, Link } from '@inertiajs/vue3'
+import { computed, ref } from 'vue'
+import { Head, Link, router } from '@inertiajs/vue3'
 import { useActiveTemplate } from '@/composables/useActiveTemplate'
 import { resolvePublicPage } from '@/templateRegistry'
 
-const props = defineProps({ books: { type: Object, required: true } })
+const props = defineProps({
+  books: { type: Object, required: true },
+  filters: { type: Object, default: () => ({}) },
+})
 
 // ── Template resolution ──────────────────────────────────────────────────────
 const { publicTemplate } = useActiveTemplate()
 const activeTemplateComponent = computed(() => resolvePublicPage(publicTemplate.value, 'LibraryIndex'))
+
+// ── Search ────────────────────────────────────────────────────────────────────
+const searchInput = ref(props.filters.search ?? '')
+let searchDebounce = null
+
+const applySearch = () => {
+  router.get('/library', { search: searchInput.value || undefined }, {
+    preserveState: true,
+    replace: true,
+  })
+}
+
+const onSearchInput = () => {
+  clearTimeout(searchDebounce)
+  searchDebounce = setTimeout(applySearch, 400)
+}
+
+const clearSearch = () => {
+  searchInput.value = ''
+  applySearch()
+}
 </script>

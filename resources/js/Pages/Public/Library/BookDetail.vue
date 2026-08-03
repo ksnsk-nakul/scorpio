@@ -53,7 +53,16 @@
                 Unfollow
               </button>
             </div>
+            <p v-if="book.my_progress?.status && book.my_progress.last_chapter_sort_order === null" class="text-xs text-slate-400 mt-1">
+              Status: {{ book.my_progress.status }}
+            </p>
           </div>
+
+          <Link v-if="hasResumePoint"
+            :href="`/library/books/${book.slug}/chapters/${book.my_progress.last_chapter_sort_order}`"
+            class="inline-flex items-center gap-1.5 mt-4 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors">
+            Continue reading — Chapter {{ book.my_progress.last_chapter_sort_order + 1 }}
+          </Link>
 
           <p v-if="book.description" class="text-sm text-slate-600 leading-relaxed mt-4">{{ book.description }}</p>
           <dl class="mt-4 space-y-1 text-xs text-slate-400">
@@ -66,18 +75,30 @@
 
       <h2 class="text-lg font-semibold text-slate-800 mb-3">Chapters</h2>
       <ol class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden">
-        <li v-for="chapter in book.chapters" :key="chapter.sort_order">
+        <li v-for="chapter in book.chapters.data" :key="chapter.sort_order">
           <Link
             :href="`/library/books/${book.slug}/chapters/${chapter.sort_order}`"
             class="flex items-center justify-between px-4 py-3 text-sm hover:bg-slate-50 transition-colors"
           >
-            <span class="line-clamp-1" :title="chapter.title ?? `Chapter ${chapter.sort_order + 1}`">
+            <span class="line-clamp-1 flex items-center gap-1.5" :title="chapter.title ?? `Chapter ${chapter.sort_order + 1}`">
+              <span v-if="isChapterRead(chapter)" class="text-emerald-600">✓</span>
               {{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }}
             </span>
             <span class="text-slate-300">›</span>
           </Link>
         </li>
       </ol>
+
+      <div v-if="book.chapters.last_page > 1" class="flex flex-wrap gap-1 mt-4 justify-center">
+        <Link
+          v-for="(link, i) in book.chapters.links"
+          :key="i"
+          :href="link.url ?? '#'"
+          v-html="link.label"
+          class="px-3 py-1.5 text-sm rounded-lg"
+          :class="link.active ? 'bg-orange-500 text-white' : link.url ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-300 pointer-events-none'"
+        />
+      </div>
 
       <div v-if="book.series && book.series.other_volumes.length > 0" class="mt-10">
         <h2 class="text-lg font-semibold text-slate-800 mb-3">
@@ -139,6 +160,16 @@ const toast = useToast()
 // idempotent backend endpoints, so nothing is lost — just not reflected until acted on this visit.
 const followed = ref(false)
 const currentStatus = ref('reading')
+
+// ── Reading progress (from `book.my_progress`, see LibraryController::show) ──
+const hasResumePoint = computed(() =>
+  props.book.my_progress?.last_chapter_sort_order !== null && props.book.my_progress?.last_chapter_sort_order !== undefined
+)
+
+const isChapterRead = (chapter) => {
+  const lastRead = props.book.my_progress?.last_chapter_sort_order
+  return lastRead !== null && lastRead !== undefined && chapter.sort_order <= lastRead
+}
 
 const follow = async () => {
   try {
