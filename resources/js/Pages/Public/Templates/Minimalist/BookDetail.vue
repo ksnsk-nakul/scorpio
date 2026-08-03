@@ -30,7 +30,7 @@
 
       <h2 class="text-lg font-semibold text-slate-800 mb-3">Chapters</h2>
       <ol class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden">
-        <li v-for="chapter in book.chapters" :key="chapter.sort_order">
+        <li v-for="chapter in book.chapters.data" :key="chapter.sort_order">
           <Link
             :href="`/library/books/${book.slug}/chapters/${chapter.sort_order}`"
             class="flex items-center justify-between px-4 py-3 text-sm hover:bg-slate-50 transition-colors"
@@ -42,6 +42,17 @@
           </Link>
         </li>
       </ol>
+
+      <div v-if="book.chapters.last_page > 1" class="flex flex-wrap gap-1 mt-4 justify-center">
+        <Link
+          v-for="(link, i) in book.chapters.links"
+          :key="i"
+          :href="link.url ?? '#'"
+          v-html="link.label"
+          class="px-3 py-1.5 text-sm rounded-lg"
+          :class="link.active ? 'bg-orange-500 text-white' : link.url ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-300 pointer-events-none'"
+        />
+      </div>
     </main>
   </div>
 </template>
