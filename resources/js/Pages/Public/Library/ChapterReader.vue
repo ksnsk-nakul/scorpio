@@ -3,11 +3,12 @@
     <title>{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }} · {{ book.title }}</title>
   </Head>
 
-  <div ref="rootEl" class="min-h-screen font-sans outline-none" :class="themeClass" tabindex="-1"
-    @keydown.left="mode === 'h-page' && goToPage(-1)" @keydown.right="mode === 'h-page' && goToPage(1)"
-    @keydown.up="mode === 'v-page' && goToPage(-1)" @keydown.down="mode === 'v-page' && goToPage(1)"
+  <div ref="rootEl" class="min-h-dvh pb-[env(safe-area-inset-bottom)] font-sans outline-none" :class="themeClass" tabindex="-1"
+    @keydown.left="onKeyLeft" @keydown.right="onKeyRight"
+    @keydown.up="onKeyUp" @keydown.down="onKeyDown"
+    @keydown.space.prevent="onKeySpace" @keydown.esc="drawerOpen = false"
     @touchstart="onTouchStart" @touchend="onTouchEnd">
-    <nav class="sticky top-0 z-40 backdrop-blur-xl border-b border-current/10" :class="themeClass">
+    <nav class="sticky top-0 z-40 backdrop-blur-xl border-b border-current/10 pt-[env(safe-area-inset-top)]" :class="themeClass">
       <div class="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between text-sm">
         <a :href="`/library/books/${book.slug}`" class="opacity-70 hover:opacity-100 transition-opacity truncate max-w-[10rem]">
           ← {{ book.title }}
@@ -16,7 +17,7 @@
       </div>
     </nav>
 
-    <main v-if="mode === 'scroll' || mode === 'autoscroll'" class="max-w-3xl mx-auto px-6 py-10">
+    <main v-if="mode === 'scroll' || mode === 'autoscroll'" class="max-w-3xl mx-auto px-6 py-10 pb-[env(safe-area-inset-bottom)]">
       <h1 class="text-xl font-bold mb-6">{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }}</h1>
       <div class="markdown-body" :style="fontStyle" v-html="chapter.content"></div>
 
@@ -28,7 +29,7 @@
       </div>
     </main>
 
-    <main v-else-if="mode === 'h-page'" ref="pagedViewportEl" class="overflow-hidden max-w-3xl mx-auto relative" :style="{ height: 'calc(100vh - 3.5rem)' }">
+    <main v-else-if="mode === 'h-page'" ref="pagedViewportEl" class="overflow-hidden max-w-3xl mx-auto relative pb-[env(safe-area-inset-bottom)]" :style="{ height: 'calc(100dvh - 3.5rem - env(safe-area-inset-bottom))' }">
       <button class="absolute left-0 top-0 h-full w-1/3 z-10" aria-label="Previous page" @click="goToPage(-1)"></button>
       <button class="absolute right-0 top-0 h-full w-1/3 z-10" aria-label="Next page" @click="goToPage(1)"></button>
       <div ref="pagedEl" class="markdown-body px-6 py-10 h-full"
@@ -38,7 +39,7 @@
       </div>
     </main>
 
-    <main v-else-if="mode === 'v-page'" ref="pagedViewportEl" class="overflow-hidden max-w-3xl mx-auto relative" :style="{ height: 'calc(100vh - 3.5rem)' }">
+    <main v-else-if="mode === 'v-page'" ref="pagedViewportEl" class="overflow-hidden max-w-3xl mx-auto relative pb-[env(safe-area-inset-bottom)]" :style="{ height: 'calc(100dvh - 3.5rem - env(safe-area-inset-bottom))' }">
       <button class="absolute top-0 left-0 w-full h-1/3 z-10" aria-label="Previous page" @click="goToPage(-1)"></button>
       <button class="absolute bottom-0 left-0 w-full h-1/3 z-10" aria-label="Next page" @click="goToPage(1)"></button>
       <div ref="pagedEl" class="markdown-body px-6 py-10" :style="{ ...fontStyle, transform: `translateY(-${currentPage * pageHeight}px)`, transition: 'transform 0.25s ease' }">
@@ -164,6 +165,38 @@ const goToPage = (delta) => {
 
 watch(mode, measurePages, { flush: 'post' })
 watch(() => fontStyle.value.fontSize, measurePages, { flush: 'post' })
+
+const goToChapter = (delta) => {
+  if (navigating) return
+  const target = props.chapter.sort_order + delta
+  if (delta < 0 && !props.hasPrev) return
+  if (delta > 0 && !props.hasNext) return
+  navigating = true
+  router.visit(`/library/books/${props.book.slug}/chapters/${target}`, {
+    onFinish: () => { navigating = false },
+  })
+}
+
+const onKeyLeft = () => {
+  if (mode.value === 'h-page') goToPage(-1)
+  else goToChapter(-1)
+}
+const onKeyRight = () => {
+  if (mode.value === 'h-page') goToPage(1)
+  else goToChapter(1)
+}
+const onKeyUp = () => {
+  if (mode.value === 'v-page') goToPage(-1)
+  else goToChapter(-1)
+}
+const onKeyDown = () => {
+  if (mode.value === 'v-page') goToPage(1)
+  else goToChapter(1)
+}
+const onKeySpace = () => {
+  if (mode.value === 'h-page' || mode.value === 'v-page') goToPage(1)
+  else goToChapter(1)
+}
 
 let touchStartX = 0
 let touchStartY = 0
