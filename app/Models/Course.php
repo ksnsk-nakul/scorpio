@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Course extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'code', 'title', 'slug', 'subtitle', 'description',
         'status', 'status_reason', 'source_path', 'imported_at',
