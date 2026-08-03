@@ -9,6 +9,7 @@ use App\Models\Module;
 use App\Models\PricingTier;
 use App\Models\Topic;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -16,20 +17,33 @@ class CourseImportService
 {
     public function importCourse(string $courseDir, string $code): Course
     {
-        $title = $this->extractTitle($courseDir) ?? $code;
-        $existing = Course::where('code', $code)->first();
+        try {
+            $title = $this->extractTitle($courseDir) ?? $code;
+            $existing = Course::where('code', $code)->first();
 
-        $course = Course::updateOrCreate(
-            ['code' => $code],
-            [
-                'title' => $title,
-                'slug' => $existing?->slug ?? Course::uniqueSlug($title),
-                'description' => $this->extractDescription($courseDir),
-                'source_path' => $courseDir,
-                'status' => 'importing',
-                'status_reason' => null,
-            ]
-        );
+            $course = Course::updateOrCreate(
+                ['code' => $code],
+                [
+                    'title' => $title,
+                    'slug' => $existing?->slug ?? Course::uniqueSlug($title),
+                    'description' => $this->extractDescription($courseDir),
+                    'source_path' => $courseDir,
+                    'status' => 'importing',
+                    'status_reason' => null,
+                ]
+            );
+        } catch (Throwable $e) {
+            // No Course row exists to mark as failed — log for operator
+            // visibility and rethrow so the caller (ImportCoursesCommand)
+            // can isolate the failure at the loop level.
+            Log::warning('Course import failed before a Course row could be created', [
+                'code' => $code,
+                'course_dir' => $courseDir,
+                'exception' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
 
         try {
             $this->importPricingTiers($course, $courseDir);
@@ -214,7 +228,12 @@ class CourseImportService
             return null;
         }
 
-        $line = collect(file($path))->first(fn ($l) => str_starts_with(trim($l), '# '));
+        $lines = file($path);
+        if ($lines === false) {
+            return null;
+        }
+
+        $line = collect($lines)->first(fn ($l) => str_starts_with(trim($l), '# '));
         return $line ? trim(substr(trim($line), 2)) : null;
     }
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Course;
+use App\Services\CourseImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\Support\CourseFixtureBuilder;
@@ -44,4 +45,35 @@ it('skips courses whose COURSE-INDEX.md status is not content-complete', functio
     $this->artisan('edtech:import-courses', ['path' => $tmp])->assertSuccessful();
 
     expect(Course::count())->toBe(0);
+});
+
+it('isolates a total per-course import failure at the command loop level and keeps importing the rest', function () {
+    $tmp = sys_get_temp_dir().'/edtech-cmd-test-'.uniqid();
+    mkdir($tmp, 0777, true);
+
+    CourseFixtureBuilder::build($tmp, 'C001-HTML-101', 'Introduction to HTML', 'HTML desc', [
+        ['title' => 'Fundamentals', 'topics' => [['title' => 'Intro']]],
+    ]);
+    CourseFixtureBuilder::build($tmp, 'C002-CSS-101', 'Introduction to CSS', 'CSS desc', [
+        ['title' => 'Fundamentals', 'topics' => [['title' => 'Selectors']]],
+    ]);
+    CourseFixtureBuilder::buildIndex($tmp, [
+        ['code' => 'C001-HTML-101', 'title' => 'Introduction to HTML', 'slug' => 'C001-HTML-101-introduction-to-html'],
+        ['code' => 'C002-CSS-101', 'title' => 'Introduction to CSS', 'slug' => 'C002-CSS-101-introduction-to-css'],
+    ]);
+
+    // Simulate CourseImportService::importCourse() throwing before any Course
+    // row could be created for C001, while C002 imports normally through the
+    // real (non-mocked) implementation.
+    $this->partialMock(CourseImportService::class, function ($mock) {
+        $mock->shouldReceive('importCourse')
+            ->withArgs(fn ($courseDir, $code) => $code === 'C001-HTML-101')
+            ->andThrow(new \RuntimeException('simulated total failure'));
+    });
+
+    $this->artisan('edtech:import-courses', ['path' => $tmp])->assertSuccessful();
+
+    expect(Course::count())->toBe(1)
+        ->and(Course::where('code', 'C002-CSS-101')->first()->status)->toBe('ready')
+        ->and(Course::where('code', 'C001-HTML-101')->exists())->toBeFalse();
 });

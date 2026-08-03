@@ -42,8 +42,16 @@ class ImportCoursesCommand extends Command
             }
 
             $this->info("Importing {$row['code']}: {$row['title']}");
-            $service->importCourse($courseDir, $row['code']);
-            $imported++;
+
+            try {
+                $service->importCourse($courseDir, $row['code']);
+                $imported++;
+            } catch (\Throwable $e) {
+                $this->warn("Failed to import {$row['code']}: {$e->getMessage()}");
+                $skipped++;
+
+                continue;
+            }
         }
 
         $this->info("Imported: {$imported}, Skipped: {$skipped}");
