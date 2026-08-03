@@ -20,7 +20,7 @@ class CourseFixtureBuilder
         @mkdir("{$courseDir}/00-course-info", 0777, true);
         @mkdir("{$courseDir}/selfpaced", 0777, true);
 
-        file_put_contents("{$courseDir}/00-course-info/intro-and-summary.md", "# Intro\n\n{$description}\n");
+        file_put_contents("{$courseDir}/00-course-info/intro-and-summary.md", "# {$courseTitle}\n\n{$description}\n");
 
         $tierRows = implode("\n", array_map(
             fn ($t) => "| {$t['name']} | {$t['included']} | {$t['price_inr']} | {$t['price_usd']} |",
