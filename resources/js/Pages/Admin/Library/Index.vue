@@ -110,7 +110,14 @@
                     <img v-if="book.cover_url" :src="book.cover_url" class="w-8 h-11 object-cover rounded" />
                     <div v-else class="w-8 h-11 bg-slate-100 rounded"></div>
                   </td>
-                  <td class="px-5 py-3 font-medium text-slate-800 max-w-xs line-clamp-2" :title="book.title">{{ book.title }}</td>
+                  <td class="px-5 py-3 max-w-xs">
+                    <p class="font-medium text-slate-800 line-clamp-2" :title="book.title">{{ book.title }}</p>
+                    <p v-if="book.series" class="text-xs text-slate-400 mt-0.5">
+                      Part of:
+                      <a :href="`/library/series/${book.series.slug}`" target="_blank" rel="noopener" class="hover:underline hover:text-slate-600">{{ book.series.name }}</a>,
+                      Vol. {{ book.series.volume_number }}
+                    </p>
+                  </td>
                   <td class="px-5 py-3 text-slate-500 whitespace-nowrap">{{ book.author ?? '—' }}</td>
                   <td class="px-5 py-3">
                     <span class="text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap" :class="statusBadge(book.status)">
@@ -148,6 +155,11 @@
             <div v-else class="aspect-[2/3] w-full bg-slate-100 rounded-lg"></div>
             <p class="font-medium text-slate-800 text-sm mt-2 line-clamp-2" :title="book.title">{{ book.title }}</p>
             <p class="text-slate-500 text-xs">{{ book.author ?? '—' }}</p>
+            <p v-if="book.series" class="text-xs text-slate-400 mt-0.5">
+              Part of:
+              <a :href="`/library/series/${book.series.slug}`" target="_blank" rel="noopener" class="hover:underline hover:text-slate-600">{{ book.series.name }}</a>,
+              Vol. {{ book.series.volume_number }}
+            </p>
             <span class="inline-block text-xs px-2 py-0.5 rounded-full font-medium mt-1" :class="statusBadge(book.status)">
               {{ book.status }}
             </span>
@@ -185,6 +197,11 @@
             </div>
 
             <p class="line-clamp-2 text-xs text-center mt-1 text-slate-600">{{ book.title }}</p>
+            <p v-if="book.series" class="text-xs text-center text-slate-400 truncate">
+              Part of:
+              <a :href="`/library/series/${book.series.slug}`" target="_blank" rel="noopener" class="hover:underline hover:text-slate-600">{{ book.series.name }}</a>,
+              Vol. {{ book.series.volume_number }}
+            </p>
           </div>
         </div>
       </template>
@@ -254,7 +271,14 @@
                       <img v-if="book.cover_url" :src="book.cover_url" class="w-8 h-11 object-cover rounded" />
                       <div v-else class="w-8 h-11 bg-slate-100 rounded"></div>
                     </td>
-                    <td class="px-5 py-3 font-medium text-slate-800 max-w-xs line-clamp-2" :title="book.title">{{ book.title }}</td>
+                    <td class="px-5 py-3 max-w-xs">
+                      <p class="font-medium text-slate-800 line-clamp-2" :title="book.title">{{ book.title }}</p>
+                      <p v-if="book.series" class="text-xs text-slate-400 mt-0.5">
+                        Part of:
+                        <a :href="`/library/series/${book.series.slug}`" target="_blank" rel="noopener" class="hover:underline hover:text-slate-600">{{ book.series.name }}</a>,
+                        Vol. {{ book.series.volume_number }}
+                      </p>
+                    </td>
                     <td class="px-5 py-3 text-slate-500 whitespace-nowrap">{{ book.author ?? '—' }}</td>
                     <td class="px-5 py-3">
                       <span class="text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap" :class="myStatusBadge(book.status)">
@@ -283,6 +307,11 @@
               <div v-else class="aspect-[2/3] w-full bg-slate-100 rounded-lg"></div>
               <p class="font-medium text-slate-800 text-sm mt-2 line-clamp-2" :title="book.title">{{ book.title }}</p>
               <p class="text-slate-500 text-xs">{{ book.author ?? '—' }}</p>
+              <p v-if="book.series" class="text-xs text-slate-400 mt-0.5">
+                Part of:
+                <a :href="`/library/series/${book.series.slug}`" target="_blank" rel="noopener" class="hover:underline hover:text-slate-600">{{ book.series.name }}</a>,
+                Vol. {{ book.series.volume_number }}
+              </p>
               <span class="inline-block text-xs px-2 py-0.5 rounded-full font-medium mt-1" :class="myStatusBadge(book.status)">
                 {{ statusLabel(book.status) }}
               </span>
@@ -309,6 +338,11 @@
               </div>
 
               <p class="line-clamp-2 text-xs text-center mt-1 text-slate-600">{{ book.title }}</p>
+              <p v-if="book.series" class="text-xs text-center text-slate-400 truncate">
+                Part of:
+                <a :href="`/library/series/${book.series.slug}`" target="_blank" rel="noopener" class="hover:underline hover:text-slate-600">{{ book.series.name }}</a>,
+                Vol. {{ book.series.volume_number }}
+              </p>
             </div>
           </div>
         </template>

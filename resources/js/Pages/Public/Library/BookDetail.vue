@@ -24,6 +24,9 @@
         </div>
         <div class="flex-1">
           <h1 class="text-2xl font-bold text-slate-800 mb-2">{{ book.title }}</h1>
+          <a v-if="book.series" :href="`/library/series/${book.series.slug}`" class="block text-sm text-slate-500 hover:text-orange-500 hover:underline mb-1">
+            {{ book.series.name }}, Vol. {{ book.series.volume_number }}
+          </a>
           <a v-if="book.author" :href="`/library/authors/${book.author.slug}`" class="text-sm text-orange-500 hover:underline">
             {{ book.author.name }}
           </a>
@@ -75,6 +78,29 @@
           </Link>
         </li>
       </ol>
+
+      <div v-if="book.series && book.series.other_volumes.length > 0" class="mt-10">
+        <h2 class="text-lg font-semibold text-slate-800 mb-3">
+          More in <a :href="`/library/series/${book.series.slug}`" class="text-orange-500 hover:underline">{{ book.series.name }}</a>
+        </h2>
+        <ul class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden">
+          <li v-for="volume in book.series.other_volumes" :key="volume.slug">
+            <Link
+              :href="`/library/books/${volume.slug}`"
+              class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-slate-50 transition-colors"
+            >
+              <div class="w-8 h-11 rounded overflow-hidden bg-slate-100 flex-shrink-0">
+                <img v-if="volume.cover_url" :src="volume.cover_url" class="w-full h-full object-cover" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs text-slate-400">Vol. {{ volume.volume_number }}</p>
+                <p class="line-clamp-1" :title="volume.title">{{ volume.title }}</p>
+              </div>
+              <span class="text-slate-300">›</span>
+            </Link>
+          </li>
+        </ul>
+      </div>
     </main>
   </div>
   <ToastContainer />
