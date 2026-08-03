@@ -11,7 +11,7 @@ class Book extends Model
     use HasFactory;
 
     protected $fillable = [
-        'author_id', 'title', 'slug', 'description', 'cover_path',
+        'author_id', 'series_id', 'volume_number', 'title', 'slug', 'description', 'cover_path',
         'language', 'publisher', 'published_date', 'subject',
         'source_epub_path', 'status', 'status_reason', 'uploaded_by',
     ];
@@ -50,6 +50,16 @@ class Book extends Model
     public function author(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Author::class);
+    }
+
+    public function series(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Series::class);
+    }
+
+    public function alternateTitles(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(BookAlternateTitle::class);
     }
 
     public function chapters(): \Illuminate\Database\Eloquent\Relations\HasMany

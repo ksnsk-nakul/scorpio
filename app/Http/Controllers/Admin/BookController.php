@@ -6,10 +6,10 @@ use App\Jobs\ParseEpubBookJob;
 use App\Models\Author;
 use App\Models\Book;
 use App\Models\LibraryEntry;
+use App\Services\BookDeletionService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -19,11 +19,15 @@ class BookController extends Controller
 {
     private const ALLOWED_EPUB_MIMES = ['application/epub+zip', 'application/zip', 'application/octet-stream'];
 
+    public function __construct(private readonly BookDeletionService $bookDeletionService)
+    {
+    }
+
     public function index(Request $request): Response
     {
         return Inertia::render('Admin/Library/Index', [
             'books' => $this->filteredQuery($request)
-                ->with('author')->latest()->latest('id')->paginate(15)->withQueryString()->through(fn (Book $book) => [
+                ->with(['author', 'series'])->latest()->latest('id')->paginate(15)->withQueryString()->through(fn (Book $book) => [
                 'id' => $book->id,
                 'title' => $book->title,
                 'slug' => $book->slug,
@@ -34,6 +38,7 @@ class BookController extends Controller
                 'is_stuck' => $book->isStuck(),
                 'cover_url' => $book->cover_url,
                 'created_at' => $book->created_at->toDateTimeString(),
+                'series' => $book->series ? ['name' => $book->series->name, 'slug' => $book->series->slug, 'volume_number' => $book->volume_number] : null,
             ]),
             'filters' => $request->only(['search', 'status']),
         ]);
@@ -64,7 +69,7 @@ class BookController extends Controller
 
         $query = Book::query()
             ->whereHas('libraryEntries', fn ($q) => $q->where('user_id', $userId))
-            ->with(['author', 'libraryEntries' => fn ($q) => $q->where('user_id', $userId)]);
+            ->with(['author', 'series', 'libraryEntries' => fn ($q) => $q->where('user_id', $userId)]);
 
         if ($request->filled('search')) {
             $term = $request->string('search');
@@ -113,6 +118,7 @@ class BookController extends Controller
                 'chapters_read' => $chaptersRead,
                 'chapters_total' => $chaptersTotal,
                 'last_read_at' => $entry?->last_read_at?->toDateTimeString(),
+                'series' => $book->series ? ['name' => $book->series->name, 'slug' => $book->series->slug, 'volume_number' => $book->volume_number] : null,
             ];
         });
 
@@ -131,7 +137,8 @@ class BookController extends Controller
                 $term = $request->string('search');
                 $query->where(function ($q) use ($term) {
                     $q->where('title', 'like', "%{$term}%")
-                        ->orWhereHas('author', fn ($a) => $a->where('name', 'like', "%{$term}%"));
+                        ->orWhereHas('author', fn ($a) => $a->where('name', 'like', "%{$term}%"))
+                        ->orWhereHas('series', fn ($s) => $s->where('name', 'like', "%{$term}%"));
                 });
             })
             ->when($request->filled('status'), function ($query) use ($request) {
@@ -245,7 +252,7 @@ class BookController extends Controller
 
     public function destroy(Book $book): JsonResponse
     {
-        $this->deleteBookCompletely($book);
+        $this->bookDeletionService->delete($book);
 
         return response()->json(['deleted' => true]);
     }
@@ -278,25 +285,9 @@ class BookController extends Controller
 
         $count = $books->count();
         foreach ($books as $book) {
-            $this->deleteBookCompletely($book);
+            $this->bookDeletionService->delete($book);
         }
 
         return response()->json(['deleted' => $count]);
-    }
-
-    private function deleteBookCompletely(Book $book): void
-    {
-        Storage::disk('public')->deleteDirectory("books/{$book->id}");
-        Storage::disk('public')->delete($book->source_epub_path);
-
-        // book_chunks lives on the separate `rag` Postgres connection with no FK to
-        // sqlite's books table (cross-database, can't cascade) — clean it up explicitly
-        // so a delete doesn't leave orphaned embeddings behind. Skip cleanly if the rag
-        // connection isn't configured/reachable here, same as the migrations do.
-        if (\App\Support\RagConnectionGuard::available()) {
-            DB::connection('rag')->table('book_chunks')->where('book_id', $book->id)->delete();
-        }
-
-        $book->delete();
     }
 }

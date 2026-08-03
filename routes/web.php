@@ -414,6 +414,7 @@ Route::get('/library/books/{slug}/chapters/{sortOrder}', [LibraryController::cla
 Route::get('/library/authors/{slug}', [LibraryController::class, 'author'])
     ->name('library.author')
     ->where('slug', '[a-z0-9\-]+');
+Route::get('/library/series/{slug}', [LibraryController::class, 'series'])->name('library.series');
 
 use App\Http\Controllers\LibraryEntryController;
 
