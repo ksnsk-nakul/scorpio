@@ -109,11 +109,15 @@
                     </span>
                   </td>
                   <td class="px-5 py-3 text-slate-400 text-xs whitespace-nowrap">{{ book.created_at }}</td>
-                  <td v-if="canManage" class="px-5 py-3">
+                  <td class="px-5 py-3">
                     <div class="flex items-center gap-2 whitespace-nowrap">
-                      <button @click="openEdit(book)" class="text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-800 px-2 py-1 rounded-md transition-colors">Edit</button>
-                      <button v-if="book.status === 'failed' || book.is_stuck" @click="retry(book)" class="text-xs text-amber-600 hover:bg-amber-50 hover:text-amber-800 px-2 py-1 rounded-md transition-colors">Retry</button>
-                      <button v-if="book.is_stuck" @click="markFailed(book)" class="text-xs text-red-500 hover:bg-red-50 hover:text-red-700 px-2 py-1 rounded-md transition-colors">Mark failed</button>
+                      <a v-if="book.status === 'ready'" :href="`/library/books/${book.slug}`" target="_blank" rel="noopener"
+                        class="text-xs text-emerald-600 hover:bg-emerald-50 hover:text-emerald-800 px-2 py-1 rounded-md transition-colors">Read</a>
+                      <template v-if="canManage">
+                        <button @click="openEdit(book)" class="text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-800 px-2 py-1 rounded-md transition-colors">Edit</button>
+                        <button v-if="book.status === 'failed' || book.is_stuck" @click="retry(book)" class="text-xs text-amber-600 hover:bg-amber-50 hover:text-amber-800 px-2 py-1 rounded-md transition-colors">Retry</button>
+                        <button v-if="book.is_stuck" @click="markFailed(book)" class="text-xs text-red-500 hover:bg-red-50 hover:text-red-700 px-2 py-1 rounded-md transition-colors">Mark failed</button>
+                      </template>
                     </div>
                   </td>
                 </tr>
@@ -138,10 +142,14 @@
             <span v-if="book.status === 'failed' && book.status_reason" class="block text-xs text-red-400 mt-1">
               {{ book.status_reason }}
             </span>
-            <div v-if="canManage" class="flex items-center gap-2 mt-2">
-              <button @click="openEdit(book)" class="text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-800 px-2 py-1 rounded-md transition-colors">Edit</button>
-              <button v-if="book.status === 'failed' || book.is_stuck" @click="retry(book)" class="text-xs text-amber-600 hover:bg-amber-50 hover:text-amber-800 px-2 py-1 rounded-md transition-colors">Retry</button>
-              <button v-if="book.is_stuck" @click="markFailed(book)" class="text-xs text-red-500 hover:bg-red-50 hover:text-red-700 px-2 py-1 rounded-md transition-colors">Fail</button>
+            <div class="flex items-center gap-2 mt-2">
+              <a v-if="book.status === 'ready'" :href="`/library/books/${book.slug}`" target="_blank" rel="noopener"
+                class="text-xs text-emerald-600 hover:bg-emerald-50 hover:text-emerald-800 px-2 py-1 rounded-md transition-colors">Read</a>
+              <template v-if="canManage">
+                <button @click="openEdit(book)" class="text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-800 px-2 py-1 rounded-md transition-colors">Edit</button>
+                <button v-if="book.status === 'failed' || book.is_stuck" @click="retry(book)" class="text-xs text-amber-600 hover:bg-amber-50 hover:text-amber-800 px-2 py-1 rounded-md transition-colors">Retry</button>
+                <button v-if="book.is_stuck" @click="markFailed(book)" class="text-xs text-red-500 hover:bg-red-50 hover:text-red-700 px-2 py-1 rounded-md transition-colors">Fail</button>
+              </template>
             </div>
           </div>
         </div>
@@ -154,9 +162,13 @@
             <img v-if="book.cover_url" :src="book.cover_url" class="aspect-[2/3] object-cover w-full rounded-lg" />
             <div v-else class="aspect-[2/3] w-full bg-slate-100 rounded-lg"></div>
 
-            <div v-if="canManage" class="absolute inset-0 bg-black/0 group-hover:bg-black/40 rounded-lg transition flex items-center justify-center gap-2 hidden group-hover:flex">
-              <button @click="openEdit(book)" class="bg-white/90 hover:bg-blue-600 rounded-full px-2 py-1 text-xs text-blue-600 hover:text-white shadow-sm transition-colors">Edit</button>
-              <button v-if="book.status === 'failed' || book.is_stuck" @click="retry(book)" class="bg-white/90 hover:bg-amber-500 rounded-full px-2 py-1 text-xs text-amber-600 hover:text-white shadow-sm transition-colors">Retry</button>
+            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 rounded-lg transition flex items-center justify-center gap-2 hidden group-hover:flex">
+              <a v-if="book.status === 'ready'" :href="`/library/books/${book.slug}`" target="_blank" rel="noopener"
+                class="bg-white/90 hover:bg-emerald-600 rounded-full px-2 py-1 text-xs text-emerald-600 hover:text-white shadow-sm transition-colors">Read</a>
+              <template v-if="canManage">
+                <button @click="openEdit(book)" class="bg-white/90 hover:bg-blue-600 rounded-full px-2 py-1 text-xs text-blue-600 hover:text-white shadow-sm transition-colors">Edit</button>
+                <button v-if="book.status === 'failed' || book.is_stuck" @click="retry(book)" class="bg-white/90 hover:bg-amber-500 rounded-full px-2 py-1 text-xs text-amber-600 hover:text-white shadow-sm transition-colors">Retry</button>
+              </template>
             </div>
 
             <p class="line-clamp-2 text-xs text-center mt-1 text-slate-600">{{ book.title }}</p>
