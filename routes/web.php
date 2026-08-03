@@ -418,6 +418,13 @@ Route::get('/courses/{slug}', [CourseController::class, 'show'])
     ->name('courses.show')
     ->where('slug', '[a-z0-9\-]+');
 
+Route::get('/courses/{slug}/topics/{topicSlug}', [CourseController::class, 'topic'])
+    ->name('courses.topic')
+    ->where(['slug' => '[a-z0-9\-]+', 'topicSlug' => '[a-z0-9\-]+']);
+Route::get('/courses/{slug}/topics/{topicSlug}/materials/{material}/download', [CourseController::class, 'downloadMaterial'])
+    ->name('courses.materials.download')
+    ->where(['slug' => '[a-z0-9\-]+', 'topicSlug' => '[a-z0-9\-]+']);
+
 // Admin portfolio inner pages at root (must be last to avoid shadowing other routes)
 Route::get('/{slug}', [\App\Http\Controllers\PublicController::class, 'adminPage'])
     ->name('admin.page')
