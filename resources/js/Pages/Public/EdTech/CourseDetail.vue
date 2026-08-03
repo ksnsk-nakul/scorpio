@@ -22,6 +22,14 @@
           <h3 class="text-sm font-semibold text-slate-800">{{ tier.name }}</h3>
           <p class="text-xs text-slate-500 mt-1">{{ tier.description }}</p>
           <p class="text-lg font-bold text-slate-800 mt-2">₹{{ (tier.price_inr_paise / 100).toLocaleString('en-IN') }}</p>
+          <button
+            @click="enroll(tier.id)"
+            :disabled="enrollingTierId === tier.id"
+            class="mt-3 w-full text-sm bg-orange-500 text-white rounded-lg py-2 hover:bg-orange-600 disabled:opacity-50 transition-colors"
+          >
+            {{ enrollingTierId === tier.id ? 'Enrolling…' : 'Enroll' }}
+          </button>
+          <p v-if="enrollErrors[tier.id]" class="text-xs text-red-500 mt-2">{{ enrollErrors[tier.id] }}</p>
         </div>
       </section>
 
@@ -46,6 +54,24 @@
 
 <script setup>
 import { Head, Link } from '@inertiajs/vue3'
+import { ref } from 'vue'
+import axios from 'axios'
 
-defineProps({ course: { type: Object, required: true } })
+const props = defineProps({ course: { type: Object, required: true } })
+
+const enrollingTierId = ref(null)
+const enrollErrors = ref({})
+
+const enroll = async (tierId) => {
+  enrollingTierId.value = tierId
+  enrollErrors.value = { ...enrollErrors.value, [tierId]: null }
+  try {
+    await axios.post(`/courses/${props.course.slug}/enroll`, { pricing_tier_id: tierId })
+    window.location.reload()
+  } catch (err) {
+    enrollErrors.value = { ...enrollErrors.value, [tierId]: err.response?.data?.message ?? 'Enrollment failed.' }
+  } finally {
+    enrollingTierId.value = null
+  }
+}
 </script>
