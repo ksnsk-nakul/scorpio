@@ -138,6 +138,11 @@ class User extends Authenticatable
         return $this->hasMany(Enrollment::class);
     }
 
+    public function libraryEntries(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LibraryEntry::class);
+    }
+
     public function paymentMethods(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(PaymentMethod::class)->latest();

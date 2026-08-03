@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\ParseEpubBookJob;
 use App\Models\Author;
 use App\Models\Book;
+use App\Models\LibraryEntry;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -54,6 +55,70 @@ class BookController extends Controller
                     'status_reason' => $book->status_reason,
                     'created_at' => $book->created_at->toDateTimeString(),
                 ]),
+        ]);
+    }
+
+    public function myLibrary(Request $request): Response
+    {
+        $userId = $request->user()->id;
+
+        $query = Book::query()
+            ->whereHas('libraryEntries', fn ($q) => $q->where('user_id', $userId))
+            ->with(['author', 'libraryEntries' => fn ($q) => $q->where('user_id', $userId)]);
+
+        if ($request->filled('search')) {
+            $term = $request->string('search');
+            $query->where(function ($q) use ($term) {
+                $q->where('title', 'like', "%{$term}%")
+                    ->orWhereHas('author', fn ($a) => $a->where('name', 'like', "%{$term}%"));
+            });
+        }
+
+        $tab = $request->string('tab')->toString();
+        if ($tab && $tab !== 'all') {
+            $query->whereHas('libraryEntries', fn ($q) => $q->where('user_id', $userId)->where('status', $tab));
+        }
+
+        $sort = $request->string('sort')->toString();
+        $column = match ($sort) {
+            'recently_added' => 'created_at',
+            'recently_read' => 'last_read_at',
+            default => 'updated_at',
+        };
+
+        // A correlated subquery is required (rather than a join) because each book
+        // has at most one library_entries row per user (enforced by the unique
+        // (user_id, book_id) index), so this can't multiply rows the way a join
+        // could — `orderByDesc()` accepts a subquery builder directly and Laravel
+        // wraps it correctly for the ORDER BY clause.
+        $query->orderByDesc(
+            LibraryEntry::select($column)
+                ->whereColumn('book_id', 'books.id')
+                ->where('user_id', $userId)
+                ->limit(1)
+        );
+
+        $books = $query->paginate(15)->withQueryString()->through(function (Book $book) {
+            $entry = $book->libraryEntries->first();
+            $chaptersTotal = $book->chapters()->count();
+            $chaptersRead = $entry?->lastChapter?->sort_order !== null ? $entry->lastChapter->sort_order + 1 : 0;
+
+            return [
+                'id' => $book->id,
+                'title' => $book->title,
+                'slug' => $book->slug,
+                'author' => $book->author?->name,
+                'cover_url' => $book->cover_url,
+                'status' => $entry?->status,
+                'chapters_read' => $chaptersRead,
+                'chapters_total' => $chaptersTotal,
+                'last_read_at' => $entry?->last_read_at?->toDateTimeString(),
+            ];
+        });
+
+        return Inertia::render('Admin/Library/Index', [
+            'myLibrary' => $books,
+            'myLibraryFilters' => $request->only(['search', 'tab', 'sort']),
         ]);
     }
 

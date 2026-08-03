@@ -96,6 +96,7 @@ Route::middleware(['auth', 'role:admin,editor,viewer'])
         Route::get('library/books/{book}/status', [BookController::class, 'status'])->name('library.books.status');
         Route::get('library', [BookController::class, 'index'])->name('library.index');
         Route::get('library/upload', [BookController::class, 'uploadPage'])->name('library.upload');
+        Route::get('library/my', [BookController::class, 'myLibrary'])->name('library.my');
     });
 
 use App\Http\Controllers\Admin\LibraryChatController;
@@ -413,6 +414,18 @@ Route::get('/library/books/{slug}/chapters/{sortOrder}', [LibraryController::cla
 Route::get('/library/authors/{slug}', [LibraryController::class, 'author'])
     ->name('library.author')
     ->where('slug', '[a-z0-9\-]+');
+
+use App\Http\Controllers\LibraryEntryController;
+
+Route::middleware(['auth'])
+    ->prefix('library')
+    ->name('library.')
+    ->group(function () {
+        Route::post('books/{slug}/follow', [LibraryEntryController::class, 'follow'])->name('entries.follow');
+        Route::patch('books/{slug}/status', [LibraryEntryController::class, 'updateStatus'])->name('entries.status');
+        Route::delete('books/{slug}/follow', [LibraryEntryController::class, 'unfollow'])->name('entries.unfollow');
+        Route::post('books/{slug}/progress', [LibraryEntryController::class, 'recordProgress'])->name('entries.progress');
+    });
 
 // Admin portfolio inner pages at root (must be last to avoid shadowing other routes)
 Route::get('/{slug}', [\App\Http\Controllers\PublicController::class, 'adminPage'])

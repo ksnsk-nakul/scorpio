@@ -62,6 +62,11 @@ class Book extends Model
         return $this->belongsTo(User::class, 'uploaded_by');
     }
 
+    public function libraryEntries(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LibraryEntry::class);
+    }
+
     public function isReady(): bool
     {
         return $this->status === 'ready';

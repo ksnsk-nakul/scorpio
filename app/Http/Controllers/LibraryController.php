@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Author;
 use App\Models\Book;
+use App\Models\LibraryEntry;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -52,6 +53,13 @@ class LibraryController extends Controller
     {
         $book = Book::where('slug', $slug)->where('status', 'ready')->firstOrFail();
         $chapter = $book->chapters()->where('sort_order', $sortOrder)->firstOrFail();
+
+        if ($user = auth()->user()) {
+            LibraryEntry::updateOrCreate(
+                ['user_id' => $user->id, 'book_id' => $book->id],
+                ['last_chapter_id' => $chapter->id, 'last_read_at' => now()]
+            );
+        }
 
         return Inertia::render('Public/Library/ChapterReader', [
             'book' => ['title' => $book->title, 'slug' => $book->slug],

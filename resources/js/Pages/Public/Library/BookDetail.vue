@@ -27,6 +27,31 @@
           <a v-if="book.author" :href="`/library/authors/${book.author.slug}`" class="text-sm text-orange-500 hover:underline">
             {{ book.author.name }}
           </a>
+
+          <!-- Reading status tracker -->
+          <div class="mt-3">
+            <a v-if="!user" href="/login" class="text-xs text-slate-500 hover:text-orange-500 underline">
+              Log in to track your reading
+            </a>
+            <div v-else class="flex items-center gap-2">
+              <button v-if="!followed" @click="follow"
+                class="text-xs font-medium bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg transition-colors">
+                + Follow
+              </button>
+              <select v-else v-model="currentStatus" @change="updateStatus"
+                class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400">
+                <option value="reading">Reading</option>
+                <option value="completed">Completed</option>
+                <option value="on_hold">On-Hold</option>
+                <option value="plan_to_read">Plan to Read</option>
+                <option value="dropped">Dropped</option>
+              </select>
+              <button v-if="followed" @click="unfollow" class="text-xs text-slate-400 hover:text-red-500 underline">
+                Unfollow
+              </button>
+            </div>
+          </div>
+
           <p v-if="book.description" class="text-sm text-slate-600 leading-relaxed mt-4">{{ book.description }}</p>
           <dl class="mt-4 space-y-1 text-xs text-slate-400">
             <div v-if="book.publisher"><dt class="inline font-medium">Publisher:</dt> <dd class="inline">{{ book.publisher }}</dd></div>
@@ -52,18 +77,71 @@
       </ol>
     </main>
   </div>
+  <ToastContainer />
   </template>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { Head, Link } from '@inertiajs/vue3'
+import { computed, ref } from 'vue'
+import { Head, Link, usePage } from '@inertiajs/vue3'
+import axios from 'axios'
 import { useActiveTemplate } from '@/composables/useActiveTemplate'
 import { resolvePublicPage } from '@/templateRegistry'
+import { useToast } from '@/composables/useToast'
+import ToastContainer from '@/Components/ToastContainer.vue'
 
 const props = defineProps({ book: { type: Object, required: true } })
 
 // ── Template resolution ──────────────────────────────────────────────────────
 const { publicTemplate } = useActiveTemplate()
 const activeTemplateComponent = computed(() => resolvePublicPage(publicTemplate.value, 'BookDetail'))
+
+// ── Reading status tracker ───────────────────────────────────────────────────
+// This page is public (guests included), so the follow/status control only
+// renders for logged-in users (checked via the shared `auth.user` Inertia prop,
+// same pattern AdminLayout.vue uses) — guests get a "log in" prompt instead of
+// a control that would just 401 against the API.
+const page = usePage()
+const user = computed(() => page.props.auth.user)
+const toast = useToast()
+
+// The backend doesn't currently return the viewer's existing LibraryEntry status
+// on this page (out of scope for this pass — see task notes), so `followed`/
+// `currentStatus` are session-local UI state rather than reflecting a persisted
+// value on load: a fresh page load always shows "+ Follow" even for a book the
+// user already follows. Picking a status (or following) still hits the real
+// idempotent backend endpoints, so nothing is lost — just not reflected until acted on this visit.
+const followed = ref(false)
+const currentStatus = ref('reading')
+
+const follow = async () => {
+  try {
+    const { data } = await axios.post(`/library/books/${props.book.slug}/follow`)
+    currentStatus.value = data.status
+    followed.value = true
+    toast.success('Added to your library.')
+  } catch (err) {
+    toast.error(err.response?.data?.message ?? 'Could not add this book to your library.')
+  }
+}
+
+const updateStatus = async () => {
+  try {
+    await axios.patch(`/library/books/${props.book.slug}/status`, { status: currentStatus.value })
+    toast.success('Reading status updated.')
+  } catch (err) {
+    toast.error(err.response?.data?.message ?? 'Could not update your reading status.')
+  }
+}
+
+const unfollow = async () => {
+  try {
+    await axios.delete(`/library/books/${props.book.slug}/follow`)
+    followed.value = false
+    currentStatus.value = 'reading'
+    toast.success('Removed from your library.')
+  } catch (err) {
+    toast.error(err.response?.data?.message ?? 'Could not remove this book from your library.')
+  }
+}
 </script>
