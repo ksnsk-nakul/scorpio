@@ -77,7 +77,7 @@ class CourseImportService
         }
 
         $content = file_get_contents($path);
-        if (! preg_match('/## Tiers\s*\n\s*\n(\|.+\|(?:\n\|.+\|)*)/', $content, $m)) {
+        if (! preg_match('/(?m)^## Tiers\s*\n\s*\n(\|.+\|(?:\n\|.+\|)*)/', $content, $m)) {
             return;
         }
 
