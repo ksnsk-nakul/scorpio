@@ -29,35 +29,17 @@ function forceRagUnavailable(): callable
     };
 }
 
-it('shows a clean unavailable state on the chat index instead of a 500 when rag is unreachable', function () {
+it('rejects asking a question with a clean 503 JSON error instead of a 500 when rag is unreachable', function () {
     $restore = forceRagUnavailable();
 
     try {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
 
-        $response = $this->actingAs($admin)->get('/admin/library/chat');
+        $response = $this->actingAs($admin)->postJson('/admin/library/chat', ['question' => 'Is anyone there?']);
 
-        $response->assertOk();
-        $response->assertInertia(fn ($page) => $page
-            ->component('Admin/Library/Chat/Index')
-            ->where('unavailable', true)
-            ->where('threads', []));
-    } finally {
-        $restore();
-    }
-});
-
-it('rejects asking a question with a clean error instead of a 500 when rag is unreachable', function () {
-    $restore = forceRagUnavailable();
-
-    try {
-        $admin = User::factory()->create();
-        $admin->assignRole('admin');
-
-        $response = $this->actingAs($admin)->post('/admin/library/chat', ['question' => 'Is anyone there?']);
-
-        $response->assertSessionHasErrors('question');
+        $response->assertStatus(503);
+        $response->assertJsonStructure(['message']);
     } finally {
         $restore();
     }

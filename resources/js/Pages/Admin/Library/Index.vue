@@ -37,6 +37,20 @@
         </button>
       </div>
 
+      <!-- Advanced search trigger — opens the floating drawer, visible above/near
+           the search bar regardless of which top-level tab is active. Hidden
+           entirely when the RAG backend is unreachable, mirroring how the old
+           "Library Chat" nav link used to hide itself. -->
+      <form v-if="ragAvailable" @submit.prevent="submitAdvancedSearch" class="flex items-center gap-2 mb-4">
+        <input v-model="advancedSearchInput" type="text"
+          placeholder="Ask the library anything…"
+          class="flex-1 min-w-[12rem] border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        <button type="submit" :disabled="!advancedSearchInput.trim()"
+          class="text-xs font-medium bg-slate-900 hover:bg-slate-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg transition-colors">
+          Ask
+        </button>
+      </form>
+
       <template v-if="topTab === 'all'">
       <!-- Search / filter -->
       <div class="flex flex-wrap items-center gap-2 mb-6">
@@ -386,6 +400,7 @@ import { Link, router, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
+import { useAdvancedSearch } from '@/composables/useAdvancedSearch'
 
 const { confirmAction } = useConfirm()
 const toast = useToast()
@@ -403,6 +418,18 @@ const userRoles = computed(() => page.props.auth.roles ?? [])
 const isAdmin = computed(() => userRoles.value.includes('admin'))
 const isEditor = computed(() => userRoles.value.includes('editor'))
 const canManage = computed(() => isAdmin.value || isEditor.value)
+
+// ── Advanced search trigger (opens the floating drawer, see AdvancedSearchDrawer.vue) ──
+const ragAvailable = computed(() => page.props.ragAvailable ?? true)
+const advancedSearchInput = ref('')
+const advancedSearch = useAdvancedSearch()
+
+const submitAdvancedSearch = () => {
+  const question = advancedSearchInput.value
+  advancedSearchInput.value = ''
+  advancedSearch.open({ minimized: false })
+  advancedSearch.ask(question)
+}
 
 // ── Top-level tab switcher (All Books / My Library) ──────────────────────────
 // Partial reloads only touch the props relevant to whichever tab is active, so
