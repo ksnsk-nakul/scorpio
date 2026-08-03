@@ -33,7 +33,7 @@
       <button class="absolute left-0 top-0 h-full w-1/3 z-10" aria-label="Previous page" @click="goToPage(-1)"></button>
       <button class="absolute right-0 top-0 h-full w-1/3 z-10" aria-label="Next page" @click="goToPage(1)"></button>
       <div ref="pagedEl" class="markdown-body h-full"
-        :style="{ ...fontStyle, columnWidth: pageWidth + 'px', columnGap: 0, columnFill: 'auto', transform: `translateX(-${currentPage * pageWidth}px)`, transition: 'transform 0.25s ease' }">
+        :style="{ ...fontStyle, '--page-height': pageHeight + 'px', columnWidth: pageWidth + 'px', columnGap: 0, columnFill: 'auto', transform: `translateX(-${currentPage * pageWidth}px)`, transition: 'transform 0.25s ease' }">
         <h1 class="text-xl font-bold mb-6">{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }}</h1>
         <div v-html="chapter.content"></div>
       </div>
@@ -42,7 +42,7 @@
     <main v-else-if="mode === 'v-page'" ref="pagedViewportEl" class="overflow-hidden max-w-3xl mx-auto relative px-6 py-10 pb-[env(safe-area-inset-bottom)]" :style="{ height: 'calc(100dvh - 3.5rem - env(safe-area-inset-bottom))' }">
       <button class="absolute top-0 left-0 w-full h-1/3 z-10" aria-label="Previous page" @click="goToPage(-1)"></button>
       <button class="absolute bottom-0 left-0 w-full h-1/3 z-10" aria-label="Next page" @click="goToPage(1)"></button>
-      <div ref="pagedEl" class="markdown-body" :style="{ ...fontStyle, transform: `translateY(-${currentPage * pageHeight}px)`, transition: 'transform 0.25s ease' }">
+      <div ref="pagedEl" class="markdown-body" :style="{ ...fontStyle, '--page-height': pageHeight + 'px', transform: `translateY(-${currentPage * pageHeight}px)`, transition: 'transform 0.25s ease' }">
         <h1 class="text-xl font-bold mb-6">{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }}</h1>
         <div v-html="chapter.content"></div>
       </div>
@@ -305,7 +305,17 @@ onUnmounted(() => {
 
 .markdown-body :deep(img) {
   max-width: 100%;
+  /* In paged modes (h-page/v-page) the parent sets --page-height to the
+     available page height so a tall image is scaled down to fit within a
+     single page instead of being clipped by the page's fixed-height,
+     overflow-hidden container. Scroll mode never sets --page-height, so
+     this falls back to no constraint there. */
+  max-height: var(--page-height, none);
   height: auto;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
   border-radius: 0.5em;
 }
 </style>
