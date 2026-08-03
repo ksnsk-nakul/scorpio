@@ -38,9 +38,23 @@ class BookController extends Controller
         ]);
     }
 
-    public function uploadPage(): Response
+    public function uploadPage(Request $request): Response
     {
-        return Inertia::render('Admin/Library/Upload');
+        return Inertia::render('Admin/Library/Upload', [
+            'recentUploads' => Book::where('uploaded_by', $request->user()->id)
+                ->latest()
+                ->latest('id')
+                ->limit(100)
+                ->get(['id', 'title', 'slug', 'status', 'status_reason', 'created_at'])
+                ->map(fn (Book $book) => [
+                    'id' => $book->id,
+                    'title' => $book->title,
+                    'slug' => $book->slug,
+                    'status' => $book->status,
+                    'status_reason' => $book->status_reason,
+                    'created_at' => $book->created_at->toDateTimeString(),
+                ]),
+        ]);
     }
 
     /** Shared by index() (for display) and bulkDestroy()'s "all matching filter" mode
