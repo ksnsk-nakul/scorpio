@@ -2,8 +2,13 @@
 
 namespace App\Services;
 
+use App\Jobs\GenerateTopicSlidesJob;
 use App\Models\Course;
+use App\Models\Material;
+use App\Models\Module;
 use App\Models\PricingTier;
+use App\Models\Topic;
+use Illuminate\Support\Str;
 use Throwable;
 
 class CourseImportService
@@ -27,7 +32,7 @@ class CourseImportService
 
         try {
             $this->importPricingTiers($course, $courseDir);
-            // Task 5 adds a call to $this->importModules($course, $courseDir); here.
+            $this->importModules($course, $courseDir);
 
             $course->status = 'ready';
             $course->imported_at = now();
@@ -111,5 +116,100 @@ class CourseImportService
 
         $digits = preg_replace('/[^0-9.]/', '', $raw);
         return (int) round(((float) $digits) * 100);
+    }
+
+    protected function importModules(Course $course, string $courseDir): void
+    {
+        $selfpacedDir = "{$courseDir}/selfpaced";
+        if (! is_dir($selfpacedDir)) {
+            return;
+        }
+
+        $moduleDirs = collect(glob("{$selfpacedDir}/module-*", GLOB_ONLYDIR))->sort()->values();
+
+        foreach ($moduleDirs as $index => $moduleDir) {
+            $slug = $this->slugFromDirName(basename($moduleDir));
+            $title = $this->extractH1($moduleDir . '/README.md') ?? Str::headline($slug);
+
+            $module = Module::updateOrCreate(
+                ['course_id' => $course->id, 'slug' => $slug],
+                ['title' => $title, 'sort_order' => $index]
+            );
+
+            $this->importTopics($module, $moduleDir);
+        }
+    }
+
+    private function importTopics(Module $module, string $moduleDir): void
+    {
+        $topicDirs = collect(glob("{$moduleDir}/topic-*", GLOB_ONLYDIR))->sort()->values();
+
+        foreach ($topicDirs as $index => $topicDir) {
+            $slug = $this->slugFromDirName(basename($topicDir));
+            $title = $this->extractH1($topicDir . '/README.md') ?? Str::headline($slug);
+
+            $topic = Topic::updateOrCreate(
+                ['module_id' => $module->id, 'slug' => $slug],
+                ['title' => $title, 'sort_order' => $index]
+            );
+
+            $this->importMaterials($topic, $topicDir);
+        }
+    }
+
+    private function importMaterials(Topic $topic, string $topicDir): void
+    {
+        $files = [
+            'notes' => ["{$topicDir}/notes/notes.md", 'downloadable'],
+            'task' => ["{$topicDir}/tasks/task.md", 'view_only'],
+            'demo_problem' => [$this->firstDemoFile("{$topicDir}/demo/problem"), 'downloadable'],
+            'demo_try_it' => [$this->firstDemoFile("{$topicDir}/demo/try-it"), 'view_only'],
+            'demo_solution' => [$this->firstDemoFile("{$topicDir}/demo/solution"), 'view_only'],
+        ];
+
+        foreach ($files as $type => [$path, $policy]) {
+            if (! $path || ! is_file($path)) {
+                continue;
+            }
+
+            Material::updateOrCreate(
+                ['topic_id' => $topic->id, 'type' => $type],
+                ['content' => file_get_contents($path), 'download_policy' => $policy, 'status' => 'ready']
+            );
+        }
+
+        $slides = Material::updateOrCreate(
+            ['topic_id' => $topic->id, 'type' => 'slides'],
+            ['download_policy' => 'view_only', 'status' => 'generating']
+        );
+        GenerateTopicSlidesJob::dispatch($topic);
+
+        Material::updateOrCreate(
+            ['topic_id' => $topic->id, 'type' => 'video'],
+            ['download_policy' => 'view_only', 'status' => 'not_generated']
+        );
+    }
+
+    private function firstDemoFile(string $dir): ?string
+    {
+        $files = glob("{$dir}/*.html") ?: glob("{$dir}/*");
+        $files = array_filter($files ?: [], fn ($f) => basename($f) !== 'README.md');
+        return $files ? array_values($files)[0] : null;
+    }
+
+    private function extractH1(string $path): ?string
+    {
+        if (! is_file($path)) {
+            return null;
+        }
+
+        $line = collect(file($path))->first(fn ($l) => str_starts_with(trim($l), '# '));
+        return $line ? trim(substr(trim($line), 2)) : null;
+    }
+
+    private function slugFromDirName(string $dirName): string
+    {
+        // "module-01-html-fundamentals" -> "html-fundamentals"; "topic-03-tables" -> "tables"
+        return preg_replace('/^(module|topic)-\d+-/', '', $dirName);
     }
 }
