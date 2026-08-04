@@ -106,6 +106,7 @@ Route::middleware(['auth', 'role:admin,editor,viewer'])
     ->name('admin.')
     ->group(function () {
         Route::post('library/chat', [LibraryChatController::class, 'store'])->middleware('throttle:20,1')->name('library.chat.store');
+        Route::get('library/chat/history', [LibraryChatController::class, 'history'])->name('library.chat.history');
     });
 
 use App\Http\Controllers\Admin\WorkspaceController;

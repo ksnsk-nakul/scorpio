@@ -3,7 +3,7 @@
      pinned to the bottom-right that expands into a floating panel, mounted once
      globally in AdminLayout so it's available from any admin page. -->
 <template>
-  <div v-if="isOpen" class="fixed bottom-0 right-6 z-50">
+  <div v-if="isOpen && ragAvailable" class="fixed bottom-0 right-6 z-50">
     <!-- Minimized bar -->
     <div v-if="isMinimized" class="w-72 bg-white border border-slate-200 rounded-t-xl shadow-lg overflow-hidden">
       <div class="h-11 px-4 flex items-center justify-between bg-slate-900">
@@ -48,13 +48,16 @@
             {{ m.content }}
           </div>
           <div v-if="m.citations?.length" class="mt-1.5 flex flex-wrap gap-1.5">
-            <template v-for="(c, ci) in m.citations" :key="ci">
+            <template v-for="(c, ci) in dedupedCitations(m.citations)" :key="ci">
               <!-- Link to the book, not a specific chapter: the RAG index's
                    chapter_sort_order can go stale relative to the current
                    chapters table (e.g. after a re-parse), producing a citation
                    that points at a chapter number that no longer exists. The
                    book page is always valid, and already links to the book's
-                   series (a real "list") when it belongs to one. -->
+                   series (a real "list") when it belongs to one. Citations are
+                   deduplicated by book (see dedupedCitations) and shown as
+                   book-only pills — the user only cares which books were used
+                   as sources, not which chapters within them. -->
               <a
                 v-if="c.book_slug"
                 :href="`/library/books/${c.book_slug}`"
@@ -62,13 +65,13 @@
                 rel="noopener"
                 class="text-xs px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
               >
-                {{ c.book_title }}<template v-if="c.chapter_title"> — {{ c.chapter_title }}</template>
+                {{ c.book_title }}
               </a>
               <span
                 v-else
                 class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500"
               >
-                {{ c.book_title }}<template v-if="c.chapter_title"> — {{ c.chapter_title }}</template>
+                {{ c.book_title }}
               </span>
             </template>
           </div>
@@ -106,10 +109,18 @@
 </template>
 
 <script setup>
-import { nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 import { useAdvancedSearch } from '@/composables/useAdvancedSearch'
 
-const { isOpen, isMinimized, messages, loading, error, close, minimize, expand, ask } = useAdvancedSearch()
+const { isOpen, isMinimized, messages, loading, error, close, minimize, expand, ask, loadHistory } = useAdvancedSearch()
+
+// The `rag` Postgres connection availability is a page-level Inertia prop
+// (shared from HandleInertiaRequests); the drawer reads it directly rather
+// than taking it as a component prop so it stays a true "mount once globally"
+// component in AdminLayout with no per-page wiring required.
+const page = usePage()
+const ragAvailable = computed(() => page.props.ragAvailable ?? true)
 
 const question = ref('')
 const messagesEl = ref(null)
@@ -121,6 +132,22 @@ const scrollToBottom = () => {
 }
 
 watch(() => messages.value.length, scrollToBottom)
+
+// Deduplicates a message's citations by book_slug (keeping the first
+// occurrence of each unique book) so the same book doesn't appear once per
+// cited chapter -- the user only wants to know which books were sourced.
+const dedupedCitations = (citations) => {
+  const seen = new Set()
+  return (citations || []).filter((c) => {
+    if (!c.book_slug || seen.has(c.book_slug)) return false
+    seen.add(c.book_slug)
+    return true
+  })
+}
+
+onMounted(() => {
+  loadHistory()
+})
 
 const submit = async () => {
   const q = question.value

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ChatThread;
 use App\Services\ChatService;
 use App\Support\RagConnectionGuard;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -58,5 +59,31 @@ class LibraryChatController extends Controller
             'answer' => $assistantMessage?->content,
             'citations' => $assistantMessage?->citations ?? [],
         ]);
+    }
+
+    public function history(Request $request): JsonResponse
+    {
+        if (! RagConnectionGuard::available()) {
+            return response()->json(['thread_id' => null, 'messages' => []]);
+        }
+
+        // SECURITY: scope strictly to the authenticated user's own thread — never accept
+        // or trust any thread/user identifier from the request (same IDOR-safety
+        // convention as store() above).
+        $thread = ChatThread::where('user_id', $request->user()->id)
+            ->latest('updated_at')
+            ->first();
+
+        if (! $thread) {
+            return response()->json(['thread_id' => null, 'messages' => []]);
+        }
+
+        $messages = $thread->messages()->orderBy('id')->get()->map(fn ($m) => [
+            'role' => $m->role,
+            'content' => $m->content,
+            'citations' => $m->citations ?? [],
+        ]);
+
+        return response()->json(['thread_id' => $thread->id, 'messages' => $messages]);
     }
 }
