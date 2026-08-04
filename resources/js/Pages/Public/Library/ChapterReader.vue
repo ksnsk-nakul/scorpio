@@ -19,7 +19,13 @@
 
     <main v-if="mode === 'scroll' || mode === 'autoscroll'" class="max-w-3xl mx-auto px-6 py-10 pb-[env(safe-area-inset-bottom)]">
       <h1 class="text-xl font-bold mb-6">{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }}</h1>
-      <div class="markdown-body" :style="fontStyle" v-html="chapter.content"></div>
+      <!-- Scroll mode has no fixed "page" height, but a raw embedded image (a
+           cover image as the first spine item is common) still shouldn't be
+           allowed to render at its full natural size and dominate the whole
+           screen — bound it to roughly one viewport height, same containment
+           principle as the paged modes, just against the viewport instead of
+           a measured page height. -->
+      <div class="markdown-body" :style="{ ...fontStyle, '--page-height': 'calc(100dvh - 3.5rem)' }" v-html="chapter.content"></div>
 
       <div class="flex items-center justify-between mt-12 pt-6 border-t border-current/10 text-sm">
         <Link v-if="hasPrev" :href="`/library/books/${book.slug}/chapters/${chapter.sort_order - 1}`" class="opacity-70 hover:opacity-100">← Previous</Link>
