@@ -1,6 +1,7 @@
 <?php
 
 use App\Support\RagConnectionGuard;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 function resetRagConnectionGuardCache(): void
@@ -8,6 +9,11 @@ function resetRagConnectionGuardCache(): void
     $property = new ReflectionProperty(RagConnectionGuard::class, 'available');
     $property->setAccessible(true);
     $property->setValue(null, null);
+    // The static property above only helps within a single request; availability is
+    // also cached across requests (see RagConnectionGuard) and must be cleared too,
+    // or a test that forces unavailable would leak a stale cached `false` into
+    // whatever runs next.
+    Cache::forget('rag-connection-available');
 }
 
 it('reports unavailable, without throwing, when the rag connection cannot connect', function () {
