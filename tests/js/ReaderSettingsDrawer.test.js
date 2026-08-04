@@ -19,7 +19,10 @@ describe('ReaderSettingsDrawer', () => {
     expect(wrapper.text()).toContain('Reading Settings')
     expect(wrapper.text()).toContain('Sepia')
     expect(wrapper.text()).toContain('A+')
+    expect(wrapper.text()).toContain('Scroll')
+    expect(wrapper.text()).toContain('Autoscroll')
     expect(wrapper.text()).toContain('H-Page')
+    expect(wrapper.text()).toContain('V-Page')
   })
 
   it('only shows autoscroll speed controls when mode is autoscroll', async () => {
@@ -50,7 +53,7 @@ describe('ReaderSettingsDrawer', () => {
     const { mode } = useReaderMode()
 
     const wrapper = mount(ReaderSettingsDrawer, { props: { open: true } })
-    await wrapper.find('[data-testid="mode-h-page"]').trigger('click')
-    expect(mode.value).toBe('h-page')
+    await wrapper.find('[data-testid="mode-autoscroll"]').trigger('click')
+    expect(mode.value).toBe('autoscroll')
   })
 })

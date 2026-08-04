@@ -37,22 +37,27 @@
 
     <!-- Three layers, deliberately: overflow-hidden clips at an element's
          PADDING-box edge, not its content-box edge. If padding lived on
-         either the clipping element or the column/transform element, the
+         either the clipping element or the inner content element, the
          clip boundary would always be wider than where one page's content
          actually ends, leaving the next page's leading edge visible in that
          gap. So padding/centering lives on an outer layer that is neither
-         clipped nor transformed; the clipping layer and the column layer
-         both have zero padding, so the clip boundary exactly matches one
-         column's rendered width/height with no slack. -->
+         clipped nor transformed; the clipping layer and the content layer
+         both have zero padding, so the clip boundary exactly matches the
+         page's rendered width/height with no slack.
+
+         Pagination itself is no longer a CSS side-effect: `pages` is a
+         pre-computed array of per-page HTML strings (see paginateContent()),
+         each built from whole block-level nodes that were measured to fit
+         within one page's height. The clip layer's overflow-hidden below is
+         now just a safety net for the rare single-block-taller-than-a-page
+         case, not load-bearing for pagination itself. -->
     <main v-else-if="mode === 'h-page'" class="max-w-3xl mx-auto relative px-6 py-10 pb-[env(safe-area-inset-bottom)]" :style="{ height: 'calc(100dvh - 3.5rem - env(safe-area-inset-bottom))' }">
       <div ref="pagedViewportEl" class="overflow-hidden relative h-full w-full">
         <button class="absolute left-0 top-0 h-full w-1/3 z-10" aria-label="Previous page" @click="goToPage(-1)"></button>
         <button class="absolute right-0 top-0 h-full w-1/3 z-10" aria-label="Next page" @click="goToPage(1)"></button>
-        <div ref="pagedEl" class="markdown-body h-full"
-          :style="{ ...fontStyle, '--page-height': pageHeight + 'px', columnWidth: pageWidth + 'px', columnGap: 0, columnFill: 'auto', transform: `translateX(-${currentPage * pageWidth}px)`, transition: 'transform 0.25s ease' }">
-          <h1 class="text-xl font-bold mb-6">{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }}</h1>
-          <div v-html="chapter.content"></div>
-        </div>
+        <div :key="currentPage" data-page class="markdown-body h-full page-fade"
+          :style="{ ...fontStyle, '--page-height': pageHeight + 'px' }"
+          v-html="pages[currentPage] ?? ''"></div>
       </div>
     </main>
 
@@ -60,12 +65,20 @@
       <div ref="pagedViewportEl" class="overflow-hidden relative h-full w-full">
         <button class="absolute top-0 left-0 w-full h-1/3 z-10" aria-label="Previous page" @click="goToPage(-1)"></button>
         <button class="absolute bottom-0 left-0 w-full h-1/3 z-10" aria-label="Next page" @click="goToPage(1)"></button>
-        <div ref="pagedEl" class="markdown-body" :style="{ ...fontStyle, '--page-height': pageHeight + 'px', transform: `translateY(-${currentPage * pageHeight}px)`, transition: 'transform 0.25s ease' }">
-          <h1 class="text-xl font-bold mb-6">{{ chapter.title ?? `Chapter ${chapter.sort_order + 1}` }}</h1>
-          <div v-html="chapter.content"></div>
-        </div>
+        <div :key="currentPage" data-page class="markdown-body page-fade"
+          :style="{ ...fontStyle, '--page-height': pageHeight + 'px' }"
+          v-html="pages[currentPage] ?? ''"></div>
       </div>
     </main>
+
+    <!-- Off-screen measuring container: mounted inside the component's real
+         DOM tree (not display:none, which would report zero height) so the
+         scoped .markdown-body typography rules below and the live fontStyle
+         apply identically to how a page actually renders. paginateContent()
+         appends the chapter's block nodes here, reads each one's rendered
+         height via getBoundingClientRect(), then clears it. -->
+    <div v-if="mode === 'h-page' || mode === 'v-page'" ref="measureEl" class="markdown-body"
+      :style="{ ...fontStyle, position: 'absolute', visibility: 'hidden', left: '-9999px', top: 0, width: pageWidth + 'px' }"></div>
 
     <ReaderSettingsDrawer :open="drawerOpen" @close="drawerOpen = false" />
   </div>
@@ -97,10 +110,11 @@ const drawerOpen = ref(false)
 const rootEl = ref(null)
 
 const pagedViewportEl = ref(null)
-const pagedEl = ref(null)
+const measureEl = ref(null)
 const currentPage = ref(0)
 const pageWidth = ref(0)
 const pageHeight = ref(0)
+const pages = ref([])
 const totalPages = ref(1)
 
 let rafId = null
@@ -133,33 +147,98 @@ const pauseOnInteraction = () => {
   if (isPlaying.value) pause()
 }
 
-const recomputeTotalPages = () => {
-  if (!pagedViewportEl.value || !pagedEl.value) return
-  // pagedViewportEl (the overflow-hidden clipping layer) and pagedEl (the
-  // column/transform layer) are both deliberately padding-free — see the
-  // template comment above the h-page/v-page markup — so clientWidth/
-  // clientHeight here already equal exactly what pagedEl renders as one
-  // column/page, with no padding to account for.
+// Deterministic, controllable pagination: parse the chapter's HTML into
+// block-level nodes, measure each one's real rendered height at the page
+// width, then greedily pack whole blocks onto pages so a page never breaks
+// mid-element the way CSS column-width used to (column breaks are an
+// emergent browser layout decision with no control over avoiding awkward
+// splits around headings/images).
+const paginateContent = () => {
+  if (!pagedViewportEl.value || !measureEl.value) return
+
+  // pagedViewportEl (the overflow-hidden clipping layer) is deliberately
+  // padding-free — see the template comment above the h-page/v-page markup
+  // — so clientWidth/clientHeight here already equal exactly the space one
+  // page has to render into, with no padding to account for.
   pageWidth.value = pagedViewportEl.value.clientWidth
   pageHeight.value = pagedViewportEl.value.clientHeight
-  const size = mode.value === 'h-page' ? pagedEl.value.scrollWidth : pagedEl.value.scrollHeight
-  const pageSize = mode.value === 'h-page' ? pageWidth.value : pageHeight.value
-  totalPages.value = Math.max(1, Math.ceil(size / pageSize))
+
+  const doc = new DOMParser().parseFromString(props.chapter.content ?? '', 'text/html')
+  // EPUBs (especially Kobo-format sources) commonly wrap a chapter's real
+  // paragraphs in one or more single-child container divs, e.g.
+  // <div id="book-columns"><div id="book-inner"><p>...</p><p>...</p>...
+  // </div></div>. Taking doc.body.children directly in that case yields ONE
+  // giant unsplittable "block" (the outer wrapper) instead of the ~40 actual
+  // paragraphs inside it, which defeats pagination entirely — everything
+  // ends up crammed onto a single oversized page. Descend through any lone
+  // wrapping element (not just <div>) to find the real sibling blocks.
+  let unwrapped = doc.body
+  while (unwrapped.children.length === 1 && unwrapped.children[0].children.length > 0) {
+    unwrapped = unwrapped.children[0]
+  }
+  const blocks = Array.from(unwrapped.children)
+
+  const titleEl = document.createElement('h1')
+  titleEl.className = 'text-xl font-bold mb-6'
+  titleEl.textContent = props.chapter.title ?? `Chapter ${props.chapter.sort_order + 1}`
+  blocks.unshift(titleEl)
+
+  // Render all blocks into the off-screen measuring container at once (one
+  // reflow) rather than reflowing per-node, then read each one's height.
+  const container = measureEl.value
+  container.replaceChildren(...blocks)
+  container.style.width = pageWidth.value + 'px'
+
+  const heights = blocks.map((block) => block.getBoundingClientRect().height)
+
+  const limit = pageHeight.value || Infinity
+  const newPages = []
+  let current = []
+  let runningHeight = 0
+
+  blocks.forEach((block, i) => {
+    const h = heights[i]
+    if (current.length > 0 && runningHeight + h > limit) {
+      newPages.push(current.map((el) => el.outerHTML).join(''))
+      current = []
+      runningHeight = 0
+    }
+    // A single block taller than one page (an oversized image/paragraph) is
+    // still placed on its own page rather than looped on forever — this one
+    // page may overflow slightly; the container's overflow-hidden and the
+    // image max-height CSS rule below bound how bad that can look.
+    current.push(block)
+    runningHeight += h
+  })
+  if (current.length > 0) {
+    newPages.push(current.map((el) => el.outerHTML).join(''))
+  }
+
+  pages.value = newPages.length > 0 ? newPages : ['']
+  totalPages.value = pages.value.length
   currentPage.value = Math.min(currentPage.value, totalPages.value - 1)
 
-  pagedEl.value.querySelectorAll('img').forEach((img) => {
+  // Images without explicit width/height attributes report zero height
+  // until they've loaded, which can shift which page a block lands on.
+  // Re-paginate once any still-loading images in this chapter resolve.
+  const pendingImages = blocks.flatMap((b) => Array.from(b.querySelectorAll ? b.querySelectorAll('img') : []))
+  pendingImages.forEach((img) => {
     if (!img.complete) {
-      img.addEventListener('load', recomputeTotalPages, { once: true })
-      img.addEventListener('error', recomputeTotalPages, { once: true })
+      img.addEventListener('load', paginateContent, { once: true })
+      img.addEventListener('error', paginateContent, { once: true })
     }
   })
+
+  // Clear the measuring container so repeated resizes/font-size changes
+  // don't leak DOM nodes across repagination passes.
+  container.replaceChildren()
 }
 
 const measurePages = async () => {
   currentPage.value = 0
   if (mode.value !== 'h-page' && mode.value !== 'v-page') return
   await nextTick()
-  recomputeTotalPages()
+  paginateContent()
 }
 
 const goToPage = (delta) => {
@@ -317,6 +396,19 @@ onUnmounted(() => {
   border-left: 3px solid currentColor;
   padding-left: 0.75em;
   opacity: 0.85;
+}
+
+/* Pages are now swapped by re-rendering v-html rather than sliding via
+   transform, since pagination is pre-computed block packing, not a CSS
+   column offset. A brief fade softens the swap; :key="currentPage" on the
+   element re-triggers this transition on every page change. */
+.page-fade {
+  animation: page-fade-in 0.15s ease;
+}
+
+@keyframes page-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .markdown-body :deep(img) {
