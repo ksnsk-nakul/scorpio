@@ -49,9 +49,15 @@
           </div>
           <div v-if="m.citations?.length" class="mt-1.5 flex flex-wrap gap-1.5">
             <template v-for="(c, ci) in m.citations" :key="ci">
+              <!-- Link to the book, not a specific chapter: the RAG index's
+                   chapter_sort_order can go stale relative to the current
+                   chapters table (e.g. after a re-parse), producing a citation
+                   that points at a chapter number that no longer exists. The
+                   book page is always valid, and already links to the book's
+                   series (a real "list") when it belongs to one. -->
               <a
                 v-if="c.book_slug"
-                :href="`/library/books/${c.book_slug}/chapters/${c.chapter_sort_order ?? 0}`"
+                :href="`/library/books/${c.book_slug}`"
                 target="_blank"
                 rel="noopener"
                 class="text-xs px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
