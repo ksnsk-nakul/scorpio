@@ -80,7 +80,6 @@
     <AnnouncementModal :announcements="announcements" />
     <ToastContainer />
     <ConfirmModal />
-    <AdvancedSearchDrawer />
   </div>
 </template>
 
@@ -91,7 +90,6 @@ import AnnouncementBanner from '@/Components/AnnouncementBanner.vue'
 import AnnouncementModal from '@/Components/AnnouncementModal.vue'
 import ToastContainer from '@/Components/ToastContainer.vue'
 import ConfirmModal from '@/Components/ConfirmModal.vue'
-import AdvancedSearchDrawer from '@/Components/Admin/AdvancedSearchDrawer.vue'
 import { useToast } from '@/composables/useToast'
 
 const page = usePage()

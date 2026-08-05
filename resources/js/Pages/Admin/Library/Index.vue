@@ -376,6 +376,8 @@
         </div>
       </div>
     </Teleport>
+
+    <AdvancedSearchDrawer />
   </AdminLayout>
 </template>
 
@@ -384,6 +386,7 @@ import { ref, computed, reactive } from 'vue'
 import axios from 'axios'
 import { Link, router, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import AdvancedSearchDrawer from '@/Components/Admin/AdvancedSearchDrawer.vue'
 import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
 
