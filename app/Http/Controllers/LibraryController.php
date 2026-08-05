@@ -3,16 +3,33 @@ namespace App\Http\Controllers;
 
 use App\Models\Author;
 use App\Models\Book;
+use App\Models\LibraryEntry;
+use App\Models\Series;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class LibraryController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response|\Illuminate\Http\RedirectResponse
     {
+        if (auth()->check()) {
+            return redirect()->route('admin.library.my');
+        }
+
+        $query = Book::with(['author', 'series'])->where('status', 'ready');
+
+        if ($request->filled('search')) {
+            $term = $request->string('search');
+            $query->where(function ($q) use ($term) {
+                $q->where('title', 'like', "%{$term}%")
+                    ->orWhereHas('author', fn ($a) => $a->where('name', 'like', "%{$term}%"))
+                    ->orWhereHas('series', fn ($s) => $s->where('name', 'like', "%{$term}%"));
+            });
+        }
+
         return Inertia::render('Public/Library/Index', [
-            'books' => Book::with('author')
-                ->where('status', 'ready')
+            'books' => $query
                 ->latest()
                 ->latest('id')
                 ->paginate(15)
@@ -22,7 +39,9 @@ class LibraryController extends Controller
                     'slug' => $book->slug,
                     'author' => $book->author?->name,
                     'cover_url' => $book->cover_url,
+                    'series' => $book->series ? ['name' => $book->series->name, 'slug' => $book->series->slug, 'volume_number' => $book->volume_number] : null,
                 ]),
+            'filters' => $request->only(['search']),
         ]);
     }
 
@@ -30,8 +49,17 @@ class LibraryController extends Controller
     {
         $book = Book::where('slug', $slug)
             ->where('status', 'ready')
-            ->with(['author', 'chapters' => fn ($q) => $q->orderBy('sort_order')])
+            ->with(['author', 'series'])
             ->firstOrFail();
+
+        $myEntry = auth()->check()
+            ? LibraryEntry::where('user_id', auth()->id())->where('book_id', $book->id)->with('lastChapter')->first()
+            : null;
+
+        $chapters = $book->chapters()
+            ->orderBy('sort_order')
+            ->paginate(30, ['id', 'title', 'sort_order'], 'chapter_page')
+            ->withQueryString();
 
         return Inertia::render('Public/Library/BookDetail', [
             'book' => [
@@ -43,7 +71,17 @@ class LibraryController extends Controller
                 'publisher' => $book->publisher,
                 'published_date' => $book->published_date?->toDateString(),
                 'author' => $book->author ? ['name' => $book->author->name, 'slug' => $book->author->slug] : null,
-                'chapters' => $book->chapters->map(fn ($c) => ['title' => $c->title, 'sort_order' => $c->sort_order])->values(),
+                'chapters' => $chapters->through(fn ($c) => ['title' => $c->title, 'sort_order' => $c->sort_order]),
+                'my_progress' => $myEntry ? [
+                    'status' => $myEntry->status,
+                    'last_chapter_sort_order' => $myEntry->lastChapter?->sort_order,
+                ] : null,
+                'series' => $book->series ? [
+                    'name' => $book->series->name,
+                    'slug' => $book->series->slug,
+                    'volume_number' => $book->volume_number,
+                    'other_volumes' => $book->series->books()->where('status', 'ready')->where('id', '!=', $book->id)->orderBy('volume_number')->get()->map(fn ($b) => ['title' => $b->title, 'slug' => $b->slug, 'volume_number' => $b->volume_number, 'cover_url' => $b->cover_url])->values(),
+                ] : null,
             ],
         ]);
     }
@@ -52,6 +90,13 @@ class LibraryController extends Controller
     {
         $book = Book::where('slug', $slug)->where('status', 'ready')->firstOrFail();
         $chapter = $book->chapters()->where('sort_order', $sortOrder)->firstOrFail();
+
+        if ($user = auth()->user()) {
+            LibraryEntry::updateOrCreate(
+                ['user_id' => $user->id, 'book_id' => $book->id],
+                ['last_chapter_id' => $chapter->id, 'last_read_at' => now()]
+            );
+        }
 
         return Inertia::render('Public/Library/ChapterReader', [
             'book' => ['title' => $book->title, 'slug' => $book->slug],
@@ -62,6 +107,18 @@ class LibraryController extends Controller
             ],
             'hasPrev' => $sortOrder > 0 && $book->chapters()->where('sort_order', $sortOrder - 1)->exists(),
             'hasNext' => $book->chapters()->where('sort_order', $sortOrder + 1)->exists(),
+        ]);
+    }
+
+    public function series(string $slug): Response
+    {
+        $series = Series::where('slug', $slug)->firstOrFail();
+
+        return Inertia::render('Public/Library/SeriesShow', [
+            'series' => ['name' => $series->name, 'slug' => $series->slug, 'description' => $series->description],
+            'books' => $series->books()->where('status', 'ready')->orderBy('volume_number')
+                ->paginate(15)->withQueryString()
+                ->through(fn (Book $book) => ['title' => $book->title, 'slug' => $book->slug, 'volume_number' => $book->volume_number, 'cover_url' => $book->cover_url]),
         ]);
     }
 

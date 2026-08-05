@@ -6,10 +6,6 @@
         <h1 class="text-2xl font-bold text-slate-800">My Wallet</h1>
       </div>
 
-      <div v-if="$page.props.flash?.success" class="mb-4 bg-green-50 border border-green-200 text-green-800 text-sm rounded-xl px-4 py-3">
-        {{ $page.props.flash.success }}
-      </div>
-
       <!-- Balance card -->
       <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 text-white mb-6 shadow-lg">
         <p class="text-sm text-blue-200 mb-1">Available Balance</p>

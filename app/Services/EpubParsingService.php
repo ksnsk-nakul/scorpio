@@ -3,7 +3,9 @@ namespace App\Services;
 
 use App\Models\Author;
 use App\Models\Book;
+use App\Models\BookAlternateTitle;
 use App\Models\Chapter;
+use App\Models\Series;
 use DOMDocument;
 use DOMNode;
 use Illuminate\Support\Carbon;
@@ -54,6 +56,45 @@ class EpubParsingService
                     $book->title = $metadata['title'];
                     $book->slug = Book::uniqueSlug($metadata['title'], $book->id);
                 }
+
+                $extractor = app(SeriesNameExtractor::class);
+                ['series_name' => $seriesName, 'volume_number' => $volumeNumber] = $extractor->extract($book->title);
+
+                if ($seriesName !== null) {
+                    $book->series_id = Series::findOrCreateByName($seriesName)->id;
+                    $book->volume_number = $volumeNumber;
+
+                    $duplicate = Book::where('id', '!=', $book->id)
+                        ->where('series_id', $book->series_id)
+                        ->where('volume_number', $volumeNumber)
+                        ->where('status', '!=', 'failed')
+                        ->first();
+                } else {
+                    $book->series_id = null;
+                    $book->volume_number = null;
+
+                    $normalized = $extractor->normalize($book->title);
+                    $duplicate = Book::where('id', '!=', $book->id)
+                        ->where('status', '!=', 'failed')
+                        ->get()
+                        ->first(fn ($candidate) => $extractor->normalize($candidate->title) === $normalized);
+                }
+
+                if ($duplicate) {
+                    BookAlternateTitle::create([
+                        'book_id' => $duplicate->id,
+                        'title' => $book->title,
+                        'source' => 'upload',
+                        'created_at' => now(),
+                    ]);
+                    Storage::disk('public')->delete($book->source_epub_path);
+                    Storage::disk('public')->deleteDirectory("books/{$book->id}");
+                    $book->status = 'failed';
+                    $book->status_reason = "Duplicate of existing book '{$duplicate->title}' (id {$duplicate->id}) — upload rejected.";
+                    $book->save();
+                    return;
+                }
+
                 $book->description = $metadata['description'] ?? null;
                 $book->language = $metadata['language'] ?? null;
                 $book->publisher = $metadata['publisher'] ?? null;

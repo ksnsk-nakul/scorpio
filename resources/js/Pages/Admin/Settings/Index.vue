@@ -16,7 +16,9 @@
         Settings are read-only in demo mode.
       </div>
 
-      <form @submit.prevent="!isDemo && save()" class="bg-white border border-slate-200 rounded-xl p-6 space-y-4"
+      <IntegrationsPanel v-if="activeGroup === 'integrations'" :payment="payment" :mail="mail" :sms="sms" />
+
+      <form v-else @submit.prevent="!isDemo && save()" class="bg-white border border-slate-200 rounded-xl p-6 space-y-4"
         :class="isDemo ? 'opacity-60 pointer-events-none select-none' : ''">
         <div v-for="(value, key) in currentGroup" :key="key">
           <template v-if="isBoolKey(String(key))">
@@ -65,9 +67,20 @@ import { ref, computed } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import ImagePicker from '@/Components/Admin/ImagePicker.vue'
+import IntegrationsPanel from '@/Components/Admin/IntegrationsPanel.vue'
 
-const props = defineProps({ settings: Object, groups: Array })
-const activeGroup = ref(props.groups[0])
+const props = defineProps({
+  settings: Object,
+  groups: Array,
+  payment: { type: Object, default: () => ({}) },
+  mail: { type: Object, default: () => ({}) },
+  sms: { type: Object, default: () => ({}) },
+})
+
+// Supports deep-linking straight to a tab, e.g. /admin/settings?group=integrations
+// (the old /admin/integrations route redirects here with that query param).
+const requestedGroup = new URLSearchParams(window.location.search).get('group')
+const activeGroup = ref(props.groups.includes(requestedGroup) ? requestedGroup : props.groups[0])
 const isDemo = usePage().props.demo
 
 const allSettings = Object.values(props.settings).reduce((acc, g) => ({ ...acc, ...g }), {})

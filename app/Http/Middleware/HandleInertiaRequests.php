@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Announcement;
 use App\Models\Setting;
+use App\Support\RagConnectionGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
@@ -69,6 +70,7 @@ class HandleInertiaRequests extends Middleware
                 'status'             => fn () => $request->session()->get('status'),
                 'success'            => fn () => $request->session()->get('success'),
                 'error'              => fn () => $request->session()->get('error'),
+                'warning'            => fn () => $request->session()->get('warning'),
                 'profile_success'    => fn () => $request->session()->get('profile_success'),
                 'password_success'   => fn () => $request->session()->get('password_success'),
                 'webhook_project_id' => fn () => $request->session()->get('webhook_project_id'),
@@ -76,6 +78,7 @@ class HandleInertiaRequests extends Middleware
                 'webhook_secret'     => fn () => $request->session()->get('webhook_secret'),
             ],
             'announcements'  => fn () => Cache::remember('announcements.active', 60, fn () => Announcement::active()->get(['id', 'title', 'body', 'type', 'display', 'cta_label', 'cta_url'])),
+            'ragAvailable'   => fn () => RagConnectionGuard::available(),
             'wallet_balance' => fn () => $request->user()?->wallet_balance_paise ?? 0,
             'demo' => env('DEMO_MODE', false) ? [
                 'enabled'  => true,

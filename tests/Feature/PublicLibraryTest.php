@@ -34,8 +34,8 @@ it('shows a ready book with its chapters in order', function () {
     $response->assertInertia(fn ($page) => $page
         ->component('Public/Library/BookDetail')
         ->where('book.title', 'A Public Book')
-        ->where('book.chapters.0.title', 'One')
-        ->where('book.chapters.1.title', 'Two'));
+        ->where('book.chapters.data.0.title', 'One')
+        ->where('book.chapters.data.1.title', 'Two'));
 });
 
 it('404s for a book that is not ready', function () {

@@ -83,7 +83,9 @@ Route::middleware(['auth', 'role:admin,editor'])
     ->group(function () {
         Route::post('library/books', [BookController::class, 'store'])->name('library.books.store');
         Route::post('library/books/{book}/retry', [BookController::class, 'retry'])->name('library.books.retry');
+        Route::post('library/books/{book}/mark-failed', [BookController::class, 'markFailed'])->name('library.books.mark-failed');
         Route::patch('library/books/{book}', [BookController::class, 'update'])->name('library.books.update');
+        Route::delete('library/books/bulk', [BookController::class, 'bulkDestroy'])->name('library.books.bulk-destroy');
         Route::delete('library/books/{book}', [BookController::class, 'destroy'])->name('library.books.destroy');
     });
 
@@ -93,6 +95,8 @@ Route::middleware(['auth', 'role:admin,editor,viewer'])
     ->group(function () {
         Route::get('library/books/{book}/status', [BookController::class, 'status'])->name('library.books.status');
         Route::get('library', [BookController::class, 'index'])->name('library.index');
+        Route::get('library/upload', [BookController::class, 'uploadPage'])->name('library.upload');
+        Route::get('library/my', [BookController::class, 'myLibrary'])->name('library.my');
     });
 
 use App\Http\Controllers\Admin\EdTechController;
@@ -118,8 +122,6 @@ Route::middleware(['auth', 'role:admin,editor,viewer'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-        Route::get('library/chat', [LibraryChatController::class, 'index'])->name('library.chat.index');
-        Route::get('library/chat/{thread}', [LibraryChatController::class, 'show'])->name('library.chat.show');
         Route::post('library/chat', [LibraryChatController::class, 'store'])->middleware('throttle:20,1')->name('library.chat.store');
     });
 
@@ -292,7 +294,8 @@ Route::middleware(['auth'])
         // Payment methods
         Route::get('payment-methods',                    [PaymentMethodController::class, 'index'])->name('payment-methods.index');
         Route::post('payment-methods/upi',               [PaymentMethodController::class, 'storeUpi'])->name('payment-methods.store-upi');
-        Route::post('payment-methods/card',              [PaymentMethodController::class, 'storeCard'])->name('payment-methods.store-card');
+        Route::post('payment-methods/card/order',        [PaymentMethodController::class, 'createCardOrder'])->name('payment-methods.card.order');
+        Route::post('payment-methods/card/verify',       [PaymentMethodController::class, 'verifyCard'])->name('payment-methods.card.verify');
         Route::patch('payment-methods/{method}/default', [PaymentMethodController::class, 'setDefault'])->name('payment-methods.default');
         Route::delete('payment-methods/{method}',        [PaymentMethodController::class, 'destroy'])->name('payment-methods.destroy');
     });
@@ -426,6 +429,19 @@ Route::get('/library/books/{slug}/chapters/{sortOrder}', [LibraryController::cla
 Route::get('/library/authors/{slug}', [LibraryController::class, 'author'])
     ->name('library.author')
     ->where('slug', '[a-z0-9\-]+');
+Route::get('/library/series/{slug}', [LibraryController::class, 'series'])->name('library.series');
+
+use App\Http\Controllers\LibraryEntryController;
+
+Route::middleware(['auth'])
+    ->prefix('library')
+    ->name('library.')
+    ->group(function () {
+        Route::post('books/{slug}/follow', [LibraryEntryController::class, 'follow'])->name('entries.follow');
+        Route::patch('books/{slug}/status', [LibraryEntryController::class, 'updateStatus'])->name('entries.status');
+        Route::delete('books/{slug}/follow', [LibraryEntryController::class, 'unfollow'])->name('entries.unfollow');
+        Route::post('books/{slug}/progress', [LibraryEntryController::class, 'recordProgress'])->name('entries.progress');
+    });
 
 use App\Http\Controllers\CourseController;
 

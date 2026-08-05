@@ -3,45 +3,21 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ChatThread;
 use App\Services\ChatService;
+use App\Support\RagConnectionGuard;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 use RuntimeException;
 
 class LibraryChatController extends Controller
 {
-    public function index(Request $request): Response
+    public function store(Request $request, ChatService $chatService): JsonResponse
     {
-        $threads = ChatThread::where('user_id', $request->user()->id)
-            ->orderByDesc('updated_at')
-            ->get(['id', 'title', 'updated_at']);
+        if (! RagConnectionGuard::available()) {
+            return response()->json(['message' => "Advanced search isn't available right now — the search backend is unreachable. Please try again later."], 503);
+        }
 
-        return Inertia::render('Admin/Library/Chat/Index', [
-            'threads' => $threads,
-            'activeThread' => null,
-        ]);
-    }
-
-    public function show(Request $request, ChatThread $thread): Response
-    {
-        abort_unless($thread->user_id === $request->user()->id, 403);
-
-        $threads = ChatThread::where('user_id', $request->user()->id)
-            ->orderByDesc('updated_at')
-            ->get(['id', 'title', 'updated_at']);
-
-        return Inertia::render('Admin/Library/Chat/Index', [
-            'threads' => $threads,
-            'activeThread' => $thread->load('messages'),
-        ]);
-    }
-
-    public function store(Request $request, ChatService $chatService): RedirectResponse
-    {
         $data = $request->validate([
             'question' => ['required', 'string', 'max:2000', function ($attribute, $value, $fail) {
                 if (trim($value) === '') {
@@ -70,10 +46,17 @@ class LibraryChatController extends Controller
         } catch (RuntimeException $e) {
             // GeminiClient failures (API down, rate-limited, malformed response) — the
             // question was already persisted by ChatService before the failing call, so
-            // send the admin back to see it (with no answer yet) rather than a raw 500.
-            return back()->withErrors(['question' => 'Something went wrong asking the library: '.$e->getMessage()]);
+            // report the failure back to the drawer rather than a raw 500.
+            return response()->json(['message' => 'Something went wrong asking the library: '.$e->getMessage()], 422);
         }
 
-        return redirect()->route('admin.library.chat.show', $result['thread']->id);
+        $thread = $result['thread'];
+        $assistantMessage = $thread->messages()->where('role', 'assistant')->latest('id')->first();
+
+        return response()->json([
+            'thread_id' => $thread->id,
+            'answer' => $assistantMessage?->content,
+            'citations' => $assistantMessage?->citations ?? [],
+        ]);
     }
 }

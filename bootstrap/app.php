@@ -31,5 +31,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ])
     ->withSchedule(function (\Illuminate\Console\Scheduling\Schedule $schedule) {
         $schedule->command('github:sync')->hourly();
+        $schedule->command('queue:work --stop-when-empty --max-time=50')->everyMinute()->withoutOverlapping();
     })
     ->create();

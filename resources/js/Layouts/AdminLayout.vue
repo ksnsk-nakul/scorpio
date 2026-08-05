@@ -78,17 +78,39 @@
     </div>
 
     <AnnouncementModal :announcements="announcements" />
+    <ToastContainer />
+    <ConfirmModal />
+    <AdvancedSearchDrawer />
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
 import AnnouncementBanner from '@/Components/AnnouncementBanner.vue'
 import AnnouncementModal from '@/Components/AnnouncementModal.vue'
+import ToastContainer from '@/Components/ToastContainer.vue'
+import ConfirmModal from '@/Components/ConfirmModal.vue'
+import AdvancedSearchDrawer from '@/Components/Admin/AdvancedSearchDrawer.vue'
+import { useToast } from '@/composables/useToast'
 
 const page = usePage()
 const announcements = computed(() => page.props.announcements ?? [])
+
+// Every controller across the app already flashes success/error/warning into the
+// session (HandleInertiaRequests shares them as page.props.flash.*) — surfacing
+// them here as toasts means every existing and future page gets create/update/
+// delete alerts for free, without each page needing its own inline banner.
+const toast = useToast()
+watch(
+  () => page.props.flash,
+  (flash) => {
+    if (flash?.success) toast.success(flash.success)
+    if (flash?.error) toast.error(flash.error)
+    if (flash?.warning) toast.warning(flash.warning)
+  },
+  { deep: true }
+)
 
 const userRoles  = computed(() => page.props.auth.roles ?? [])
 const isAdmin    = computed(() => userRoles.value.includes('admin'))
@@ -106,9 +128,9 @@ const DEFAULT_ICON = 'M12 4a8 8 0 100 16 8 8 0 000-16z'
 // icon: simple hand-drawn line icon path (no icon library dependency)
 const allNav = [
   { label: 'Dashboard',     href: '/admin/dashboard',     roles: ['admin','editor','viewer'], icon: 'M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z' },
+  { label: 'Tasks',         href: '/admin/tasks',         roles: ['admin','editor'], icon: 'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11' },
   { label: 'Pages',         href: '/admin/pages',         roles: ['admin','editor','viewer'], icon: 'M6 3h8l4 4v14H6V3zm8 0v4h4M9 11h6M9 14h6M9 17h4' },
   { label: 'Library',       href: '/admin/library',      roles: ['admin','editor','viewer'], icon: 'M12 6c-1.4-.8-3-1.2-4.8-1.2S3.8 5.2 2.5 6v13c1.3-.8 3-1.2 4.7-1.2s3.4.4 4.8 1.2m0-13c1.4-.8 3-1.2 4.8-1.2s3.4.4 4.7 1.2v13c-1.3-.8-3-1.2-4.7-1.2s-3.4.4-4.8 1.2m0-13v13' },
-  { label: 'Library Chat',  href: '/admin/library/chat', roles: ['admin','editor','viewer'], icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8-1.5 0-2.9-.33-4.14-.9L3 20l1.05-3.16C3.38 15.6 3 14.35 3 13c0-4.418 4.03-8 9-8s9 3.582 9 7z' },
   { label: 'EdTech',        href: '/admin/edtech',        roles: ['admin','editor','viewer'], icon: 'M12 14l9-5-9-5-9 5 9 5zM12 14l6.16-3.42A12.05 12.05 0 0121 12v4M12 14v7m-4-3.5v-4l4 2.2' },
   { label: 'Service Cards', href: '/admin/service-cards', roles: ['admin','editor','viewer'], icon: 'M3.5 6.5h17a1 1 0 011 1V17a1 1 0 01-1 1h-17a1 1 0 01-1-1V7.5a1 1 0 011-1zM2.5 10h19M6 14.5h3' },
   { label: 'Products',      href: '/admin/products',      roles: ['admin','editor','viewer'], icon: 'M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM4 7.5L12 12l8-4.5M12 12v9' },
@@ -119,18 +141,22 @@ const allNav = [
   { label: 'Wallet',           href: '/admin/wallet',           roles: ['admin','editor','viewer'], icon: 'M4 7a1.5 1.5 0 011.5-1.5h13A1.5 1.5 0 0120 7v1.5H4V7zM4 8.5h16V17a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 17V8.5zM15.5 12.75a1 1 0 100 2 1 1 0 000-2z' },
   { label: 'Payment Methods',  href: '/admin/payment-methods',  roles: ['admin','editor','viewer'], icon: 'M3.5 9.5L12 4.5l8.5 5M5 10v8.5M19 10v8.5M9 10v8.5M15 10v8.5M3.5 18.5h17' },
   { label: 'Users',         href: '/admin/users',         roles: ['admin'], icon: 'M9 12.5a3 3 0 100-6 3 3 0 000 6zM3.5 19c.7-2.7 2.9-4.5 5.5-4.5s4.8 1.8 5.5 4.5M16 11a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM14.5 14.5c2 .3 3.6 1.8 4 4' },
-  { label: 'Integrations', href: '/admin/integrations', roles: ['admin'], icon: 'M9 3.5v3.5M15 3.5v3.5M6.5 7h11l-.6 3.4a5 5 0 01-9.8 0L6.5 7zM12 15v5.5' },
   { label: 'Settings',      href: '/admin/settings',      roles: ['admin'], icon: 'M12 8.8a3.2 3.2 0 100 6.4 3.2 3.2 0 000-6.4zM12 2v2.3M12 19.7V22M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2 12h2.3M19.7 12H22M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6' },
   { label: 'Organizations', href: '/admin/organizations', roles: ['admin','editor','viewer'], icon: 'M4.5 20.5V6l6.5-3v17.5M13.5 20.5V10l6 2.5v8M4.5 20.5h15M8 9h.01M8 12.5h.01M8 16h.01' },
   { label: 'Announcements', href: '/admin/announcements', roles: ['admin'], icon: 'M3.5 10.5v4a1 1 0 001 1h2l5 3v-12l-5 3h-2a1 1 0 00-1 1zM15 9.5a3 3 0 010 6M17.3 6.5a6.5 6.5 0 010 12' },
 ]
 
-const nav = computed(() => allNav.filter(item => item.roles.some(r => userRoles.value.includes(r))))
+// The `rag` Postgres connection availability (missing driver, unreachable host,
+// bad creds, etc.) also gates the "Advanced Search" drawer trigger on the Library
+// page — kept here (rather than moved into the drawer composable) since it's
+// already sourced from this shared page prop and other admin pages may want it.
+const ragAvailable = computed(() => page.props.ragAvailable ?? true)
+const nav = computed(() => allNav
+  .filter(item => item.roles.some(r => userRoles.value.includes(r))))
 
-// Some nav hrefs are prefixes of others now that Library Chat sits under Library
-// (e.g. /admin/library/chat starts with /admin/library). Pick the longest matching
-// href rather than just "does the URL start with this href", so only the most
-// specific nav item lights up.
+// Some nav hrefs can be prefixes of others (e.g. /admin/library and any future
+// nested route). Pick the longest matching href rather than just "does the URL
+// start with this href", so only the most specific nav item lights up.
 const isActive = (href) => {
   const matches = nav.value.filter(item => page.url.startsWith(item.href))
   if (matches.length === 0) return false

@@ -11,7 +11,7 @@ class Book extends Model
     use HasFactory;
 
     protected $fillable = [
-        'author_id', 'title', 'slug', 'description', 'cover_path',
+        'author_id', 'series_id', 'volume_number', 'title', 'slug', 'description', 'cover_path',
         'language', 'publisher', 'published_date', 'subject',
         'source_epub_path', 'status', 'status_reason', 'uploaded_by',
     ];
@@ -52,6 +52,16 @@ class Book extends Model
         return $this->belongsTo(Author::class);
     }
 
+    public function series(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Series::class);
+    }
+
+    public function alternateTitles(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(BookAlternateTitle::class);
+    }
+
     public function chapters(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Chapter::class)->orderBy('sort_order');
@@ -60,6 +70,11 @@ class Book extends Model
     public function uploader(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    public function libraryEntries(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LibraryEntry::class);
     }
 
     public function isReady(): bool
@@ -75,6 +90,16 @@ class Book extends Model
     public function isFailed(): bool
     {
         return $this->status === 'failed';
+    }
+
+    // A book stuck at pending/processing for a while almost always means the
+    // job that would move it forward was lost (e.g. no queue worker was running
+    // when it was dispatched) rather than genuinely still in flight — a fresh
+    // upload legitimately sits at "pending" for a few seconds/minutes, so this
+    // only trips once that window has clearly passed.
+    public function isStuck(): bool
+    {
+        return $this->isProcessing() && $this->updated_at->lt(now()->subMinutes(10));
     }
 
     public function getCoverUrlAttribute(): ?string
