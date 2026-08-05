@@ -389,6 +389,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import AdvancedSearchDrawer from '@/Components/Admin/AdvancedSearchDrawer.vue'
 import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
+import { timeAgo } from '@/composables/useTimeAgo'
 
 const { confirmAction } = useConfirm()
 const toast = useToast()
@@ -643,24 +644,6 @@ const myStatusBadge = (status) => ({
   plan_to_read: 'bg-slate-100 text-slate-600',
   dropped: 'bg-red-50 text-red-700',
 }[status] ?? 'bg-slate-100 text-slate-600')
-
-// No relative-time helper exists elsewhere in the codebase (checked composables/
-// and Pages for timeAgo/formatRelative/dayjs/date-fns) and no date library is a
-// dependency, so this is a small local one-liner rather than a new npm install.
-const timeAgo = (dateString) => {
-  if (!dateString) return 'Never'
-  const diffMs = Date.now() - new Date(dateString.replace(' ', 'T')).getTime()
-  const minutes = Math.floor(diffMs / 60000)
-  if (minutes < 1) return 'Just now'
-  if (minutes < 60) return `${minutes}m ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  if (days < 30) return `${days}d ago`
-  const months = Math.floor(days / 30)
-  if (months < 12) return `${months}mo ago`
-  return `${Math.floor(months / 12)}y ago`
-}
 
 // "My Library" tab rows carry `chapters_read` (last_chapter.sort_order + 1, or 0),
 // so the Read link can resume at the last-read chapter instead of always chapter 1.

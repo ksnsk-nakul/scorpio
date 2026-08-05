@@ -16,12 +16,30 @@ const state = reactive({
   threadId: null,
   loading: false,
   error: null,
+  // 'chat' shows the current conversation + input form; 'list' shows the
+  // LinkedIn-Messages-style inbox of past threads (see openThreadList/
+  // openThread below). Purely a client-side view toggle within the same
+  // docked panel -- no route change.
+  view: 'chat',
+  threadList: [],
+  // Reactive counterpart of historyLoaded below, but exposed to the drawer
+  // component so it can render a one-time loading indicator while the first
+  // fetch of the list is in flight (flips true once that fetch settles,
+  // success or failure, and then guards loadThreadList() from refetching for
+  // the rest of the page session).
+  threadListLoaded: false,
 })
 
 // Guards loadHistory() so it only ever fetches once per page session, not on
 // every AdvancedSearchDrawer re-mount (e.g. across Inertia navigations that
 // tear down and remount AdminLayout's children).
 let historyLoaded = false
+
+// Guards loadThreadList() against firing a second request while the first is
+// still in flight or has already settled (state.threadListLoaded, above, only
+// flips once the request settles, so it can't be used as the "already
+// started" guard by itself without allowing a burst of duplicate requests).
+let threadListRequested = false
 
 async function loadHistory() {
   if (historyLoaded) return
@@ -106,6 +124,44 @@ async function ask(question) {
   }
 }
 
+// Fetches the current user's conversation list (title, last message preview,
+// last message role, updated_at) for the inbox view. Guarded by
+// threadListLoaded the same way loadHistory() is guarded by historyLoaded --
+// only refetches once per page session.
+async function loadThreadList() {
+  if (threadListRequested) return
+  threadListRequested = true
+  try {
+    const { data } = await axios.get('/admin/library/chat/threads')
+    state.threadList = data.threads
+  } catch {
+    // Silently ignore, same rationale as loadHistory() -- an empty list is a
+    // fine fallback for a convenience view, not worth surfacing an error for.
+  } finally {
+    state.threadListLoaded = true
+  }
+}
+
+// Switches the expanded panel into the inbox view and loads the thread list.
+function openThreadList() {
+  state.view = 'list'
+  loadThreadList()
+}
+
+// Opens one specific past thread: fetches its full message history and
+// switches the panel back to the chat view so it renders like the active
+// conversation.
+async function openThread(id) {
+  try {
+    const { data } = await axios.get(`/admin/library/chat/threads/${id}`)
+    state.threadId = data.thread_id
+    state.messages = data.messages.map((m) => ({ role: m.role, content: m.content, citations: m.citations }))
+    state.view = 'chat'
+  } catch (err) {
+    state.error = err.response?.data?.message ?? 'Could not open that conversation.'
+  }
+}
+
 export function useAdvancedSearch() {
   return {
     ...toRefs(state),
@@ -117,5 +173,8 @@ export function useAdvancedSearch() {
     deleteConversation,
     ask,
     loadHistory,
+    loadThreadList,
+    openThreadList,
+    openThread,
   }
 }

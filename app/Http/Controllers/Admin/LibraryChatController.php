@@ -9,6 +9,7 @@ use App\Support\RagConnectionGuard;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class LibraryChatController extends Controller
@@ -52,7 +53,12 @@ class LibraryChatController extends Controller
         }
 
         $thread = $result['thread'];
-        $assistantMessage = $thread->messages()->where('role', 'assistant')->latest('id')->first();
+        // ChatThread::messages() already applies orderBy('id') ascending, so chaining
+        // latest('id') here just appends a second, ineffective ORDER BY -- the first
+        // clause wins since 'id' is unique, silently returning the OLDEST assistant
+        // message instead of the answer to the question just asked. reorder() clears
+        // the existing order first so this actually gets the most recent one.
+        $assistantMessage = $thread->messages()->where('role', 'assistant')->reorder('id', 'desc')->first();
 
         return response()->json([
             'thread_id' => $thread->id,
@@ -85,6 +91,53 @@ class LibraryChatController extends Controller
         ]);
 
         return response()->json(['thread_id' => $thread->id, 'messages' => $messages]);
+    }
+
+    public function index(Request $request): JsonResponse
+    {
+        // SECURITY: scope strictly to the authenticated user's own threads (same IDOR-safety
+        // convention as store()/history()/destroy() above).
+        $threads = ChatThread::where('user_id', $request->user()->id)
+            ->orderByDesc('updated_at')
+            ->get()
+            ->map(function (ChatThread $thread) {
+                // NOTE: ChatThread::messages() already applies orderBy('id') ascending;
+                // chaining latest('id')/orderByDesc('id') directly would append a second,
+                // ineffective ORDER BY clause (the first one wins since `id` is unique).
+                // reorder() clears it first so we actually get the most recent message.
+                $last = $thread->messages()->reorder('id', 'desc')->first();
+
+                return [
+                    'id' => $thread->id,
+                    'title' => $thread->title,
+                    'last_message' => $last ? Str::limit($last->content, 100) : null,
+                    'last_message_role' => $last?->role,
+                    'updated_at' => $thread->updated_at,
+                ];
+            });
+
+        return response()->json(['threads' => $threads]);
+    }
+
+    public function show(Request $request, int $thread): JsonResponse
+    {
+        // SECURITY: scope strictly to the authenticated user's own thread (same IDOR-safety
+        // convention as store()/history()/destroy() above). Unlike destroy()'s silent
+        // no-op, a 404 here is correct — this is a read the user explicitly asked for by
+        // clicking a specific thread, not a "delete something that may already be gone" action.
+        $chatThread = ChatThread::where('user_id', $request->user()->id)->find($thread);
+
+        if (! $chatThread) {
+            return response()->json(['message' => 'Conversation not found.'], 404);
+        }
+
+        $messages = $chatThread->messages()->orderBy('id')->get()->map(fn ($m) => [
+            'role' => $m->role,
+            'content' => $m->content,
+            'citations' => $m->citations ?? [],
+        ]);
+
+        return response()->json(['thread_id' => $chatThread->id, 'messages' => $messages]);
     }
 
     public function destroy(Request $request, int $thread): JsonResponse
