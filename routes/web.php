@@ -99,6 +99,23 @@ Route::middleware(['auth', 'role:admin,editor,viewer'])
         Route::get('library/my', [BookController::class, 'myLibrary'])->name('library.my');
     });
 
+use App\Http\Controllers\Admin\EdTechController;
+
+Route::middleware(['auth', 'role:admin,editor'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::post('edtech/courses/{course}/reimport', [EdTechController::class, 'reimport'])->name('edtech.reimport');
+    });
+
+Route::middleware(['auth', 'role:admin,editor,viewer'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('edtech', [EdTechController::class, 'index'])->name('edtech.index');
+        Route::get('edtech/enrollments', [EdTechController::class, 'enrollments'])->name('edtech.enrollments');
+    });
+
 use App\Http\Controllers\Admin\LibraryChatController;
 
 Route::middleware(['auth', 'role:admin,editor,viewer'])
@@ -429,6 +446,29 @@ Route::middleware(['auth'])
         Route::delete('books/{slug}/follow', [LibraryEntryController::class, 'unfollow'])->name('entries.unfollow');
         Route::post('books/{slug}/progress', [LibraryEntryController::class, 'recordProgress'])->name('entries.progress');
     });
+
+use App\Http\Controllers\CourseController;
+
+Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
+
+Route::get('/courses/{slug}', [CourseController::class, 'show'])
+    ->name('courses.show')
+    ->where('slug', '[a-z0-9\-]+');
+
+Route::get('/courses/{slug}/topics/{topicSlug}', [CourseController::class, 'topic'])
+    ->name('courses.topic')
+    ->where(['slug' => '[a-z0-9\-]+', 'topicSlug' => '[a-z0-9\-]+']);
+Route::get('/courses/{slug}/topics/{topicSlug}/materials/{material}/download', [CourseController::class, 'downloadMaterial'])
+    ->name('courses.materials.download')
+    ->where(['slug' => '[a-z0-9\-]+', 'topicSlug' => '[a-z0-9\-]+']);
+
+use App\Http\Controllers\CourseEnrollmentController;
+
+Route::middleware(['auth'])->group(function () {
+    Route::post('/courses/{slug}/enroll', [CourseEnrollmentController::class, 'store'])
+        ->name('courses.enroll')
+        ->where('slug', '[a-z0-9\-]+');
+});
 
 // Admin portfolio inner pages at root (must be last to avoid shadowing other routes)
 Route::get('/{slug}', [\App\Http\Controllers\PublicController::class, 'adminPage'])

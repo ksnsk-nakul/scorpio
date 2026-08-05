@@ -1,6 +1,8 @@
 <?php
 namespace App\Models;
 
+use App\Notifications\Contracts\NotificationSender;
+use App\Notifications\WalletBalanceChanged;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -186,6 +188,8 @@ class User extends Authenticatable
             'meta'                 => $meta,
         ]);
 
+        app(NotificationSender::class)->send(new WalletBalanceChanged($this, $this->walletTransactions()->latest()->first()));
+
         return $this->wallet_balance_paise;
     }
 
@@ -216,6 +220,9 @@ class User extends Authenticatable
         ]);
 
         $this->wallet_balance_paise = $fresh->wallet_balance_paise;
+
+        app(NotificationSender::class)->send(new WalletBalanceChanged($this, $this->walletTransactions()->latest()->first()));
+
         return $fresh->wallet_balance_paise;
     }
 }
