@@ -4,12 +4,13 @@ import axios from 'axios'
 // Module-singleton reactive state (same pattern as useToast.js) — every caller
 // across the app shares one drawer instance, rendered once by
 // <AdvancedSearchDrawer /> mounted in AdminLayout, so any admin page can open/
-// ask into the same drawer without mounting its own. The drawer is docked
-// (minimized) by default on any admin page — like LinkedIn's messaging widget,
-// there's no separate "open" trigger elsewhere on the page. `close()` fully
-// dismisses it for the rest of the session (until the next page load).
+// ask into the same drawer without mounting its own. The drawer is closed by
+// default; a small floating trigger button (rendered by AdvancedSearchDrawer
+// itself) is what the user clicks to open it. `deleteConversation()` (wired
+// to the drawer's Close/X button) both hides the drawer and deletes the
+// underlying thread server-side.
 const state = reactive({
-  isOpen: true,
+  isOpen: false,
   isMinimized: false,
   messages: [],
   threadId: null,
@@ -50,7 +51,37 @@ function minimize() {
 }
 
 function expand() {
+  state.isOpen = true
   state.isMinimized = false
+}
+
+// Starts a fresh conversation without deleting the previous one server-side —
+// clears local state only, so the next `ask()` creates a brand-new thread
+// (per store()'s `thread_id: null` handling). The old thread stays intact and
+// will resurface next time loadHistory() runs (e.g. next page load).
+function newChat() {
+  state.messages = []
+  state.threadId = null
+}
+
+// Actually deletes the current conversation (distinct from newChat(), which
+// just stops looking at it, and from minimize(), which just collapses the
+// panel). Clears client-side state and closes the drawer immediately, then
+// best-effort deletes the thread server-side.
+async function deleteConversation() {
+  const idToDelete = state.threadId
+  state.messages = []
+  state.threadId = null
+  state.isOpen = false
+  if (idToDelete) {
+    try {
+      await axios.delete(`/admin/library/chat/${idToDelete}`)
+    } catch {
+      // Already cleared client-side regardless; a failed server-side delete just
+      // means loadHistory() would resurrect it next time they open the drawer,
+      // which is an acceptable degradation, not worth surfacing an error for.
+    }
+  }
 }
 
 async function ask(question) {
@@ -82,6 +113,8 @@ export function useAdvancedSearch() {
     close,
     minimize,
     expand,
+    newChat,
+    deleteConversation,
     ask,
     loadHistory,
   }

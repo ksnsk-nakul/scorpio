@@ -3,6 +3,22 @@
      pinned to the bottom-right that expands into a floating panel, mounted once
      globally in AdminLayout so it's available from any admin page. -->
 <template>
+  <!-- Floating trigger: small circular action button, visible whenever RAG is
+       available and the drawer itself isn't open. Clicking it expands straight
+       into the full panel (skipping the minimized-bar state, since getting here
+       already took a deliberate click) and defensively kicks off loadHistory()
+       so the user's last conversation is there when the panel appears. -->
+  <button
+    v-if="ragAvailable && !isOpen"
+    @click="openDrawer"
+    aria-label="Open Advanced Search"
+    class="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-slate-900 shadow-lg hover:bg-slate-700 flex items-center justify-center transition-colors"
+  >
+    <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+    </svg>
+  </button>
+
   <div v-if="isOpen && ragAvailable" class="fixed bottom-0 right-6 z-50">
     <!-- Minimized bar -->
     <div v-if="isMinimized" class="w-72 bg-white border border-slate-200 rounded-t-xl shadow-lg overflow-hidden">
@@ -14,7 +30,7 @@
           <button @click="expand" aria-label="Expand" class="p-1 text-slate-300 hover:text-white transition-colors">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6" /></svg>
           </button>
-          <button @click="close" aria-label="Close" class="p-1 text-slate-300 hover:text-white transition-colors">
+          <button @click="confirmDelete" aria-label="Close" class="p-1 text-slate-300 hover:text-white transition-colors">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
           </button>
         </div>
@@ -26,10 +42,13 @@
       <div class="h-11 px-4 flex items-center justify-between bg-slate-900 flex-shrink-0">
         <span class="text-sm font-medium text-white truncate">Advanced Search</span>
         <div class="flex items-center gap-1 flex-shrink-0">
+          <button @click="newChat" aria-label="New chat" title="New chat" class="p-1 text-slate-300 hover:text-white transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+          </button>
           <button @click="minimize" aria-label="Minimize" class="p-1 text-slate-300 hover:text-white transition-colors">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
           </button>
-          <button @click="close" aria-label="Close" class="p-1 text-slate-300 hover:text-white transition-colors">
+          <button @click="confirmDelete" aria-label="Close" class="p-1 text-slate-300 hover:text-white transition-colors">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
           </button>
         </div>
@@ -109,11 +128,13 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import { useAdvancedSearch } from '@/composables/useAdvancedSearch'
+import { useConfirm } from '@/composables/useConfirm'
 
-const { isOpen, isMinimized, messages, loading, error, close, minimize, expand, ask, loadHistory } = useAdvancedSearch()
+const { isOpen, isMinimized, messages, loading, error, minimize, expand, newChat, deleteConversation, ask, loadHistory } = useAdvancedSearch()
+const { confirmAction } = useConfirm()
 
 // The `rag` Postgres connection availability is a page-level Inertia prop
 // (shared from HandleInertiaRequests); the drawer reads it directly rather
@@ -145,9 +166,25 @@ const dedupedCitations = (citations) => {
   })
 }
 
-onMounted(() => {
+// Called from the floating trigger button: expands straight into the full
+// panel and defensively loads history (loadHistory() has its own
+// historyLoaded guard, so this only actually fetches the first time the
+// drawer is opened this session).
+const openDrawer = () => {
+  expand()
   loadHistory()
-})
+}
+
+const confirmDelete = async () => {
+  const ok = await confirmAction({
+    title: 'Delete conversation',
+    message: 'This clears your current conversation. It cannot be undone.',
+    danger: true,
+    confirmLabel: 'Delete',
+  })
+  if (!ok) return
+  deleteConversation()
+}
 
 const submit = async () => {
   const q = question.value

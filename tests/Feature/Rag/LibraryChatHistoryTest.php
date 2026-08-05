@@ -125,3 +125,62 @@ it('returns empty history gracefully when rag is unavailable, not a 500', functi
         $property->setValue(null, null);
     }
 });
+
+it('deletes a users own chat thread and its messages', function () {
+    skipIfRagUnavailable();
+
+    $user = User::factory()->create();
+    $user->assignRole('admin');
+
+    $thread = ChatThread::create(['user_id' => $user->id, 'title' => 'A conversation']);
+    ChatMessage::create(['thread_id' => $thread->id, 'role' => 'user', 'content' => 'First question?']);
+    ChatMessage::create(['thread_id' => $thread->id, 'role' => 'assistant', 'content' => 'First answer.']);
+
+    try {
+        $response = $this->actingAs($user)->deleteJson("/admin/library/chat/{$thread->id}");
+
+        $response->assertOk();
+        $response->assertExactJson(['deleted' => true]);
+
+        expect(ChatThread::find($thread->id))->toBeNull();
+        expect(ChatMessage::where('thread_id', $thread->id)->count())->toBe(0);
+    } finally {
+        deleteRagThreadForHistory($thread->id);
+    }
+});
+
+it('does not delete another users thread and does not error', function () {
+    skipIfRagUnavailable();
+
+    $userA = User::factory()->create();
+    $userA->assignRole('admin');
+    $userB = User::factory()->create();
+    $userB->assignRole('admin');
+
+    $threadB = ChatThread::create(['user_id' => $userB->id, 'title' => 'B conversation']);
+    ChatMessage::create(['thread_id' => $threadB->id, 'role' => 'user', 'content' => 'From B — secret']);
+
+    try {
+        $response = $this->actingAs($userA)->deleteJson("/admin/library/chat/{$threadB->id}");
+
+        $response->assertOk();
+        $response->assertExactJson(['deleted' => true]);
+
+        expect(ChatThread::find($threadB->id))->not->toBeNull();
+        expect(ChatMessage::where('thread_id', $threadB->id)->count())->toBe(1);
+    } finally {
+        deleteRagThreadForHistory($threadB->id);
+    }
+});
+
+it('is a no-op when the thread does not exist', function () {
+    skipIfRagUnavailable();
+
+    $user = User::factory()->create();
+    $user->assignRole('admin');
+
+    $response = $this->actingAs($user)->deleteJson('/admin/library/chat/999999');
+
+    $response->assertOk();
+    $response->assertExactJson(['deleted' => true]);
+});

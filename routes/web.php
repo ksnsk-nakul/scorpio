@@ -107,6 +107,7 @@ Route::middleware(['auth', 'role:admin,editor,viewer'])
     ->group(function () {
         Route::post('library/chat', [LibraryChatController::class, 'store'])->middleware('throttle:20,1')->name('library.chat.store');
         Route::get('library/chat/history', [LibraryChatController::class, 'history'])->name('library.chat.history');
+        Route::delete('library/chat/{thread}', [LibraryChatController::class, 'destroy'])->name('library.chat.destroy');
     });
 
 use App\Http\Controllers\Admin\WorkspaceController;

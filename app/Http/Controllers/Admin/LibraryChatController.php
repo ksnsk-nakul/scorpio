@@ -86,4 +86,21 @@ class LibraryChatController extends Controller
 
         return response()->json(['thread_id' => $thread->id, 'messages' => $messages]);
     }
+
+    public function destroy(Request $request, int $thread): JsonResponse
+    {
+        // SECURITY: scope strictly to the authenticated user's own thread (same IDOR-safety
+        // convention as store()/history() above). ->find() (not ->findOrFail()) is
+        // deliberate: a not-found/not-owned thread is treated as a silent no-op — deleting
+        // something that's already gone (or was never yours) isn't an error from the
+        // client's perspective.
+        $chatThread = ChatThread::where('user_id', $request->user()->id)->find($thread);
+
+        // The chat_messages.thread_id FK is cascadeOnDelete() at the DB level (see
+        // 2026_07_31_100003_create_chat_messages_table.php), so deleting the thread is
+        // sufficient — no need to delete messages explicitly first.
+        $chatThread?->delete();
+
+        return response()->json(['deleted' => true]);
+    }
 }
