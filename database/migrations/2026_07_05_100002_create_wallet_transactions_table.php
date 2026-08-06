@@ -28,7 +28,6 @@ return new class extends Migration {
 
             $table->index('txn_ref');
             $table->index('recipient_user_id');
-            $table->index('payer_email');
             $table->index('created_at');
         });
     }
