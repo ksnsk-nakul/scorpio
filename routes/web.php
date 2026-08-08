@@ -392,6 +392,7 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 Route::get('/terms', [\App\Http\Controllers\PublicController::class, 'terms'])->name('terms');
 Route::get('/privacy', [\App\Http\Controllers\PublicController::class, 'privacy'])->name('privacy');
 Route::get('/refund', [\App\Http\Controllers\PublicController::class, 'refund'])->name('refund');
+Route::get('/pricing', [\App\Http\Controllers\PublicController::class, 'pricing'])->name('pricing');
 
 // Public portfolio
 Route::get('/', [\App\Http\Controllers\PublicController::class, 'index'])->name('home');

@@ -172,6 +172,18 @@ class PublicController extends Controller
         ]);
     }
 
+    public function pricing(): Response
+    {
+        $plans = collect(config('billing.plans'))
+            ->map(fn ($plan, $key) => [...$plan, 'key' => $key])
+            ->values();
+
+        return Inertia::render('Public/Pricing', [
+            'site_name' => Setting::get('site_name', 'KSNSK'),
+            'plans'     => $plans,
+        ]);
+    }
+
     public function orgPage(string $slug): Response
     {
         $org = \App\Models\Organization::where('slug', $slug)
